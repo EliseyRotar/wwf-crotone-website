@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Admin / manager accounts. Role superadmin = you (creator), sees everything.
+// Role manager = Paolo or other local WWF managers, limited to their assigned turns.
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  passwordHash  String
+  role          String   @default("manager") // "superadmin" | "manager"
+  assignedTurns String? // CSV of Turno.id for managers, null = all turns (superadmin)
+  expiresAt     DateTime? // when the account expires (e.g. when the last assigned turn ends)
+  active        Boolean  @default(true) // false = disabled
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  iscrizioniManaged Iscrizione[] @relation("ManagedBy")
+}
+
+// Weekly camp turns. The 12 turns for summer 2026 are seeded.
+// capacity is the max volunteers per turn (configurable from admin).
+model Turno {
+  id        String   @id @default(cuid())
+  number    Int      @unique // 1..12
+  startDate DateTime
+  endDate   DateTime
+  capacity  Int      @default(20)
+  isActive  Boolean  @default(true)
+  iscrizioni Iscrizione[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([number])
+}
+
+// A registration. status is managed from admin panel.
+// isMinor triggers the parent/guardian consent block.
+model Iscrizione {
+  id            String   @id @default(cuid())
+  // Personal
+  firstName     String
+  lastName      String
+  birthDate     DateTime
+  email         String
+  phone         String
+  isMinor       Boolean
+  // If minor
+  guardianName  String?
+  guardianEmail String?
+  guardianPhone String?
+  guardianConsent Boolean @default(false)
+  // Turn — primary turn + optional additional turns for multi-week registrations
+  turnoId       String
+  turno         Turno   @relation(fields: [turnoId], references: [id])
+  additionalTurns String? // CSV of additional Turno.id for multi-week registrations
+  // Health & diet
+  allergies     String?
+  medications   String?
+  swimmingAbility String? // "none" | "basic" | "confident"
+  tetanusStatus String? // "unknown" | "vaccinated" | "not_vaccinated"
+  fitnessSelf   String?
+  dietaryNeeds  String? // "none" | "vegetarian" | "vegan" | "celiac" | "other"
+  dietaryNotes  String?
+  tshirtSize    String? // "S" | "M" | "L" | "XL" | "XXL"
+  // Logistics
+  arrivalMode   String? // "own_car" | "train" | "bus" | "plane_crotone" | "plane_lamezia" | "need_pickup"
+  arrivalTime   String? // e.g. "14:30"
+  departureTime String? // e.g. "10:00"
+  // Admin-managed
+  status        String   @default("pending") // "pending" | "confirmed" | "paid" | "cancelled" | "waitlist"
+  // Payment tracking — split into registration fee (100€) + balance
+  feePaid       Boolean  @default(false) // 100€ registration fee paid
+  feePaidDate   DateTime?
+  balancePaid   Boolean  @default(false) // remaining balance paid
+  balancePaidDate DateTime?
+  notes         String? // internal admin notes
+  // Consent
+  privacyConsent   Boolean @default(false)
+  marketingConsent  Boolean @default(false)
+  imageDataConsent Boolean @default(false)
+  // Meta
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  managedBy  String? // User.id who last changed status
+  manager    User?   @relation("ManagedBy", fields: [managedBy], references: [id])
+
+  @@index([turnoId])
+  @@index([status])
+  @@index([email])
+}
+
+model GalleryItem {
+  id          String   @id @default(cuid())
+  type        String   // "image" | "video"
+  src         String   // path or youtube id
+  thumbnail   String?  // for video, poster
+  titleIt     String
+  titleEn     String?
+  captionIt   String?
+  captionEn   String?
+  category    String   // "tartarughe" | "cleanup" | "wildlife" | "campo" | "schiuse" | "cultura"
+  year        Int      @default(2026)
+  uploaderId  String?  // User.id
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+  @@index([year])
+}
+
+model NewsletterSubscriber {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  locale   String   @default("it")
+  consent  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Camp operators / staff (distinct from volunteer registrations).
+// role: "operatore" | "tecnico" | "coordinatore"
+model Operatore {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  sex       String?  // "M" | "F"
+  role      String   @default("operatore") // "operatore" | "tecnico" | "coordinatore"
+  email     String?
+  phone     String?
+  // CSV of Turno.id — which turns the operator is assigned to
+  assignedTurns String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
