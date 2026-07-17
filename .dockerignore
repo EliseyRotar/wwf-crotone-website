@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+*.md
+.env*
+prisma/dev.db*
+public/uploads
+images_pdf
+*.pdf
+*.png
+*.jpg
+opencode.jsonc
