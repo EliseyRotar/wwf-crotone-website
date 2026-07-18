@@ -2,6 +2,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { Mail, Phone, Facebook, Instagram, Plane, Train, Bus, Car } from "lucide-react";
 import { SITE } from "@/lib/site";
+import WeatherWidget from "@/components/WeatherWidget";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -46,8 +47,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         <li aria-current="page">{t("title")}</li>
       </nav>
 
-      <h1 className="text-4xl md:text-5xl mb-5">{t("title")}</h1>
-      <p className="text-lg text-ink-2 max-w-3xl mb-12 leading-relaxed">{t("intro")}</p>
+      <h1 className="text-4xl md:text-5xl mb-3">{t("title")}</h1>
+      <p className="text-lg text-ink-2 max-w-3xl mb-6 leading-relaxed">{t("intro")}</p>
+      <div className="mb-8"><WeatherWidget /></div>
 
       <div className="grid lg:grid-cols-2 gap-12">
         <section>
