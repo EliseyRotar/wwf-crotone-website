@@ -6,7 +6,8 @@ import ManualAddVolunteer from "@/components/admin/ManualAddVolunteer";
 import EditVolunteer from "@/components/admin/EditVolunteer";
 import ViewVolunteer from "@/components/admin/ViewVolunteer";
 import DeleteVolunteer from "@/components/admin/DeleteVolunteer";
-import { Download } from "lucide-react";
+import BulkEmailButton from "@/components/admin/BulkEmailButton";
+import { Download, Filter } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -64,17 +65,34 @@ export default async function IscrizioniPage({
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
-        <Link href="/admin/iscrizioni" className={`tag ${!sp.status ? "tag-green" : "tag-grey"}`}>Tutte</Link>
+        <Link href="/admin/iscrizioni" className={`tag ${!sp.status && !sp.turno ? "tag-green" : "tag-grey"}`}>Tutte</Link>
         {["pending", "confirmed", "paid", "waitlist", "cancelled"].map((s) => (
           <Link
             key={s}
             href={`/admin/iscrizioni?status=${s}`}
             className={`tag ${sp.status === s ? "tag-green" : "tag-grey"}`}
           >
-            {s === "pending" ? "In attesa" : s === "confirmed" ? "Confermato" : s === "paid" ? "Pagato" : s === "waitlist" ? "Lista d&apos;attesa" : "Annullato"}
+            {s === "pending" ? "In attesa" : s === "confirmed" ? "Confermato" : s === "paid" ? "Pagato" : s === "waitlist" ? "Lista d'attesa" : "Annullato"}
+          </Link>
+        ))}
+        <span className="mx-2 text-ink-grey-light">|</span>
+        <span className="tag tag-grey inline-flex items-center gap-1"><Filter size={12} /> Turno:</span>
+        {turni.map((t) => (
+          <Link
+            key={t.id}
+            href={`/admin/iscrizioni?turno=${t.id}`}
+            className={`tag ${sp.turno === t.id ? "tag-green" : "tag-grey"}`}
+          >
+            C{t.number}
           </Link>
         ))}
       </div>
+
+      {sp.turno && (
+        <div className="mb-4">
+          <BulkEmailButton turnoId={sp.turno} />
+        </div>
+      )}
 
       {iscrizioni.length === 0 ? (
         <p className="text-ink-grey">Nessuna iscrizione trovata.</p>
