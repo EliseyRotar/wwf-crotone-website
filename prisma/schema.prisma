@@ -89,6 +89,7 @@ model Iscrizione {
   updatedAt  DateTime @updatedAt
   managedBy  String? // User.id who last changed status
   manager    User?   @relation("ManagedBy", fields: [managedBy], references: [id])
+  receipts   Receipt[]
 
   @@index([turnoId])
   @@index([status])
@@ -138,4 +139,56 @@ model Operatore {
   updatedAt DateTime @updatedAt
 
   @@index([role])
+}
+
+// Receipt/bonifico uploaded by the volunteer
+model Receipt {
+  id        String   @id @default(cuid())
+  iscrizioneId String
+  iscrizione   Iscrizione @relation(fields: [iscrizioneId], references: [id], onDelete: Cascade)
+  fileName  String
+  filePath  String
+  mimeType  String
+  uploadedAt DateTime @default(now())
+
+  @@index([iscrizioneId])
+}
+
+// Blog / news posts
+model BlogPost {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  titleIt   String
+  titleEn   String?
+  contentIt String
+  contentEn String?
+  excerptIt String?
+  excerptEn String?
+  imageUrl  String?
+  published Boolean  @default(false)
+  publishedAt DateTime?
+  authorId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([published])
+}
+
+// Camp settings — year, dates, number of turns (for recurring camp config)
+model CampSettings {
+  id        String   @id @default(cuid())
+  year      Int      @default(2026)
+  startDate DateTime
+  endDate   DateTime
+  numTurns  Int      @default(12)
+  turnDurationDays Int @default(7)
+  costNonMember Int  @default(430)
+  costMember   Int   @default(400)
+  minorInsurance Int  @default(20)
+  registrationFee Int @default(100)
+  iban      String   @default("IT30V0306909606100000107334")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
