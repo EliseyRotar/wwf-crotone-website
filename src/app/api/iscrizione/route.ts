@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { notifyNewIscrizione } from "@/lib/mail";
+import { notifyNewIscrizione, sendVolunteerConfirmation } from "@/lib/mail";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -185,6 +185,20 @@ export async function POST(req: Request) {
       phone: d.phone,
       turno: `${created.map((c) => `Campo ${c.turnoNumber}`).join(" + ")} (${turni.length} ${d.locale === "it" ? "settimane" : "weeks"})`,
       isMinor: serverMinor,
+      locale: d.locale
+    });
+
+    // Send confirmation email to the volunteer
+    void sendVolunteerConfirmation({
+      email: d.email,
+      firstName: d.firstName,
+      lastName: d.lastName,
+      turns: turni.map((t) => ({
+        number: t.number,
+        startDate: t.startDate.toLocaleDateString("it-IT"),
+        endDate: t.endDate.toLocaleDateString("it-IT")
+      })),
+      totalCost: created.length * 430,
       locale: d.locale
     });
 
