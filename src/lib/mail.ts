@@ -19,6 +19,15 @@ function getTransporter(): nodemailer.Transporter {
   return transporter;
 }
 
+function escapeHtml(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function sendNotification(opts: {
   to: string;
   subject: string;
@@ -39,15 +48,6 @@ export async function sendNotification(opts: {
     console.error("mail send failed:", err);
     return false;
   }
-}
-
-function escapeHtml(s: string): string {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 export async function notifyNewIscrizione(data: {
@@ -91,6 +91,120 @@ Vedi il pannello admin per i dettagli completi.
   return sendNotification({
     to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
     subject,
+    text,
+    html
+  });
+}
+
+export async function sendVolunteerConfirmation(data: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  turns: { number: number; startDate: string; endDate: string }[];
+  totalCost: number;
+  locale: string;
+}) {
+  const isIt = data.locale === "it";
+  const turnLines = data.turns
+    .map((t) => `Campo ${t.number}: ${t.startDate} → ${t.endDate}`)
+    .join("\n");
+  const turnHtml = data.turns
+    .map((t) => `<tr><td>Campo ${t.number}</td><td>${t.startDate} → ${t.endDate}</td></tr>`)
+    .join("");
+
+  const subject = isIt
+    ? `Conferma iscrizione — WWF Crotone Campi di Volontariato 2026`
+    : `Registration confirmation — WWF Crotone Volunteer Camps 2026`;
+
+  const text = isIt
+    ? `Ciao ${data.firstName},
+
+La tua iscrizione al campo di volontariato WWF Crotone è stata ricevuta.
+
+Turni:
+${turnLines}
+
+Totale: €${data.totalCost}
+
+Per confermare la tua iscrizione, versa la quota di €100 tramite bonifico:
+IBAN: ${SITE.iban}
+Causale: Iscrizione di: ${data.firstName} ${data.lastName}, numero del campo scelto
+
+Il saldo (€${data.totalCost - 100}) va versato almeno una settimana prima dell'inizio del campo.
+
+Trovi la lista di cosa portare qui: ${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list
+
+Ti contatteremo a breve per confermare la tua iscrizione.
+
+— WWF Crotone`
+    : `Hello ${data.firstName},
+
+Your registration for the WWF Crotone volunteer camp has been received.
+
+Turns:
+${turnLines}
+
+Total: €${data.totalCost}
+
+To confirm your registration, pay the €100 fee via bank transfer:
+IBAN: ${SITE.iban}
+Reason: Registration of: ${data.firstName} ${data.lastName}, chosen camp number
+
+The balance (€${data.totalCost - 100}) is due at least one week before the camp starts.
+
+Find the packing list here: ${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list
+
+We will contact you shortly to confirm your registration.
+
+— WWF Crotone`;
+
+  const html = isIt
+    ? `<h2>Ciao ${escapeHtml(data.firstName)},</h2>
+<p>La tua iscrizione al campo di volontariato WWF Crotone è stata ricevuta.</p>
+<h3>Turni:</h3>
+<table style="border-collapse:collapse">${turnHtml}</table>
+<p><strong>Totale: €${data.totalCost}</strong></p>
+<h3>Pagamento</h3>
+<p>Per confermare la tua iscrizione, versa la quota di €100 tramite bonifico:</p>
+<p><strong>IBAN:</strong> ${SITE.iban}<br/>
+<strong>Causale:</strong> Iscrizione di: ${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}, numero del campo scelto</p>
+<p>Il saldo (€${data.totalCost - 100}) va versato almeno una settimana prima dell'inizio del campo.</p>
+<p>Trovi la lista di cosa portare qui: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list">Lista cosa portare</a></p>
+<p>Ti contatteremo a breve per confermare la tua iscrizione.</p>
+<p>— WWF Crotone</p>`
+    : `<h2>Hello ${escapeHtml(data.firstName)},</h2>
+<p>Your registration for the WWF Crotone volunteer camp has been received.</p>
+<h3>Turns:</h3>
+<table style="border-collapse:collapse">${turnHtml}</table>
+<p><strong>Total: €${data.totalCost}</strong></p>
+<h3>Payment</h3>
+<p>To confirm your registration, pay the €100 fee via bank transfer:</p>
+<p><strong>IBAN:</strong> ${SITE.iban}<br/>
+<strong>Reason:</strong> Registration of: ${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}, chosen camp number</p>
+<p>The balance (€${data.totalCost - 100}) is due at least one week before the camp starts.</p>
+<p>Find the packing list here: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list">Packing list</a></p>
+<p>We will contact you shortly to confirm your registration.</p>
+<p>— WWF Crotone</p>`;
+
+  return sendNotification({ to: data.email, subject, text, html });
+}
+
+export async function sendBulkEmail(opts: {
+  to: string[];
+  subject: string;
+  body: string;
+  locale: string;
+}) {
+  const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+<h2 style="color:#007932">${escapeHtml(opts.subject)}</h2>
+<div style="white-space:pre-wrap;color:#262626;line-height:1.6">${escapeHtml(opts.body)}</div>
+<hr style="border:none;border-top:1px solid #cecece;margin:20px 0"/>
+<p style="font-size:12px;color:#707070">WWF Crotone — Sezione locale di WWF Italia ETS<br/>wwfcrotone26@gmail.com</p>
+</div>`;
+  const text = `${opts.subject}\n\n${opts.body}\n\n— WWF Crotone`;
+  return sendNotification({
+    to: opts.to.join(", "),
+    subject: opts.subject,
     text,
     html
   });
