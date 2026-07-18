@@ -7,6 +7,7 @@ export const SITE = {
   phonePaolo: "+39 328 8726625",
   facebook: "https://www.facebook.com/wwfcrotone",
   instagram: "https://www.instagram.com/wwfcrotone",
+  googleBusiness: "https://www.google.com/maps/search/?api=1&query=WWF+Crotone",
   vergari: "https://www.riservanaturaledelvergari.it/",
   iban: "IT30V0306909606100000107334",
   brochure: "/downloads/INFO_CAMPI_2026_WWF.pdf"
