@@ -16,8 +16,11 @@ export default function AdminNav({ session }: { session: SessionUser }) {
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/iscrizioni", label: "Iscrizioni", icon: Users },
     { href: "/admin/operatori", label: "Operatori", icon: Users },
+    { href: "/admin/roster", label: "Roster", icon: CalendarDays },
     { href: "/admin/turni", label: "Turni", icon: CalendarDays },
-    { href: "/admin/gallery", label: "Galleria", icon: ImageIcon }
+    { href: "/admin/gallery", label: "Galleria", icon: ImageIcon },
+    { href: "/admin/blog", label: "Blog", icon: ImageIcon },
+    { href: "/admin/camp-settings", label: "Impostazioni", icon: UserCog }
   ];
   if (isSuper) links.push({ href: "/admin/utenti", label: "Utenti", icon: UserCog });
 
