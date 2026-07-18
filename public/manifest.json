@@ -1,0 +1,13 @@
+{
+  "name": "WWF Crotone — Campi di Volontariato",
+  "short_name": "WWF Crotone",
+  "description": "Campi di volontariato WWF Crotone — tutela tartarughe marine, pulizia spiagge, recupero animali selvatici",
+  "start_url": "/it",
+  "display": "standalone",
+  "background_color": "#141413",
+  "theme_color": "#007932",
+  "icons": [
+    { "src": "/logos/wwf.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logos/wwf.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
