@@ -53,14 +53,19 @@ export function middleware(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
 
-  // The admin panel lives outside the [locale] segment (it is
-  // Italian-only). Skip the i18n locale rewrite on /admin/* so we
-  // don't 307 /admin/login → /it/admin/login (which doesn't exist).
+  // The admin panel AND all API routes live outside the [locale]
+  // segment. Skip the i18n locale rewrite on those so we don't
+  //   /admin/login    → /it/admin/login  (404)
+  //   /api/admin/login → /it/api/admin/login (404)
   // CSP + security headers still apply — they're attached to the
   // response below.
   const { pathname } = req.nextUrl;
-  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
-  const res = isAdmin
+  const skipI18n =
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/api" ||
+    pathname.startsWith("/api/");
+  const res = skipI18n
     ? NextResponse.next({ request: { headers: requestHeaders } })
     : intlMiddleware(new NextRequest(req, { headers: requestHeaders })) ??
       NextResponse.next({ request: { headers: requestHeaders } });
