@@ -8,7 +8,8 @@ export default async function TurniPage() {
   await requireSuperadmin();
   const turni = await prisma.turno.findMany({
     orderBy: { number: "asc" },
-    include: { _count: { select: { iscrizioni: true } } }
+    // C-07: surface the atomic counter (active registrations only).
+    select: { id: true, number: true, startDate: true, endDate: true, capacity: true, isActive: true, bookedCount: true }
   });
 
   return (
@@ -30,8 +31,8 @@ export default async function TurniPage() {
             {turni.map((t) => (
               <tr key={t.id} className="border-b border-ink-grey-light/60">
                 <td className="p-3 font-bold">Campo {t.number}</td>
-                <td className="p-3">{t.startDate.toLocaleDateString("it-IT")} → {t.endDate.toLocaleDateString("it-IT")}</td>
-                <td className="p-3">{t._count.iscrizioni}</td>
+                <td className="p-3">{t.startDate.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })} → {t.endDate.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
+                <td className="p-3">{t.bookedCount}</td>
                 <td className="p-3"><TurnoEditor id={t.id} capacity={t.capacity} isActive={t.isActive} /></td>
               </tr>
             ))}

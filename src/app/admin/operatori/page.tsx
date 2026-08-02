@@ -8,7 +8,11 @@ export default async function OperatoriPage() {
   await requireSuperadmin();
 
   const [operatori, turni] = await Promise.all([
-    prisma.operatore.findMany({ orderBy: [{ role: "asc" }, { firstName: "asc" }] }),
+    prisma.operatore.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ role: "asc" }, { firstName: "asc" }],
+      select: { id: true, firstName: true, lastName: true, sex: true, role: true, email: true, phone: true, assignedTurns: true, notes: true }
+    }),
     prisma.turno.findMany({ orderBy: { number: "asc" }, select: { id: true, number: true } })
   ]);
 

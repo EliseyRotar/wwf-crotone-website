@@ -7,7 +7,10 @@ export const dynamic = "force-dynamic";
 export default async function UtentiPage() {
   const session = await requireSuperadmin();
   const [users, turni] = await Promise.all([
-    prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.user.findMany({
+      orderBy: { createdAt: "asc" },
+      select: { id: true, email: true, name: true, role: true, assignedTurns: true, expiresAt: true, active: true }
+    }),
     prisma.turno.findMany({ orderBy: { number: "asc" }, select: { id: true, number: true, endDate: true } })
   ]);
 
