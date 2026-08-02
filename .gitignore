@@ -20,9 +20,13 @@ dist
 .env.production.local
 
 # Prisma
+# Ignore local SQLite dev DB only; migrations are committed.
 prisma/dev.db
 prisma/dev.db-journal
 prisma/*.db*
+# PostgreSQL dumps and migration shadow DBs
+prisma/*.dump
+prisma/*.sql
 
 # OS
 .DS_Store
@@ -41,3 +45,9 @@ public/uploads
 
 # Opencode config
 opencode.jsonc
+
+# INFRASTRUCTURE.txt (project notes, not for repo)
+INFRASTRUCTURE.txt
+
+# Test coverage
+coverage
