@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Upload, Trash2 } from "lucide-react";
 
 export default function GalleryUploader({ items }: { items: { id: string; titleIt: string; category: string }[] }) {
   const router = useRouter();
+  const t = useTranslations("Admin.gallery");
+  const tC = useTranslations("Admin.common");
   const [type, setType] = useState<"image" | "video">("image");
   const [src, setSrc] = useState("");
   const [thumbnail, setThumbnail] = useState("");
@@ -30,13 +33,13 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
       const json = await res.json();
       if (json.ok) {
         setSrc(json.path);
-        setMsg("File caricato: " + json.path);
+        setMsg(tC("uploaded") + ": " + json.path);
         if (!titleIt) setTitleIt(f.name.replace(/\.[^.]+$/, ""));
       } else {
-        setMsg("Errore upload: " + json.error);
+        setMsg(tC("error") + " upload: " + json.error);
       }
     } catch {
-      setMsg("Errore di rete");
+      setMsg(tC("networkError"));
     } finally {
       setBusy(false);
     }
@@ -55,10 +58,10 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
       const json = await res.json();
       if (json.ok) {
         setSrc(""); setTitleIt(""); setTitleEn(""); setCaptionIt(""); setCaptionEn("");
-        setMsg("Aggiunto alla galleria.");
+        setMsg(tC("addedToGallery"));
         router.refresh();
       } else {
-        setMsg("Errore: " + json.error);
+        setMsg(tC("error") + ": " + json.error);
       }
     } finally {
       setBusy(false);
@@ -66,7 +69,7 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
   };
 
   const del = async (id: string) => {
-    if (!confirm("Eliminare questo elemento?")) return;
+    if (!confirm(t("delete"))) return;
     await fetch("/api/admin/gallery", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -81,71 +84,71 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
     <div className="grid lg:grid-cols-2 gap-8">
       <div className="card">
         <div className="card-body">
-          <h2 className="text-xl mb-4">Aggiungi elemento</h2>
+          <h2 className="text-xl mb-4">{t("addItem")}</h2>
           <form onSubmit={submit} className="space-y-3">
             <div className="field">
-              <label>Tipo</label>
+              <label>{t("type")}</label>
               <select value={type} onChange={(e) => setType(e.target.value as "image" | "video")}>
-                <option value="image">Immagine</option>
-                <option value="video">Video (YouTube ID)</option>
+                <option value="image">{t("image")}</option>
+                <option value="video">{t("video")}</option>
               </select>
             </div>
             {type === "image" ? (
               <div className="field">
-                <label>File</label>
+                <label>{t("file")}</label>
                 <input type="file" accept="image/*" onChange={onFile} />
                 {src && <p className="text-xs text-wwf-green mt-1">{src}</p>}
               </div>
             ) : (
               <>
                 <div className="field">
-                  <label>YouTube video ID</label>
+                  <label>{t("youtubeId")}</label>
                   <input value={src} onChange={(e) => setSrc(e.target.value)} placeholder="es. dQw4w9WgXcQ" />
                 </div>
                 <div className="field">
-                  <label>Thumbnail URL (opzionale)</label>
+                  <label>{t("thumbnail")}</label>
                   <input value={thumbnail} onChange={(e) => setThumbnail(e.target.value)} />
                 </div>
               </>
             )}
             <div className="field">
-              <label>Titolo (IT) *</label>
+              <label>{t("titleIt")}</label>
               <input value={titleIt} onChange={(e) => setTitleIt(e.target.value)} required />
             </div>
             <div className="field">
-              <label>Titolo (EN)</label>
+              <label>{t("titleEn")}</label>
               <input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} />
             </div>
             <div className="field">
-              <label>Didascalia (IT)</label>
+              <label>{t("captionIt")}</label>
               <input value={captionIt} onChange={(e) => setCaptionIt(e.target.value)} />
             </div>
             <div className="field">
-              <label>Didascalia (EN)</label>
+              <label>{t("captionEn")}</label>
               <input value={captionEn} onChange={(e) => setCaptionEn(e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="field">
-                <label>Categoria</label>
+                <label>{t("category")}</label>
                 <select value={category} onChange={(e) => setCategory(e.target.value)}>
                   {cats.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="field">
-                <label>Anno</label>
+                <label>{t("year")}</label>
                 <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
               </div>
             </div>
             {msg && <p className="text-sm text-ink-grey">{msg}</p>}
             <button type="submit" disabled={busy} className="btn btn-green">
-              <Upload size={18} /> {busy ? "…" : "Pubblica"}
+              <Upload size={18} /> {busy ? tC("loading") : t("publish")}
             </button>
           </form>
         </div>
       </div>
 
       <div>
-        <h2 className="text-xl mb-4">Elementi esistenti ({items.length})</h2>
+        <h2 className="text-xl mb-4">{t("existingItems")} ({items.length})</h2>
         <div className="space-y-2 max-h-[40rem] overflow-y-auto">
           {items.map((it) => (
             <div key={it.id} className="flex items-center justify-between p-3 bg-surface border border-ink-grey-light">
@@ -153,7 +156,7 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
                 <p className="font-bold truncate">{it.titleIt}</p>
                 <p className="text-xs text-ink-grey">{it.category}</p>
               </div>
-              <button onClick={() => del(it.id)} className="text-wwf-red hover:bg-wwf-red/10 p-2" aria-label="Elimina">
+              <button onClick={() => del(it.id)} className="text-wwf-red hover:bg-wwf-red/10 p-2" aria-label={tC("delete")}>
                 <Trash2 size={16} />
               </button>
             </div>

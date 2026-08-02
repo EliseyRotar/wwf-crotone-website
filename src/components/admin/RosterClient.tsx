@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Printer } from "lucide-react";
 
 type Iscrizione = {
@@ -22,14 +23,17 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
   iscrizioni: Iscrizione[];
 }) {
   const router = useRouter();
+  const t = useTranslations("Admin.roster");
+  const tIsc = useTranslations("Admin.iscrizioni");
+  const tC = useTranslations("Admin.common");
   const selected = turni.find((t) => t.id === selectedTurnoId);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="text-3xl">Roster turno</h1>
+        <h1 className="text-3xl">{t("title")}</h1>
         <button onClick={() => window.print()} className="btn btn-outline">
-          <Printer size={18} /> Stampa
+          <Printer size={18} /> {t("print")}
         </button>
       </div>
 
@@ -47,8 +51,8 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
 
       {selected && (
         <h2 className="text-xl mb-4">
-          Campo {selected.number} — {new Date(selected.start).toLocaleDateString("it-IT")} → {new Date(selected.end).toLocaleDateString("it-IT")}
-          <span className="text-ink-grey text-sm ml-2">({iscrizioni.length} volontari)</span>
+          Campo {selected.number} — {new Date(selected.start).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })} → {new Date(selected.end).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}
+          <span className="text-ink-grey text-sm ml-2">({iscrizioni.length} {t("volunteers")})</span>
         </h2>
       )}
 
@@ -57,13 +61,13 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
           <thead>
             <tr className="border-b border-ink-grey-light text-left">
               <th className="p-2">#</th>
-              <th className="p-2">Nome</th>
-              <th className="p-2">Tel</th>
-              <th className="p-2">Dieta</th>
-              <th className="p-2">Allergie</th>
-              <th className="p-2">Arrivo</th>
-              <th className="p-2">Ora</th>
-              <th className="p-2">Pag.</th>
+              <th className="p-2">{t("colName")}</th>
+              <th className="p-2">{t("colTel")}</th>
+              <th className="p-2">{t("colDiet")}</th>
+              <th className="p-2">{t("colAllergies")}</th>
+              <th className="p-2">{t("colArrival")}</th>
+              <th className="p-2">{t("colTime")}</th>
+              <th className="p-2">{t("colPayment")}</th>
             </tr>
           </thead>
           <tbody>
@@ -81,7 +85,7 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
                 <td className="p-2 text-xs">{i.arrivalTime || ""}</td>
                 <td className="p-2">
                   <span className={`tag ${i.feePaid && i.balancePaid ? "tag-green" : i.feePaid ? "tag-orange" : "tag-red"} text-xs`}>
-                    {i.feePaid && i.balancePaid ? "OK" : i.feePaid ? "100€" : "✗"}
+                    {i.feePaid && i.balancePaid ? t("paymentOk") : i.feePaid ? tIsc("fee100") : t("paymentNone")}
                   </span>
                 </td>
               </tr>

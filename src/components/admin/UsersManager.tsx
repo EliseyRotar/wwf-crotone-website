@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Trash2, UserPlus } from "lucide-react";
 
 export default function UsersManager({
@@ -14,6 +15,8 @@ export default function UsersManager({
   currentId: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("Admin.users");
+  const tC = useTranslations("Admin.common");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +49,7 @@ export default function UsersManager({
         setEmail(""); setName(""); setPassword(""); setAssigned([]);
         router.refresh();
       } else {
-        setErr(json.error === "exists" ? "Email già esistente" : "Errore");
+        setErr(json.error === "exists" ? t("emailExists") : tC("error"));
       }
     } finally {
       setBusy(false);
@@ -54,7 +57,7 @@ export default function UsersManager({
   };
 
   const del = async (id: string) => {
-    if (!confirm("Eliminare questo utente?")) return;
+    if (!confirm(t("delete"))) return;
     await fetch("/api/admin/utenti", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -67,30 +70,30 @@ export default function UsersManager({
     <div className="grid lg:grid-cols-2 gap-8">
       <div className="card">
         <div className="card-body">
-          <h2 className="text-xl mb-4">Nuovo utente</h2>
+          <h2 className="text-xl mb-4">{t("newUser")}</h2>
           <form onSubmit={create} className="space-y-3">
             <div className="field">
-              <label>Email *</label>
+              <label>{t("email")}</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="field">
-              <label>Nome</label>
+              <label>{t("name")}</label>
               <input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="field">
-              <label>Password *</label>
+              <label>{t("password")}</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <div className="field">
-              <label>Ruolo</label>
+              <label>{t("role")}</label>
               <select value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="manager">Manager (turni assegnati)</option>
-                <option value="superadmin">Superadmin (tutto)</option>
+                <option value="manager">{t("manager")}</option>
+                <option value="superadmin">{t("superadmin")}</option>
               </select>
             </div>
             {role === "manager" && (
               <div className="field">
-                <label>Turni assegnati</label>
+                <label>{t("assignedTurns")}</label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {turni.map((t) => (
                     <button
@@ -107,30 +110,30 @@ export default function UsersManager({
             )}
             {err && <p className="field-error">{err}</p>}
             <button type="submit" disabled={busy} className="btn btn-green">
-              <UserPlus size={18} /> {busy ? "…" : "Crea"}
+              <UserPlus size={18} /> {busy ? tC("loading") : t("create")}
             </button>
           </form>
         </div>
       </div>
 
       <div>
-        <h2 className="text-xl mb-4">Utenti ({users.length})</h2>
+        <h2 className="text-xl mb-4">{t("existingUsers")} ({users.length})</h2>
         <div className="space-y-2">
           {users.map((u) => {
             const expired = u.expiresAt && new Date(u.expiresAt).getTime() < Date.now();
             return (
             <div key={u.id} className="flex items-center justify-between p-3 bg-surface border border-ink-grey-light">
               <div>
-                <p className="font-bold">{u.email} {u.id === currentId && <span className="text-xs text-wwf-green">(tu)</span>}</p>
+                <p className="font-bold">{u.email} {u.id === currentId && <span className="text-xs text-wwf-green">{t("you")}</span>}</p>
                 <p className="text-xs text-ink-grey">
-                  {u.role === "superadmin" ? "Superadmin" : "Manager"} — {u.name ?? "—"}
-                  {!u.active && <span className="text-wwf-red ml-2">disattivato</span>}
-                  {expired && <span className="text-wwf-red ml-2">scaduto</span>}
-                  {u.expiresAt && !expired && <span className="ml-2">scade {new Date(u.expiresAt).toLocaleDateString("it-IT")}</span>}
+                  {u.role === "superadmin" ? t("superadmin") : t("manager")} — {u.name ?? "—"}
+                  {!u.active && <span className="text-wwf-red ml-2">{t("disabled")}</span>}
+                  {expired && <span className="text-wwf-red ml-2">{t("expired")}</span>}
+                  {u.expiresAt && !expired && <span className="ml-2">{t("expires")} {new Date(u.expiresAt).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}</span>}
                 </p>
               </div>
               {u.id !== currentId && (
-                <button onClick={() => del(u.id)} className="text-wwf-red hover:bg-wwf-red/10 p-2" aria-label="Elimina">
+                <button onClick={() => del(u.id)} className="text-wwf-red hover:bg-wwf-red/10 p-2" aria-label={tC("delete")}>
                   <Trash2 size={16} />
                 </button>
               )}

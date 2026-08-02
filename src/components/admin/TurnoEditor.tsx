@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function TurnoEditor({
   id,
@@ -12,6 +13,8 @@ export default function TurnoEditor({
   capacity: number;
   isActive: boolean;
 }) {
+  const t = useTranslations("Admin.turni");
+  const tC = useTranslations("Admin.common");
   const [cap, setCap] = useState(capacity);
   const [active, setActive] = useState(isActive);
   const [saving, setSaving] = useState(false);
@@ -39,10 +42,10 @@ export default function TurnoEditor({
       />
       <label className="flex items-center gap-1 text-sm">
         <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-        Attivo
+        {t("active")}
       </label>
       <button onClick={save} disabled={saving} className="btn btn-green text-xs px-3 py-1">
-        {saving ? "…" : "Salva"}
+        {saving ? tC("loading") : t("save")}
       </button>
     </div>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 type TurnoData = { number: number; booked: number; capacity: number };
 type IscrData = { date: string; age: number };
 
@@ -7,6 +9,7 @@ export default function DashboardCharts({ turni, iscrizioni }: {
   turni: TurnoData[];
   iscrizioni: IscrData[];
 }) {
+  const t = useTranslations("Admin.dashboard");
   const maxBooked = Math.max(...turni.map((t) => t.booked), 1);
 
   // Registrations by day
@@ -32,7 +35,7 @@ export default function DashboardCharts({ turni, iscrizioni }: {
       {/* Turn fill rate */}
       <div className="card">
         <div className="card-body">
-          <h3 className="text-lg mb-4">Turn fill rate</h3>
+          <h3 className="text-lg mb-4">{t("campoFillRate")}</h3>
           <div className="space-y-2">
             {turni.map((t) => {
               const pct = (t.booked / t.capacity) * 100;
@@ -59,7 +62,7 @@ export default function DashboardCharts({ turni, iscrizioni }: {
       {dates.length > 0 && (
         <div className="card">
           <div className="card-body">
-            <h3 className="text-lg mb-4">Registrations over time</h3>
+            <h3 className="text-lg mb-4">{t("registrationsOverTime")}</h3>
             <div className="flex items-end gap-1 h-32">
               {dateValues.map((v, i) => (
                 <div
@@ -70,7 +73,7 @@ export default function DashboardCharts({ turni, iscrizioni }: {
                 />
               ))}
             </div>
-            <p className="text-xs text-ink-grey mt-2">{dates.length} days — first: {dates[0]}, last: {dates[dates.length - 1]}</p>
+            <p className="text-xs text-ink-grey mt-2">{dates.length} {t("days")} — {t("first")}: {dates[0]}, {t("last")}: {dates[dates.length - 1]}</p>
           </div>
         </div>
       )}
@@ -78,7 +81,7 @@ export default function DashboardCharts({ turni, iscrizioni }: {
       {/* Age distribution */}
       <div className="card">
         <div className="card-body">
-          <h3 className="text-lg mb-4">Age distribution</h3>
+          <h3 className="text-lg mb-4">{t("ageDistribution")}</h3>
           <div className="space-y-2">
             {Object.entries(ageGroups).map(([label, count]) => (
               <div key={label} className="flex items-center gap-2">

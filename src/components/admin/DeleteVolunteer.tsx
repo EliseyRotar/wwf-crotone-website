@@ -1,13 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 
 export default function DeleteVolunteer({ id, name }: { id: string; name: string }) {
   const router = useRouter();
+  const t = useTranslations("Admin.iscrizioni");
 
   const del = async () => {
-    if (!confirm(`Eliminare definitivamente ${name}? Questa azione non può essere annullata.`)) return;
+    if (!confirm(t("deleteConfirm", { name }))) return;
     try {
       const res = await fetch("/api/admin/iscrizioni", {
         method: "DELETE",
@@ -18,10 +20,10 @@ export default function DeleteVolunteer({ id, name }: { id: string; name: string
       if (json.ok) {
         router.refresh();
       } else {
-        alert("Errore: " + (json.error || "unknown"));
+        alert(t("deleteError") + ": " + (json.error || "unknown"));
       }
     } catch {
-      alert("Errore di rete");
+      alert(t("networkError"));
     }
   };
 
@@ -29,8 +31,8 @@ export default function DeleteVolunteer({ id, name }: { id: string; name: string
     <button
       onClick={del}
       className="text-wwf-red hover:bg-wwf-red/10 p-1"
-      aria-label="Elimina volontario"
-      title="Elimina volontario"
+      aria-label={t("delete")}
+      title={t("delete")}
     >
       <Trash2 size={15} />
     </button>

@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Eye, X } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { Eye, X, Printer } from "lucide-react";
+import { calcAge } from "@/lib/turns";
 
 type Iscrizione = {
   id: string;
   firstName: string;
   lastName: string;
-  birthDate: string;
+  birthDate: string | null;
+  age: number | null;
   email: string;
   phone: string;
   isMinor: boolean;
@@ -39,16 +42,8 @@ type Iscrizione = {
   turnoNumber: number;
   turnoStart: string;
   turnoEnd: string;
-  additionalTurns: string | null;
+  extraTurnoNumbers: number[];
   createdAt: string;
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: "In attesa",
-  confirmed: "Confermato",
-  paid: "Pagato",
-  cancelled: "Annullato",
-  waitlist: "Lista d'attesa"
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -59,38 +54,13 @@ const STATUS_COLORS: Record<string, string> = {
   waitlist: "tag-orange"
 };
 
-const DIET_LABELS: Record<string, string> = {
-  none: "Nessuna",
-  vegetarian: "Vegetariano",
-  vegan: "Vegano",
-  celiac: "Celiaco",
-  other: "Altra"
-};
+function esc(s: string): string {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
 
-const SWIM_LABELS: Record<string, string> = {
-  none: "Nessuna",
-  basic: "Base",
-  confident: "Buona"
-};
-
-const TETANUS_LABELS: Record<string, string> = {
-  unknown: "Non so",
-  vaccinated: "Vaccinato/a",
-  not_vaccinated: "Non vaccinato/a"
-};
-
-const ARRIVAL_LABELS: Record<string, string> = {
-  own_car: "Auto propria",
-  train: "Treno",
-  bus: "Autobus",
-  plane_crotone: "Aereo — Crotone",
-  plane_lamezia: "Aereo — Lamezia",
-  need_pickup: "Trasferimento richiesto"
-};
-
-function Row({ label, value, warn }: { label: string; value: string | boolean | null | undefined; warn?: boolean }) {
+function Row({ label, value, warn, yesLabel, noLabel }: { label: string; value: string | boolean | null | undefined; warn?: boolean; yesLabel: string; noLabel: string }) {
   if (value === null || value === undefined || value === "") return null;
-  const display = value === true ? "Sì" : value === false ? "No" : String(value);
+  const display = value === true ? yesLabel : value === false ? noLabel : String(value);
   return (
     <div className="flex gap-2 py-1.5 border-b border-ink-grey-light/40 text-sm">
       <span className="font-bold text-ink-grey uppercase tracking-cta text-xs min-w-[140px] shrink-0 pt-0.5">{label}</span>
@@ -110,34 +80,80 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function ViewVolunteer({ iscrizione }: { iscrizione: Iscrizione }) {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("Admin.volunteer");
+  const tIsc = useTranslations("Admin.iscrizioni");
+  const locale = useLocale();
+  const statusKey = ({
+    pending: "statusPending",
+    confirmed: "statusConfirmed",
+    paid: "statusPaid",
+    waitlist: "statusWaitlist",
+    cancelled: "statusCancelled"
+  } as const)[iscrizione.status as keyof object] || "statusPending";
+  const statusLabel = tIsc(statusKey);
 
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setOpen(false);
+        }
+        if (e.key === "Tab") {
+          const root = document.getElementById("view-volunteer-modal");
+          if (!root) return;
+          const focusable = root.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
+      document.addEventListener("keydown", onKey);
+      const root = document.getElementById("view-volunteer-modal");
+      const firstBtn = root?.querySelector<HTMLElement>("button");
+      firstBtn?.focus();
+      return () => {
+        document.body.style.overflow = "";
+        document.removeEventListener("keydown", onKey);
+      };
     }
   }, [open]);
 
   const close = () => setOpen(false);
 
-  const birth = new Date(iscrizione.birthDate);
-  // Use camp start date (June 21, 2026) as reference for age — that's what matters for the camp
+  const birth = iscrizione.birthDate ? new Date(iscrizione.birthDate) : null;
   const campStart = new Date("2026-06-21");
-  let age = campStart.getFullYear() - birth.getFullYear();
-  const hadBday = campStart.getMonth() > birth.getMonth() || (campStart.getMonth() === birth.getMonth() && campStart.getDate() >= birth.getDate());
-  if (!hadBday) age--;
-  const birthFormatted = birth.toLocaleDateString("it-IT");
+  let age: number | null = null;
+  if (birth) {
+    age = calcAge(birth, campStart);
+  } else if (iscrizione.age !== null) {
+    age = iscrizione.age;
+  }
+  const dateLocale = locale === "it" ? "it-IT" : "en-GB";
+  const birthFormatted = birth ? birth.toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+  const yesLabel = t("yes");
+  const noLabel = t("no");
 
-  // Additional turns
-  const isMultiTurn = !!iscrizione.additionalTurns;
+  // Additional turns (M5: derived from IscrizioneTurno junction)
+  const isMultiTurn = iscrizione.extraTurnoNumbers.length > 0;
 
   if (!open) {
     return (
       <button
         onClick={() => setOpen(true)}
         className="text-ink hover:text-wwf-green p-1"
-        aria-label="Vedi dettagli"
-        title="Vedi tutti i dettagli"
+        aria-label={t("viewAria")}
+        title={t("viewDetails")}
       >
         <Eye size={15} />
       </button>
@@ -150,6 +166,10 @@ export default function ViewVolunteer({ iscrizione }: { iscrizione: Iscrizione }
       onClick={close}
     >
       <div
+        id="view-volunteer-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("viewTitle", { firstName: iscrizione.firstName, lastName: iscrizione.lastName })}
         className="card bg-surface max-w-2xl w-full max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
@@ -160,38 +180,84 @@ export default function ViewVolunteer({ iscrizione }: { iscrizione: Iscrizione }
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <h2 className="text-2xl">{iscrizione.firstName} {iscrizione.lastName}</h2>
                 <span className={`tag ${STATUS_COLORS[iscrizione.status] || "tag-grey"}`}>
-                  {STATUS_LABELS[iscrizione.status] || iscrizione.status}
+                  {statusLabel}
                 </span>
-                {iscrizione.isMinor && <span className="tag tag-orange">minore</span>}
-                {isMultiTurn && <span className="tag tag-blue">multi-turno</span>}
+                {iscrizione.isMinor && <span className="tag tag-orange">{t("minor")}</span>}
+                {isMultiTurn && <span className="tag tag-blue">{t("multiTurn")}</span>}
               </div>
               <p className="text-sm text-ink-grey">
-                Campo {iscrizione.turnoNumber} · {new Date(iscrizione.turnoStart).toLocaleDateString("it-IT")} → {new Date(iscrizione.turnoEnd).toLocaleDateString("it-IT")}
-                {" · "}{age} anni
+                {t("camp", { number: iscrizione.turnoNumber })} · {new Date(iscrizione.turnoStart).toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" })} → {new Date(iscrizione.turnoEnd).toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" })}
+                {" · "}{age !== null ? t("printAge", { age }) : ""}
               </p>
             </div>
-            <button onClick={close} className="text-ink-grey hover:text-ink shrink-0">
-              <X size={24} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const w = window.open("", "_blank", "width=800,height=900");
+                  if (!w) return;
+                  const title = t("printDocumentTitle", { firstName: iscrizione.firstName, lastName: iscrizione.lastName, number: iscrizione.turnoNumber });
+                  w.document.write(`<!doctype html><html><head><title>${title}</title><style>body{font-family:Inter,system-ui,sans-serif;padding:24px;color:#101010}h1{font-size:24px;margin:0 0 8px}h2{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:#007932;border-bottom:2px solid #007932;padding-bottom:4px;margin:24px 0 8px}.row{display:flex;gap:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px}.label{min-width:160px;font-weight:600;color:#707070;text-transform:uppercase;font-size:11px;letter-spacing:.04em}.tag{display:inline-block;padding:2px 8px;border-radius:20px;background:#c9e8a0;color:#005a25;font-size:11px;font-weight:700;margin-right:4px}.red{color:#ed2b00}</style></head><body>`);
+                  w.document.write(`<h1>${title}</h1>`);
+                  w.document.write(`<p>${age} · ${t("printHeader")} <span class="tag">${statusLabel}</span>${iscrizione.isMinor ? ` <span class="tag" style="background:#f5d200;color:#101010">${t("printMinor")}</span>` : ''}</p>`);
+                  w.document.write(`<h2>${t("printSections.contacts")}</h2>`);
+                  w.document.write(`<div class="row"><span class="label">${t("printLabels.email")}</span><span>${iscrizione.email}</span></div>`);
+                  w.document.write(`<div class="row"><span class="label">${t("printLabels.phone")}</span><span>${iscrizione.phone}</span></div>`);
+                  if (iscrizione.isMinor) {
+                    w.document.write(`<h2>${t("printSections.guardian")}</h2>`);
+                    if (iscrizione.guardianName) w.document.write(`<div class="row"><span class="label">${t("printLabels.name")}</span><span>${esc(iscrizione.guardianName)}</span></div>`);
+                    if (iscrizione.guardianEmail) w.document.write(`<div class="row"><span class="label">${t("printLabels.email")}</span><span>${esc(iscrizione.guardianEmail)}</span></div>`);
+                    if (iscrizione.guardianPhone) w.document.write(`<div class="row"><span class="label">${t("printLabels.phone")}</span><span>${esc(iscrizione.guardianPhone)}</span></div>`);
+                  }
+                  w.document.write(`<h2>${t("printSections.health")}</h2>`);
+                  if (iscrizione.allergies) w.document.write(`<div class="row"><span class="label">${t("printLabels.allergies")}</span><span class="red">${esc(iscrizione.allergies)}</span></div>`);
+                  if (iscrizione.swimmingAbility) w.document.write(`<div class="row"><span class="label">${t("printLabels.swim")}</span><span>${t(`swimValues.${iscrizione.swimmingAbility}`)}</span></div>`);
+                  if (iscrizione.tetanusStatus) w.document.write(`<div class="row"><span class="label">${t("printLabels.tetanus")}</span><span>${t(`tetanusValues.${iscrizione.tetanusStatus}`)}</span></div>`);
+                  w.document.write(`<h2>${t("printSections.logistics")}</h2>`);
+                  if (iscrizione.dietaryNeeds && iscrizione.dietaryNeeds !== "none") w.document.write(`<div class="row"><span class="label">${t("printLabels.diet")}</span><span>${t(`dietValues.${iscrizione.dietaryNeeds}`)}</span></div>`);
+                  if (iscrizione.tshirtSize) w.document.write(`<div class="row"><span class="label">${t("printLabels.tshirt")}</span><span>${esc(iscrizione.tshirtSize)}</span></div>`);
+                  if (iscrizione.arrivalMode) w.document.write(`<div class="row"><span class="label">${t("printLabels.arrival")}</span><span>${t(`arrivalValues.${iscrizione.arrivalMode}`)} ${iscrizione.arrivalTime || ""}</span></div>`);
+                  w.document.write(`<h2>${t("printSections.payments")}</h2>`);
+                  w.document.write(`<div class="row"><span class="label">${t("printLabels.quota")}</span><span>${iscrizione.feePaid ? yesLabel : noLabel}${iscrizione.feePaidDate ? ` (${new Date(iscrizione.feePaidDate).toLocaleDateString(dateLocale)})` : ""}</span></div>`);
+                  w.document.write(`<div class="row"><span class="label">${t("printLabels.balance")}</span><span>${iscrizione.balancePaid ? yesLabel : noLabel}${iscrizione.balancePaidDate ? ` (${new Date(iscrizione.balancePaidDate).toLocaleDateString(dateLocale)})` : ""}</span></div>`);
+                  w.document.write(`<h2>${t("printSections.consents")}</h2>`);
+                  w.document.write(`<div class="row"><span class="label">${t("printLabels.privacy")}</span><span>${iscrizione.privacyConsent ? yesLabel : noLabel}</span></div>`);
+                  w.document.write(`<div class="row"><span class="label">${t("printLabels.images")}</span><span class="${!iscrizione.imageDataConsent ? "red" : ""}">${iscrizione.imageDataConsent ? yesLabel : noLabel}</span></div>`);
+                  w.document.write(`<p style="margin-top:32px;font-size:11px;color:#707070">${t("printFooter", { date: new Date().toLocaleString(dateLocale) })}</p>`);
+                  w.document.write(`</body></html>`);
+                  w.document.close();
+                  w.focus();
+                  setTimeout(() => w.print(), 250);
+                }}
+                className="text-ink hover:text-wwf-green p-1"
+                aria-label={t("printAria")}
+                title={t("printTitle")}
+              >
+                <Printer size={18} />
+              </button>
+              <button onClick={close} className="text-ink-grey hover:text-ink shrink-0">
+                <X size={24} />
+              </button>
+            </div>
           </div>
 
           {/* Payment status banner */}
           <div className="flex gap-2 mb-4">
             <span className={`tag ${iscrizione.feePaid ? "tag-green" : "tag-red"}`}>
-              Quota 100€: {iscrizione.feePaid ? "✓ Pagata" : "✗ Non pagata"}
-              {iscrizione.feePaidDate && ` (${new Date(iscrizione.feePaidDate).toLocaleDateString("it-IT")})`}
+              {t("quota")}: {iscrizione.feePaid ? `✓ ${t("quotaPaid")}` : `✗ ${t("quotaNotPaid")}`}
+              {iscrizione.feePaidDate && ` (${new Date(iscrizione.feePaidDate).toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" })})`}
             </span>
             <span className={`tag ${iscrizione.balancePaid ? "tag-green" : "tag-red"}`}>
-              Saldo: {iscrizione.balancePaid ? "✓ Pagato" : "✗ Non pagato"}
-              {iscrizione.balancePaidDate && ` (${new Date(iscrizione.balancePaidDate).toLocaleDateString("it-IT")})`}
+              {tIsc("balance")}: {iscrizione.balancePaid ? `✓ ${t("balancePaid")}` : `✗ ${t("balanceNotPaid")}`}
+              {iscrizione.balancePaidDate && ` (${new Date(iscrizione.balancePaidDate).toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" })})`}
             </span>
           </div>
 
           {/* Image consent warning */}
           {!iscrizione.imageDataConsent && (
             <div className="flex items-center gap-2 p-3 bg-wwf-red/10 border-l-4 border-wwf-red">
-              <span className="text-wwf-red font-bold text-sm">⚠ NO CONSENSO IMMAGINI</span>
-              <span className="text-wwf-red text-xs">— non fotografare/filmare questo volontario</span>
+              <span className="text-wwf-red font-bold text-sm">⚠ {tIsc("noImageConsent")}</span>
+              <span className="text-wwf-red text-xs">— {tIsc("noPhotoWarning")}</span>
             </div>
           )}
         </div>
@@ -200,57 +266,64 @@ export default function ViewVolunteer({ iscrizione }: { iscrizione: Iscrizione }
         <div className="p-6 pt-4 overflow-y-auto">
           <div>
             {/* Contatti */}
-            <Section title="Contatti">
-              <Row label="Email" value={iscrizione.email} />
-              <Row label="Telefono" value={iscrizione.phone} />
-              <Row label="Data di nascita" value={birthFormatted} />
+            <Section title={t("contacts")}>
+              <Row label={tIsc("email")} value={iscrizione.email} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={tIsc("phone")} value={iscrizione.phone} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("birthDate")} value={birthFormatted} yesLabel={yesLabel} noLabel={noLabel} />
             </Section>
 
             {/* Genitore (se minore) */}
             {iscrizione.isMinor && (
-              <Section title="Genitore / Tutore">
-                <Row label="Nome" value={iscrizione.guardianName} />
-                <Row label="Email" value={iscrizione.guardianEmail} />
-                <Row label="Telefono" value={iscrizione.guardianPhone} />
-                <Row label="Consenso" value={iscrizione.guardianConsent ? "Firmato" : "Mancante"} warn={!iscrizione.guardianConsent} />
+              <Section title={t("guardian")}>
+              <Row label={t("guardianName")} value={iscrizione.guardianName} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("guardianEmail")} value={iscrizione.guardianEmail} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("guardianPhone")} value={iscrizione.guardianPhone} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("guardianConsent")} value={iscrizione.guardianConsent ? t("signed") : t("missing")} warn={!iscrizione.guardianConsent} yesLabel={yesLabel} noLabel={noLabel} />
               </Section>
             )}
 
             {/* Salute */}
-            <Section title="Salute">
-              <Row label="Allergie" value={iscrizione.allergies} warn={!!iscrizione.allergies} />
-              <Row label="Farmaci" value={iscrizione.medications} />
-              <Row label="Nuoto" value={iscrizione.swimmingAbility ? SWIM_LABELS[iscrizione.swimmingAbility] : null} />
-              <Row label="Tetano" value={iscrizione.tetanusStatus ? TETANUS_LABELS[iscrizione.tetanusStatus] : null} />
-              <Row label="Forma fisica" value={iscrizione.fitnessSelf} />
+            <Section title={t("health")}>
+              <Row label={t("allergies")} value={iscrizione.allergies} warn={!!iscrizione.allergies} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("medications")} value={iscrizione.medications} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("swimming")} value={iscrizione.swimmingAbility ? t(`swimValues.${iscrizione.swimmingAbility}`) : null} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("tetanus")} value={iscrizione.tetanusStatus ? t(`tetanusValues.${iscrizione.tetanusStatus}`) : null} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("fitness")} value={iscrizione.fitnessSelf} yesLabel={yesLabel} noLabel={noLabel} />
             </Section>
 
             {/* Dieta */}
-            <Section title="Dieta">
-              <Row label="Esigenze" value={iscrizione.dietaryNeeds && iscrizione.dietaryNeeds !== "none" ? DIET_LABELS[iscrizione.dietaryNeeds] : "Nessuna"} />
-              <Row label="Note dieta" value={iscrizione.dietaryNotes} />
+            <Section title={t("diet")}>
+              <Row label={t("dietaryNeeds")} value={iscrizione.dietaryNeeds && iscrizione.dietaryNeeds !== "none" ? t(`dietValues.${iscrizione.dietaryNeeds}`) : t("none")} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("dietaryNotes")} value={iscrizione.dietaryNotes} yesLabel={yesLabel} noLabel={noLabel} />
             </Section>
 
             {/* Logistica */}
-            <Section title="Logistica">
-              <Row label="Arrivo" value={iscrizione.arrivalMode ? ARRIVAL_LABELS[iscrizione.arrivalMode] : null} />
-              <Row label="Orario arrivo" value={iscrizione.arrivalTime} />
-              <Row label="Orario partenza" value={iscrizione.departureTime} />
-              <Row label="Taglia T-shirt" value={iscrizione.tshirtSize} />
-              {isMultiTurn && <Row label="Turni extra" value={`Iscritto anche a: ${iscrizione.additionalTurns}`} />}
+            <Section title={t("logistics")}>
+              <Row label={t("arrivalMode")} value={iscrizione.arrivalMode ? t(`arrivalValues.${iscrizione.arrivalMode}`) : null} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("arrivalTime")} value={iscrizione.arrivalTime} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("departureTime")} value={iscrizione.departureTime} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("tshirtSize")} value={iscrizione.tshirtSize} yesLabel={yesLabel} noLabel={noLabel} />
+              {isMultiTurn && (
+                <Row
+                  label={t("extraTurnsField")}
+                  value={t("extraTurnsValue", { list: iscrizione.extraTurnoNumbers.map((n) => t("camp", { number: n })).join(", ") })}
+                  yesLabel={yesLabel}
+                  noLabel={noLabel}
+                />
+              )}
             </Section>
 
             {/* Consensi */}
-            <Section title="Consensi">
-              <Row label="Privacy" value={iscrizione.privacyConsent} warn={!iscrizione.privacyConsent} />
-              <Row label="Marketing" value={iscrizione.marketingConsent} />
-              <Row label="Immagini" value={iscrizione.imageDataConsent} warn={!iscrizione.imageDataConsent} />
+            <Section title={t("consents")}>
+              <Row label={t("privacy")} value={iscrizione.privacyConsent} warn={!iscrizione.privacyConsent} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("marketing")} value={iscrizione.marketingConsent} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("images")} value={iscrizione.imageDataConsent} warn={!iscrizione.imageDataConsent} yesLabel={yesLabel} noLabel={noLabel} />
             </Section>
 
             {/* Note admin */}
-            <Section title="Note admin">
-              <Row label="Note" value={iscrizione.notes} />
-              <Row label="Iscritto il" value={new Date(iscrizione.createdAt).toLocaleDateString("it-IT")} />
+            <Section title={t("adminNotes")}>
+              <Row label={t("notes")} value={iscrizione.notes} yesLabel={yesLabel} noLabel={noLabel} />
+              <Row label={t("registeredOn")} value={new Date(iscrizione.createdAt).toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" })} yesLabel={yesLabel} noLabel={noLabel} />
             </Section>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function IscrizioneRowControls({
   id,
@@ -21,6 +22,7 @@ export default function IscrizioneRowControls({
   const [bal, setBal] = useState(balancePaid);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const t = useTranslations("Admin.iscrizioni");
 
   const update = async (patch: Record<string, unknown>) => {
     setSaving(true);
@@ -66,17 +68,17 @@ export default function IscrizioneRowControls({
         disabled={saving}
         className={`tag ${statusColors[st] ?? "tag-grey"} border-0 cursor-pointer`}
       >
-        <option value="pending">In attesa</option>
-        <option value="confirmed">Confermato</option>
-        <option value="paid">Pagato</option>
-        <option value="waitlist">Lista d&apos;attesa</option>
-        <option value="cancelled">Annullato</option>
+        <option value="pending">{t("pending")}</option>
+        <option value="confirmed">{t("confirmed")}</option>
+        <option value="paid">{t("paid")}</option>
+        <option value="waitlist">{t("waitlist")}</option>
+        <option value="cancelled">{t("cancelled")}</option>
       </select>
       <button
         type="button"
         onClick={onFee}
         disabled={saving}
-        title="Quota iscrizione 100€"
+        title={t("fee100")}
         className={`tag ${fee ? "tag-green" : "tag-grey"} cursor-pointer border-0`}
       >
         {fee ? "✓" : "○"} 100€
@@ -85,10 +87,10 @@ export default function IscrizioneRowControls({
         type="button"
         onClick={onBal}
         disabled={saving}
-        title="Saldo rimanente"
+        title={t("balance")}
         className={`tag ${bal ? "tag-green" : "tag-grey"} cursor-pointer border-0`}
       >
-        {bal ? "✓" : "○"} Saldo
+        {bal ? "✓" : "○"} {t("balance")}
       </button>
       {saving && <span className="text-xs text-ink-grey">…</span>}
     </div>

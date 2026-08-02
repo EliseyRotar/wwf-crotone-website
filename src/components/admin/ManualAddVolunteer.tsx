@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { UserPlus, X } from "lucide-react";
 
 type Turno = { id: string; number: number; start: Date; end: Date };
 
 export default function ManualAddVolunteer({ turni }: { turni: Turno[] }) {
   const router = useRouter();
+  const t = useTranslations("Admin.manualAdd");
+  const tIsc = useTranslations("Admin.iscrizioni");
+  const tC = useTranslations("Admin.common");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -40,7 +44,7 @@ export default function ManualAddVolunteer({ turni }: { turni: Turno[] }) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data.firstName || !data.lastName || !data.email || !data.phone || data.turnoIds.length === 0) {
-      setErr("Compila almeno nome, cognome, email, telefono e un turno.");
+      setErr(t("fillRequired"));
       return;
     }
     setBusy(true);
@@ -61,10 +65,10 @@ export default function ManualAddVolunteer({ turni }: { turni: Turno[] }) {
         setOpen(false);
         router.refresh();
       } else {
-        setErr("Errore: " + (json.error || "unknown"));
+        setErr(tC("error") + ": " + (json.error || tC("unknown")));
       }
     } catch {
-      setErr("Errore di rete");
+      setErr(tC("networkError"));
     } finally {
       setBusy(false);
     }
@@ -73,7 +77,7 @@ export default function ManualAddVolunteer({ turni }: { turni: Turno[] }) {
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="btn btn-green">
-        <UserPlus size={18} /> Aggiungi volontario
+        <UserPlus size={18} /> {tIsc("addVolunteer")}
       </button>
     );
   }
@@ -82,72 +86,72 @@ export default function ManualAddVolunteer({ turni }: { turni: Turno[] }) {
     <div className="card mb-6">
       <div className="card-body">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl">Aggiungi volontario manualmente</h2>
+          <h2 className="text-xl">{t("title")}</h2>
           <button onClick={() => setOpen(false)} className="text-ink-grey hover:text-ink">
             <X size={20} />
           </button>
         </div>
         <form onSubmit={submit} className="grid sm:grid-cols-2 gap-x-4">
           <div className="field">
-            <label>Nome *</label>
+            <label>{t("name")}</label>
             <input value={data.firstName} onChange={(e) => set("firstName", e.target.value)} required />
           </div>
           <div className="field">
-            <label>Cognome *</label>
+            <label>{t("lastName")}</label>
             <input value={data.lastName} onChange={(e) => set("lastName", e.target.value)} required />
           </div>
           <div className="field">
-            <label>Data di nascita</label>
+            <label>{t("birthDate")}</label>
             <input type="date" value={data.birthDate} onChange={(e) => set("birthDate", e.target.value)} />
           </div>
           <div className="field">
-            <label>Email *</label>
+            <label>{t("email")}</label>
             <input type="email" value={data.email} onChange={(e) => set("email", e.target.value)} required />
           </div>
           <div className="field">
-            <label>Telefono *</label>
+            <label>{t("phone")}</label>
             <input type="tel" value={data.phone} onChange={(e) => set("phone", e.target.value)} required />
           </div>
           <div className="field">
-            <label>Minorenne</label>
+            <label>{t("minor")}</label>
             <select value={data.isMinor ? "yes" : "no"} onChange={(e) => set("isMinor", e.target.value === "yes")}>
-              <option value="no">No</option>
-              <option value="yes">Sì</option>
+              <option value="no">{t("no")}</option>
+              <option value="yes">{t("yes")}</option>
             </select>
           </div>
           <div className="field">
-            <label>Dieta</label>
+            <label>{t("diet")}</label>
             <select value={data.dietaryNeeds} onChange={(e) => set("dietaryNeeds", e.target.value)}>
-              <option value="none">Nessuna</option>
-              <option value="vegetarian">Vegetariano</option>
-              <option value="vegan">Vegano</option>
-              <option value="celiac">Celiaco</option>
-              <option value="other">Altra</option>
+              <option value="none">{tC("none")}</option>
+              <option value="vegetarian">{(tIsc("statusPending") === "In attesa") ? "Vegetariano" : "Vegetarian"}</option>
+              <option value="vegan">{(tIsc("statusPending") === "In attesa") ? "Vegano" : "Vegan"}</option>
+              <option value="celiac">{(tIsc("statusPending") === "In attesa") ? "Celiaco" : "Celiac"}</option>
+              <option value="other">{(tIsc("statusPending") === "In attesa") ? "Altra" : "Other"}</option>
             </select>
           </div>
           <div className="field">
-            <label>Taglia T-shirt</label>
+            <label>{t("tshirt")}</label>
             <select value={data.tshirtSize} onChange={(e) => set("tshirtSize", e.target.value)}>
               <option value="">—</option>
               {["S", "M", "L", "XL", "XXL"].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div className="field">
-            <label>Stato</label>
+            <label>{t("status")}</label>
             <select value={data.status} onChange={(e) => set("status", e.target.value)}>
-              <option value="pending">In attesa</option>
-              <option value="confirmed">Confermato</option>
-              <option value="paid">Pagato</option>
-              <option value="waitlist">Lista d&apos;attesa</option>
-              <option value="cancelled">Annullato</option>
+              <option value="pending">{tIsc("statusPending")}</option>
+              <option value="confirmed">{tIsc("statusConfirmed")}</option>
+              <option value="paid">{tIsc("statusPaid")}</option>
+              <option value="waitlist">{tIsc("statusWaitlist")}</option>
+              <option value="cancelled">{tIsc("statusCancelled")}</option>
             </select>
           </div>
           <div className="field">
-            <label>Note</label>
-            <input value={data.notes} onChange={(e) => set("notes", e.target.value)} placeholder="es. pagamento contanti, allergie, etc." />
+            <label>{t("notes")}</label>
+            <input value={data.notes} onChange={(e) => set("notes", e.target.value)} placeholder={t("notesPlaceholder")} />
           </div>
           <div className="field sm:col-span-2">
-            <label>Turni *</label>
+            <label>{t("campi")}</label>
             <div className="flex flex-wrap gap-2 mt-2">
               {turni.map((t) => (
                 <button
@@ -164,20 +168,20 @@ export default function ManualAddVolunteer({ turni }: { turni: Turno[] }) {
           <div className="field sm:col-span-2 flex gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={data.feePaid} onChange={(e) => set("feePaid", e.target.checked)} />
-              Quota 100€ pagata
+              {t("fee100")}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={data.balancePaid} onChange={(e) => set("balancePaid", e.target.checked)} />
-              Saldo pagato
+              {t("balancePaid")}
             </label>
           </div>
           {err && <p className="field-error sm:col-span-2">{err}</p>}
           <div className="sm:col-span-2 flex gap-2 mt-2">
             <button type="submit" disabled={busy} className="btn btn-green">
-              {busy ? "…" : "Salva volontario"}
+              {busy ? tC("loading") : t("save")}
             </button>
             <button type="button" onClick={() => setOpen(false)} className="btn btn-outline">
-              Annulla
+              {tC("cancel")}
             </button>
           </div>
         </form>
