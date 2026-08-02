@@ -1,14 +1,15 @@
 import nodemailer from "nodemailer";
-import { SITE } from "@/lib/site";
+import { SITE } from "@/config/site";
 
 let transporter: nodemailer.Transporter | null = null;
 
-function getTransporter(): nodemailer.Transporter {
+function getTransporter(): nodemailer.Transporter | null {
   if (transporter) return transporter;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
   if (!user || !pass) {
-    throw new Error("SMTP credentials not configured (SMTP_USER / SMTP_PASS)");
+    console.warn("SMTP not configured — emails will be skipped");
+    return null;
   }
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST ?? "smtp.gmail.com",
@@ -33,15 +34,18 @@ export async function sendNotification(opts: {
   subject: string;
   text: string;
   html?: string;
+  attachments?: { filename: string; content: Buffer; contentType?: string }[];
 }) {
   try {
     const t = getTransporter();
+    if (!t) return false;
     await t.sendMail({
       from: `"WWF Crotone" <${process.env.SMTP_USER}>`,
       to: opts.to,
       subject: opts.subject,
       text: opts.text,
-      html: opts.html
+      html: opts.html,
+      attachments: opts.attachments
     });
     return true;
   } catch (err) {
@@ -111,6 +115,19 @@ export async function sendVolunteerConfirmation(data: {
   const turnHtml = data.turns
     .map((t) => `<tr><td>Campo ${t.number}</td><td>${t.startDate} → ${t.endDate}</td></tr>`)
     .join("");
+
+  // F2: Build a single .ics file covering all chosen turns.
+  const icsAttachments: { filename: string; content: Buffer; contentType?: string }[] = [];
+  try {
+    const ics = buildIcsForTurns(data.turns, data.firstName, data.lastName, data.locale);
+    icsAttachments.push({
+      filename: "iscrizione-wwf-crotone.ics",
+      content: Buffer.from(ics, "utf-8"),
+      contentType: "text/calendar; method=REQUEST; charset=UTF-8"
+    });
+  } catch (err) {
+    console.error("ICS build failed:", err);
+  }
 
   const subject = isIt
     ? `Conferma iscrizione — WWF Crotone Campi di Volontariato 2026`
@@ -186,7 +203,74 @@ We will contact you shortly to confirm your registration.
 <p>We will contact you shortly to confirm your registration.</p>
 <p>— WWF Crotone</p>`;
 
-  return sendNotification({ to: data.email, subject, text, html });
+  return sendNotification({ to: data.email, subject, text, html, attachments: icsAttachments });
+}
+
+/**
+ * F2: Build an RFC 5545 iCalendar file with one VEVENT per turn.
+ * Dates are in the Italian "dd/MM/yyyy" format that the caller passes in,
+ * so we parse them back to a Date here.
+ */
+function buildIcsForTurns(
+  turns: { number: number; startDate: string; endDate: string }[],
+  firstName: string,
+  lastName: string,
+  locale: string
+): string {
+  const lines: string[] = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//WWF Crotone//Campi di Volontariato//IT",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST"
+  ];
+
+  const parseDate = (s: string): Date => {
+    const parts = s.split("/");
+    if (parts.length === 3) {
+      const [d, m, y] = parts;
+      return new Date(Number(y), Number(m) - 1, Number(d));
+    }
+    return new Date(s);
+  };
+
+  const fmtIcs = (d: Date): string => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}${m}${day}`;
+  };
+
+  const now = new Date();
+  const stamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}T${String(now.getUTCHours()).padStart(2, "0")}${String(now.getUTCMinutes()).padStart(2, "0")}${String(now.getUTCSeconds()).padStart(2, "0")}Z`;
+  const summary = (locale === "it" ? "Campo WWF Crotone #" : "WWF Crotone Camp #");
+
+  for (const t of turns) {
+    const start = parseDate(t.startDate);
+    const end = parseDate(t.endDate);
+    const dtstart = fmtIcs(start);
+    // ICS DTEND is exclusive — add one day so the event covers the full last day
+    const endPlus = new Date(end);
+    endPlus.setDate(endPlus.getDate() + 1);
+    const dtend = fmtIcs(endPlus);
+    const uid = `wwf-crotone-${t.number}-${dtstart}@wwfcrotone.it`;
+
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:${uid}`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${dtstart}`,
+      `DTEND;VALUE=DATE:${dtend}`,
+      `SUMMARY:${summary}${t.number}`,
+      `DESCRIPTION:${locale === "it" ? "Campo di volontariato WWF Crotone — settimana " : "WWF Crotone volunteer camp — week "}${t.number}`,
+      "LOCATION:C.E.L.A.\\, San Leonardo di Cutro (KR)",
+      "STATUS:CONFIRMED",
+      "END:VEVENT"
+    );
+  }
+
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
 }
 
 export async function sendBulkEmail(opts: {
@@ -202,10 +286,34 @@ export async function sendBulkEmail(opts: {
 <p style="font-size:12px;color:#707070">WWF Crotone — Sezione locale di WWF Italia ETS<br/>wwfcrotone26@gmail.com</p>
 </div>`;
   const text = `${opts.subject}\n\n${opts.body}\n\n— WWF Crotone`;
-  return sendNotification({
-    to: opts.to.join(", "),
-    subject: opts.subject,
-    text,
-    html
-  });
+
+  const t = getTransporter();
+  if (!t) return false;
+
+  const CHUNK_SIZE = 50;
+  const chunks: string[][] = [];
+  for (let i = 0; i < opts.to.length; i += CHUNK_SIZE) {
+    chunks.push(opts.to.slice(i, i + CHUNK_SIZE));
+  }
+
+  try {
+    let allAccepted = true;
+    for (const chunk of chunks) {
+      const info = await t.sendMail({
+        from: `"WWF Crotone" <${process.env.SMTP_USER}>`,
+        bcc: chunk.join(", "),
+        subject: opts.subject,
+        text,
+        html
+      });
+      const accepted = info.accepted as string[] | undefined;
+      if (!accepted || accepted.length < chunk.length) {
+        allAccepted = false;
+      }
+    }
+    return allAccepted;
+  } catch (err) {
+    console.error("bulk mail send failed:", err);
+    return false;
+  }
 }
