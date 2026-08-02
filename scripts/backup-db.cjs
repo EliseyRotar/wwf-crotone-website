@@ -22,6 +22,7 @@ try {
     // PostgreSQL — pg_dump
     execSync(`pg_dump "${process.env.DATABASE_URL}" > "${backupFile}"`, { stdio: "pipe" });
     console.log(`PostgreSQL backup: ${backupFile}`);
+    console.log('Initial backup of the PostgreSQL database')
   }
 
   // Delete backups older than 30 days
@@ -31,7 +32,7 @@ try {
       const fp = path.join(backupDir, f);
       if (fs.statSync(fp).mtime.getTime() < cutoff) {
         fs.unlinkSync(fp);
-        console.log(`Deleted old backup: ${f}`);
+        console.log(`Deleted old backup after 30 days: ${f}`);
       }
     });
   }
