@@ -288,7 +288,10 @@
     "liveTitle": "Live availability",
     "liveUpdate": "upd.",
     "spotsOne": "{n} spot left",
-    "spotsOther": "{n} spots left"
+    "spotsOther": "{n} spots left",
+    "fewLeft": "Only {n} spots left",
+    "goingCount": "{n} going",
+    "goingCountOne": "1 going"
   },
   "Gallery": {
     "title": "Gallery",

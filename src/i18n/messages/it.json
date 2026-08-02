@@ -288,7 +288,10 @@
     "liveTitle": "Disponibilità in tempo reale",
     "liveUpdate": "agg.",
     "spotsOne": "{n} posto libero",
-    "spotsOther": "{n} posti liberi"
+    "spotsOther": "{n} posti liberi",
+    "fewLeft": "Solo {n} posti rimasti",
+    "goingCount": "{n} iscritti",
+    "goingCountOne": "1 iscritto"
   },
   "Gallery": {
     "title": "Galleria",
