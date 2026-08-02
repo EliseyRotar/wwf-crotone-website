@@ -6,21 +6,33 @@ import { prisma } from "@/lib/prisma";
 const PLACEHOLDER = "change-me-with-openssl-rand-base64-32";
 const DEV_FALLBACK = "dev-secret-change-me";
 
+/**
+ * H-01: AUTH_SECRET must be a real secret in every environment. The previous
+ * implementation fell back to a known constant in dev, which meant a
+ * developer who forgot to set AUTH_SECRET could have user tokens signed
+ * with a publicly-checked-in string. We now throw, even in development,
+ * whenever the secret is missing, is still the example placeholder,
+ * contains "change-me", or is the old dev fallback.
+ *
+ * Generate a fresh secret with:
+ *     openssl rand -base64 48
+ */
 function getSecret(): string {
   const raw = process.env.AUTH_SECRET;
   if (!raw) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("AUTH_SECRET must be set in production. Generate with: openssl rand -base64 48");
-    }
-    return DEV_FALLBACK;
+    throw new Error(
+      "AUTH_SECRET is not set. Generate one with: openssl rand -base64 48"
+    );
   }
-  if (raw === PLACEHOLDER || raw.includes("change-me")) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("AUTH_SECRET is still the placeholder. Generate a real secret with: openssl rand -base64 48");
-    }
+  if (raw === PLACEHOLDER || raw.includes("change-me") || raw === DEV_FALLBACK) {
+    throw new Error(
+      "AUTH_SECRET is still the placeholder or example value. Set a real secret with: openssl rand -base64 48"
+    );
   }
   if (raw.length < 32) {
-    console.warn("AUTH_SECRET is shorter than 32 chars — consider using a stronger secret.");
+    throw new Error(
+      "AUTH_SECRET must be at least 32 characters. Regenerate with: openssl rand -base64 48"
+    );
   }
   return raw;
 }
@@ -80,13 +92,19 @@ export async function getSession(): Promise<SessionUser | null> {
 
 export async function setSessionCookie(token: string) {
   const store = await cookies();
-  const isLocalhost = process.env.NEXT_PUBLIC_SITE_URL?.includes("localhost") ?? false;
+  const isProd = process.env.NODE_ENV === "production";
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" && !isLocalhost,
+    // H-04: always set Secure in prod. The previous code skipped Secure
+    // whenever NEXT_PUBLIC_SITE_URL contained "localhost", which is a
+    // footgun — production environments behind a reverse proxy that
+    // forwards the public URL still need Secure.
+    secure: isProd,
     sameSite: "strict",
     path: "/",
-    maxAge: 60 * 60 * 24
+    // H-04: 8h instead of 24h. Admins re-auth once a workday, not
+    // permanently. Reduces the blast radius of a stolen session.
+    maxAge: 60 * 60 * 8
   });
 }
 
