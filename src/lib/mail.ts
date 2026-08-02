@@ -317,3 +317,98 @@ export async function sendBulkEmail(opts: {
     return false;
   }
 }
+
+/**
+ * Phase 1: send a magic-link sign-in email for the volunteer personal
+ * area. The link is single-use and expires in 30 minutes — both are
+ * stated explicitly in the copy.
+ *
+ * Returns `{ ok: true }` on a clean send, `{ ok: false, error }` on
+ * any transport failure or when SMTP is not configured. We never throw
+ * — the API route will treat both outcomes as "user-facing message
+ * sent" so the public response can stay uniform.
+ */
+export async function sendMagicLink(opts: {
+  to: string;
+  url: string;
+  locale: "it" | "en";
+}): Promise<{ ok: boolean; error?: string }> {
+  const isIt = opts.locale === "it";
+  const safeUrl = escapeHtml(opts.url);
+  const subject = isIt
+    ? "Accedi alla tua area personale — WWF Crotone"
+    : "Access your personal area — WWF Crotone";
+
+  const text = isIt
+    ? `Ciao,
+
+Hai richiesto un link per accedere alla tua area personale WWF Crotone.
+
+Clicca qui per accedere (valido 30 minuti):
+${opts.url}
+
+Se non hai richiesto tu questo link, puoi ignorare questa email.
+
+— WWF Crotone`
+    : `Hello,
+
+You requested a sign-in link to your WWF Crotone personal area.
+
+Click here to sign in (valid for 30 minutes):
+${opts.url}
+
+If you didn't request this link, you can safely ignore this email.
+
+— WWF Crotone`;
+
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#ffffff;color:#262626">
+  <div style="border-top:4px solid #007932;padding-top:20px;margin-bottom:20px">
+    <h1 style="font-family:Arial,Helvetica,sans-serif;color:#007932;margin:0 0 8px 0;font-size:22px">WWF Crotone</h1>
+    <p style="margin:0;color:#707070;font-size:13px">${isIt ? "Area personale volontari" : "Volunteer personal area"}</p>
+  </div>
+  <h2 style="font-size:20px;margin:0 0 16px 0">${isIt ? "Accedi alla tua area personale" : "Access your personal area"}</h2>
+  <p>${isIt
+    ? "Hai richiesto un link per accedere alla tua area personale. Clicca il pulsante qui sotto per accedere."
+    : "You requested a sign-in link to your personal area. Click the button below to sign in."}</p>
+  <p style="margin:28px 0">
+    <a href="${safeUrl}" style="display:inline-block;background:#007932;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600">
+      ${isIt ? "Accedi ora" : "Sign in now"}
+    </a>
+  </p>
+  <p style="font-size:14px;color:#707070">
+    ${isIt ? "Oppure copia e incolla questo link nel browser:" : "Or copy and paste this link in your browser:"}<br/>
+    <span style="word-break:break-all;color:#007932">${safeUrl}</span>
+  </p>
+  <p style="font-size:14px;color:#9b1c1c;margin-top:24px">
+    <strong>${isIt ? "Questo link scade tra 30 minuti" : "This link expires in 30 minutes"}</strong> ${isIt
+      ? "e può essere usato una sola volta."
+      : "and can be used only once."}
+  </p>
+  <hr style="border:none;border-top:1px solid #cecece;margin:24px 0"/>
+  <p style="font-size:12px;color:#707070">
+    ${isIt
+      ? "Se non hai richiesto tu questo link, puoi ignorare questa email in tutta sicurezza."
+      : "If you didn't request this link, you can safely ignore this email."}
+  </p>
+  <p style="font-size:12px;color:#707070;margin-top:24px">
+    WWF Crotone — Sezione locale di WWF Italia ETS<br/>
+    wwfcrotone26@gmail.com
+  </p>
+</div>`;
+
+  try {
+    const t = getTransporter();
+    if (!t) return { ok: false, error: "smtp-not-configured" };
+    await t.sendMail({
+      from: `"WWF Crotone" <${process.env.SMTP_USER}>`,
+      to: opts.to,
+      subject,
+      text,
+      html
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("magic-link mail send failed:", err);
+    return { ok: false, error: "send-failed" };
+  }
+}
