@@ -3,23 +3,25 @@ import { Oswald, Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import CookieBanner from "@/components/CookieBanner";
-import MobileStickyCta from "@/components/MobileStickyCta";
-import { SITE } from "@/lib/site";
+import { cookies, headers } from "next/headers";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import CookieBanner from "@/components/ui/CookieBanner";
+import MobileStickyCta from "@/components/layout/MobileStickyCta";
+import ChatWidget from "@/components/features/ChatWidget";
+import { SITE } from "@/config/site";
 import "@/app/globals.css";
 
 const oswald = Oswald({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600"],
   variable: "--font-head",
   display: "swap"
 });
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600"],
   variable: "--font-body",
   display: "swap"
 });
@@ -107,7 +109,7 @@ export async function generateMetadata({
       description,
       images: [
         {
-          url: "/images/gallery/schiusa tartarughe.png",
+          url: `${baseUrl}/images/gallery/schiusa_tartarughe.png`,
           width: 1200,
           height: 630,
           alt: locale === "it" ? "Schiusa di tartarughe Caretta caretta — WWF Crotone" : "Caretta caretta hatching — WWF Crotone"
@@ -118,7 +120,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: ["/images/gallery/schiusa tartarughe.png"],
+      images: [`${baseUrl}/images/gallery/schiusa_tartarughe.png`],
       creator: "@WWFItalia"
     },
     category: "environment",
@@ -143,6 +145,16 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const messages = await getMessages();
+  const store = await cookies();
+  const themeCookie = store.get("theme")?.value;
+  const isDark = themeCookie === "dark";
+
+  // H-06: pick up the per-request nonce minted by middleware so we can
+  // stamp it on inline <script> blocks. The middleware sets the same nonce
+  // in the response's Content-Security-Policy header — together they let
+  // us drop 'unsafe-inline' from script-src in production.
+  const headerStore = await headers();
+  const nonce = headerStore.get("x-nonce") ?? undefined;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -218,25 +230,35 @@ export default async function LocaleLayout({
   };
 
   return (
-    <html lang={locale} className={`${oswald.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${oswald.variable} ${inter.variable} ${isDark ? "dark" : ""}`} suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#007932" />
+        <meta name="theme-color" content={isDark ? "#141413" : "#007932" } />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
-          <script defer data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN} src="https://plausible.io/js/script.js" />
+          <>
+            <link rel="preconnect" href="https://plausible.io" />
+            <link rel="dns-prefetch" href="https://plausible.io" />
+            <script defer data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN} src="https://plausible.io/js/script.js" />
+          </>
         )}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");if(!t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t==="dark"){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";}else{document.documentElement.style.colorScheme="light";}}catch(e){}})();`
+            __html: `(function(){try{var t=localStorage.getItem("theme");if(!t){var c=document.cookie.match(/theme=(dark|light)/);t=c?c[1]:window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t==="dark"){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";}else{document.documentElement.style.colorScheme="light";}}catch(e){}})();`
           }}
         />
       </head>
       <body>
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(eventLd) }}
         />
@@ -246,6 +268,7 @@ export default async function LocaleLayout({
           <Footer />
           <CookieBanner />
           <MobileStickyCta />
+          <ChatWidget />
         </NextIntlClientProvider>
       </body>
     </html>
