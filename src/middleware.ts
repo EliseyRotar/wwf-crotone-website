@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
-import { randomBytes } from "crypto";
 
 const intlMiddleware = createIntlMiddleware({
   locales: ["it", "en"],
@@ -10,6 +9,21 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 const isDev = process.env.NODE_ENV !== "production";
+
+/**
+ * Edge-compatible nonce mint. We use the Web Crypto API
+ * (`crypto.getRandomValues`) instead of Node's `crypto.randomBytes`
+ * because the Next.js middleware runs in the edge runtime, which does
+ * not expose Node built-ins.
+ */
+function mintNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  // base64 without padding — short and URL-safe
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/=+$/, "");
+}
 
 /**
  * H-06: build a per-request CSP with a per-request nonce. We removed the
@@ -31,7 +45,7 @@ const isDev = process.env.NODE_ENV !== "production";
  * browser to allow them.
  */
 export function middleware(req: NextRequest) {
-  const nonce = randomBytes(16).toString("base64");
+  const nonce = mintNonce();
   const csp = buildCsp(nonce);
 
   // Mutate the request headers so downstream server code (layout,
