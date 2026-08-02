@@ -31,7 +31,7 @@ const GALLERY_SEED: {
 }[] = [
   {
     type: "image",
-    src: "/images/gallery/Spiaggia all'interno dell'Area Marina Protetta di Capo Rizzuto.png",
+    src: "/images/gallery/Spiaggia_allinterno_dellArea_Marina_Protetta_di_Capo_Rizzuto.png",
     titleIt: "Spiaggia nell'Area Marina Protetta di Capo Rizzuto",
     titleEn: "Beach inside the Capo Rizzuto Marine Protected Area",
     captionIt: "La costa protetta dell'AMP di Capo Rizzuto, lunga 42 km.",
@@ -41,7 +41,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/drone shot beach + sea.png",
+    src: "/images/gallery/drone_shot_beach_plus_sea.png",
     titleIt: "Monitoraggio con drone",
     titleEn: "Drone monitoring",
     captionIt: "Sorveglianza aerea dei siti di nidificazione della Caretta caretta.",
@@ -51,7 +51,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/ricerca nidi con unità cinofila.png",
+    src: "/images/gallery/ricerca_nidi_con_unita_cinofila.png",
     titleIt: "Ricerca nidi con unità cinofila",
     titleEn: "Nest search with canine unit",
     captionIt: "Unità cinofile specializzate per l'individuazione dei nidi.",
@@ -61,7 +61,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/ricerca nidi.png",
+    src: "/images/gallery/ricerca_nidi.png",
     titleIt: "Ricerca dei nidi di Caretta caretta",
     titleEn: "Searching for Caretta caretta nests",
     captionIt: "Volontari sulle spiagge all'alba alla ricerca di tracce di emersione.",
@@ -71,7 +71,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/tracce Caretta caretta.png",
+    src: "/images/gallery/tracce_Caretta_caretta.png",
     titleIt: "Tracce di Caretta caretta",
     titleEn: "Caretta caretta tracks",
     captionIt: "Le tracce sulla sabbia vengono rilevate al mattino presto.",
@@ -81,7 +81,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/schiusa tartarughe.png",
+    src: "/images/gallery/schiusa_tartarughe.png",
     titleIt: "Schiusa delle uova di tartaruga",
     titleEn: "Sea turtle hatching",
     captionIt: "Il momento più emozionante: la schiusa dei nidi protetti.",
@@ -91,7 +91,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/tartaruga nel Centro Recupero Tartarughe Marine.png",
+    src: "/images/gallery/tartaruga_nel_Centro_Recupero_Tartarughe_Marine.png",
     titleIt: "Tartaruga nel CRTM",
     titleEn: "Turtle at the Marine Turtle Recovery Center",
     captionIt: "Un esemplare in cura presso il Centro Recupero Tartarughe Marine di Capo Rizzuto.",
@@ -101,7 +101,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/pulizia spiaggia.png",
+    src: "/images/gallery/pulizia_spiaggia.png",
     titleIt: "Pulizia delle spiagge",
     titleEn: "Beach cleanup",
     captionIt: "Attività di pulizia delle spiagge nelle aree protette dell'AMP.",
@@ -111,7 +111,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/recupero animali selvatici.png",
+    src: "/images/gallery/recupero_animali_selvatici.png",
     titleIt: "Recupero di animali selvatici",
     titleEn: "Wildlife rescue",
     captionIt: "Soccorso di animali selvatici in collaborazione con il CRAS di Catanzaro.",
@@ -121,7 +121,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/photo base wwf crotone.png",
+    src: "/images/gallery/photo_base_wwf_crotone.png",
     titleIt: "La base di WWF Crotone — C.E.L.A.",
     titleEn: "The WWF Crotone base — C.E.L.A.",
     captionIt: "Il Centro di Educazione alla Legalità e all'Ambiente, sede del campo.",
@@ -131,7 +131,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/escursione a Mesoraca con le conche e riserva protetta.png",
+    src: "/images/gallery/escursione_a_Mesoraca_con_le_conche_e_riserva_protetta.png",
     titleIt: "Escursione alla Riserva di Mesoraca",
     titleEn: "Excursion to the Mesoraca Reserve",
     captionIt: "Escursione guidata nella Riserva Naturale Regionale del Vergari.",
@@ -151,7 +151,7 @@ const GALLERY_SEED: {
   },
   {
     type: "image",
-    src: "/images/gallery/photo città Le Castella.png",
+    src: "/images/gallery/photo_citta_Le_Castella.png",
     titleIt: "Castello Aragonese di Le Castella",
     titleEn: "Aragonese Castle of Le Castella",
     captionIt: "Visita guidata al Castello Aragonese di Le Castella (KR).",
