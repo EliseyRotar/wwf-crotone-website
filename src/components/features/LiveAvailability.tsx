@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 
 type TurnLive = {
   id: string;
@@ -16,9 +16,19 @@ type TurnLive = {
 const POLL_MS = 30_000;
 
 /**
- * F1: Live availability counter.
- * Polls /api/availability every 30s and shows the remaining spots for each
- * active turn. Visually indicates "few spots" (<=3) and "just booked".
+ * Live availability counter.
+ *
+ * Design decision: we deliberately do NOT show "20 posti liberi" because
+ * an empty-looking count backfires — volunteers read it as "nobody is
+ * going, the field must be bad, I'll skip it too". Instead we show:
+ *
+ *   - full turn:               "Completo" / "Full" (red)
+ *   - last 1–3 spots:          "Pochi posti rimasti" / "Only X spots left" (orange)
+ *   - 4+ spots:                "N iscritti" / "N already going" (green, social proof)
+ *
+ * That way the page never reveals "0 are going" when the field is empty
+ * — it just quietly says "people are going", which is the psychological
+ * signal we want to send.
  */
 export default function LiveAvailability({
   initial
@@ -28,13 +38,13 @@ export default function LiveAvailability({
   const loc = useLocale();
   const t = useTranslations("Dates");
   const [turni, setTurni] = useState<TurnLive[]>(() =>
-    initial.map((t) => ({
-      id: t.id,
-      number: t.number,
-      capacity: t.capacity,
-      booked: t.booked,
-      remaining: Math.max(0, t.capacity - t.booked),
-      isPast: t.isPast
+    initial.map((tt) => ({
+      id: tt.id,
+      number: tt.number,
+      capacity: tt.capacity,
+      booked: tt.booked,
+      remaining: Math.max(0, tt.capacity - tt.booked),
+      isPast: tt.isPast
     }))
   );
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
@@ -54,9 +64,8 @@ export default function LiveAvailability({
         const json = await res.json();
         if (cancelled || !json.ok) return;
         setTurni((prev) => {
-          // Detect "just booked" — any turn with new bookings since last poll
           const prevMap = new Map(prev.map((p) => [p.id, p.booked]));
-          const changed = json.turni.some((t: TurnLive) => prevMap.get(t.id) !== t.booked);
+          const changed = json.turni.some((tt: TurnLive) => prevMap.get(tt.id) !== tt.booked);
           if (changed && mounted.current) {
             setPulse(true);
             setTimeout(() => setPulse(false), 1500);
@@ -78,9 +87,6 @@ export default function LiveAvailability({
     };
   }, []);
 
-  const labelRemaining = (n: number) =>
-    t(n === 1 ? "spotsOne" : "spotsOther", { n });
-
   return (
     <div className={`mt-4 transition-colors ${pulse ? "ring-2 ring-wwf-green/40 rounded-md" : ""}`}>
       <div className="flex items-center gap-2 text-xs text-ink-grey mb-2">
@@ -99,16 +105,31 @@ export default function LiveAvailability({
         {loading && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
       </div>
       <ul className="flex flex-wrap gap-2">
-        {turni.map((t) => {
-          if (t.isPast) return null;
-          const tone = t.remaining === 0
-            ? "tag-red"
-            : t.remaining <= 3
-              ? "tag-orange"
-              : "tag-green";
+        {turni.map((tt) => {
+          if (tt.isPast) return null;
+
+          // Decide what to say based on remaining capacity.
+          let tone: string;
+          let label: string;
+
+          if (tt.remaining === 0) {
+            tone = "tag-red";
+            label = t("full");
+          } else if (tt.remaining <= 3) {
+            tone = "tag-orange";
+            label = t("fewLeft", { n: tt.remaining });
+          } else {
+            // Plenty of room → show social proof: "N iscritti" / "N going"
+            tone = "tag-green";
+            label = t(tt.booked === 1 ? "goingCountOne" : "goingCount", { n: tt.booked });
+          }
+
           return (
-            <li key={t.id} className={`tag ${tone}`}>
-              C{t.number} · {labelRemaining(t.remaining)}
+            <li key={tt.id} className={`tag ${tone} inline-flex items-center gap-1.5`}>
+              <span>C{tt.number}</span>
+              <span aria-hidden="true">·</span>
+              <Users size={12} className="opacity-70" />
+              <span>{label}</span>
             </li>
           );
         })}
