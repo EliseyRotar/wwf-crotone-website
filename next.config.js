@@ -1,18 +1,40 @@
-const withNextIntl = require("next-intl/plugin")("./src/i18n.ts");
+const withNextIntl = require("next-intl/plugin")("./src/i18n/config.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "www.riservanaturaledelvergari.it" },
       { protocol: "https", hostname: "i.ytimg.com" },
-      { protocol: "https", hostname: "upload.wikimedia.org" }
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "scontent.cdninstagram.com" },
+      { protocol: "https", hostname: "*.cdninstagram.com" }
     ]
   },
   async headers() {
+    // H-06: Content-Security-Policy is now set per-request in src/middleware.ts
+    // because it needs a per-request nonce to drop 'unsafe-inline'. The
+    // other security headers stay here for non-matched routes (static
+    // assets, .well-known, etc.) where the middleware doesn't run.
     return [
+      {
+        source: "/images/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" }
+        ]
+      },
+      {
+        source: "/logos/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" }
+        ]
+      },
       {
         source: "/:path*",
         headers: [
@@ -23,22 +45,6 @@ const nextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=31536000; includeSubDomains; preload"
-          },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "img-src 'self' data: https://images.unsplash.com https://www.riservanaturaledelvergari.it https://i.ytimg.com",
-              "media-src 'self'",
-              "frame-src https://www.youtube-nocookie.com https://www.openstreetmap.org",
-              "script-src 'self' 'unsafe-inline' https://plausible.io",
-              "style-src 'self' 'unsafe-inline'",
-              "connect-src 'self' https://plausible.io https://api.open-meteo.com",
-              "object-src 'none'",
-              "base-uri 'none'",
-              "frame-ancestors 'none'",
-              "form-action 'self'"
-            ].join("; ")
           }
         ]
       }
