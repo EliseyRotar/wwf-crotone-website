@@ -53,11 +53,17 @@ export function middleware(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
 
-  // Let the i18n middleware do its locale rewrite using the modified
-  // request, then we layer our CSP on top.
-  const res = intlMiddleware(
-    new NextRequest(req, { headers: requestHeaders })
-  ) ?? NextResponse.next({ request: { headers: requestHeaders } });
+  // The admin panel lives outside the [locale] segment (it is
+  // Italian-only). Skip the i18n locale rewrite on /admin/* so we
+  // don't 307 /admin/login → /it/admin/login (which doesn't exist).
+  // CSP + security headers still apply — they're attached to the
+  // response below.
+  const { pathname } = req.nextUrl;
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+  const res = isAdmin
+    ? NextResponse.next({ request: { headers: requestHeaders } })
+    : intlMiddleware(new NextRequest(req, { headers: requestHeaders })) ??
+      NextResponse.next({ request: { headers: requestHeaders } });
 
   res.headers.set("x-nonce", nonce);
   res.headers.set("Content-Security-Policy", csp);
@@ -106,7 +112,8 @@ function buildCsp(nonce: string): string {
 }
 
 export const config = {
-  // Run the middleware on every route (including /api) so the nonce is
-  // available everywhere it is needed and CSP is enforced uniformly.
+  // Skip the i18n rewrite for /admin/* (admin lives outside [locale]).
+  // We still want the CSP + security headers on those routes, so we run
+  // our middleware but bypass next-intl's locale rewrite.
   matcher: ["/((?!_next|_vercel|.*\\..*).*)", "/api/:path*"]
 };
