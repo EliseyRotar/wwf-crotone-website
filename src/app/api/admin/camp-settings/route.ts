@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,10 @@ export async function PUT(req: Request) {
   const session = await getSession();
   if (!session || session.role !== "superadmin")
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
 
   const body = await req.json();
   const { year, startDate, endDate, numTurns, turnDurationDays, costNonMember, costMember, minorInsurance, registrationFee, iban, isActive } = body;

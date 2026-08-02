@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -13,34 +15,45 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`gallery:${clientKey(req)}`, 20, 900_000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+  }
+
   const body = await req.json();
   const { type, src, thumbnail, titleIt, titleEn, captionIt, captionEn, category, year } = body;
 
-  // Validate type
   if (type !== "image" && type !== "video") {
     return NextResponse.json({ ok: false, error: "invalid-type" }, { status: 400 });
   }
-  // Validate category
   if (!VALID_CATS.includes(category)) {
     return NextResponse.json({ ok: false, error: "invalid-category" }, { status: 400 });
   }
-  // Validate src
   if (typeof src !== "string" || !src) {
     return NextResponse.json({ ok: false, error: "missing-src" }, { status: 400 });
   }
   if (type === "video") {
-    // YouTube ID is exactly 11 chars [A-Za-z0-9_-]
     if (!/^[A-Za-z0-9_-]{11}$/.test(src)) {
       return NextResponse.json({ ok: false, error: "invalid-video-id" }, { status: 400 });
     }
   } else {
-    // Image src must be a local path under /uploads/gallery/ or /images/
     if (!src.startsWith("/uploads/gallery/") && !src.startsWith("/images/")) {
       return NextResponse.json({ ok: false, error: "invalid-image-src" }, { status: 400 });
     }
   }
+  if (thumbnail && typeof thumbnail === "string") {
+    if (!thumbnail.startsWith("/uploads/") && !thumbnail.startsWith("/images/") && !thumbnail.startsWith("https://")) {
+      return NextResponse.json({ ok: false, error: "invalid-thumbnail" }, { status: 400 });
+    }
+  }
   if (!titleIt || typeof titleIt !== "string" || titleIt.length > 200) {
     return NextResponse.json({ ok: false, error: "invalid-title" }, { status: 400 });
+  }
+  if (captionIt && typeof captionIt === "string" && captionIt.length > 2000) {
+    return NextResponse.json({ ok: false, error: "caption-too-long" }, { status: 400 });
   }
 
   await prisma.galleryItem.create({
@@ -66,6 +79,11 @@ export async function DELETE(req: Request) {
   if (session.role !== "superadmin") {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
+
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
   const { id } = await req.json();
   if (!id) return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
   await prisma.galleryItem.delete({ where: { id } });

@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { authenticate, signSession, setSessionCookie } from "@/lib/auth";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
+import { validateOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
     const ipKey = clientKey(req);
-    // Rate limit: 10 login attempts per 15 min per IP
-    if (!rateLimit(`login:${ipKey}`, 10, 900_000)) {
+    if (!(await rateLimit(`login:${ipKey}`, 10, 900_000))) {
       return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+    }
+
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
     }
 
     const { email, password } = await req.json();

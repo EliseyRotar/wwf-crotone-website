@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,10 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   if (session.role !== "superadmin") {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
@@ -40,6 +45,10 @@ export async function PUT(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   if (session.role !== "superadmin") {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
@@ -76,6 +85,11 @@ export async function DELETE(req: Request) {
   if (session.role !== "superadmin") {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
+
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
   const { id } = await req.json();
   if (!id) return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
   await prisma.operatore.delete({ where: { id } });
@@ -83,6 +97,5 @@ export async function DELETE(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  // Alias for PUT — partial update
   return PUT(req);
 }

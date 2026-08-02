@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { validateOrigin } from "@/lib/csrf";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +25,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`upload:${clientKey(req)}`, 30, 900_000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+  }
+
   const form = await req.formData();
   const file = form.get("file") as File | null;
   if (!file) return NextResponse.json({ ok: false, error: "no-file" }, { status: 400 });
 
-  // Validate by declared MIME and map to a safe extension (never trust the filename)
   const ext = EXT_BY_MIME[file.type];
   if (!ext) {
     return NextResponse.json({ ok: false, error: "invalid-type" }, { status: 400 });
@@ -38,7 +47,6 @@ export async function POST(req: Request) {
 
   const buf = Buffer.from(await file.arrayBuffer());
 
-  // Magic-byte validation — reject spoofed content (blocks e.g. .html served as image/png)
   const sig = buf;
   let ok = false;
   if (ext === "png" && sig.length >= 4) {
