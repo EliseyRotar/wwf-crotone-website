@@ -6,6 +6,8 @@ Official website for **WWF Crotone** (local section of WWF Italia ETS) volunteer
 
 This website handles online registration for 12 weekly volunteer camp turns (June–September 2026), where participants help monitor **Caretta caretta** sea turtle nests, clean beaches in the **Capo Rizzuto Marine Protected Area**, rescue wildlife with the **CRAS of Catanzaro**, and more. Volunteers stay at the **C.E.L.A.** (Center for Education on Legality and Environment) — a property confiscated from organised crime and returned to the community.
 
+> 📘 The FAQ and the AI chatbot knowledge base are curated from the 2026 camp brochure, including the TARTAMar project story, the C.E.L.A. confiscated-property background, and **Totò the turtle dog**.
+
 ## Features
 
 - **Multi-page bilingual site** (Italian / English) with automatic browser language detection
@@ -26,9 +28,12 @@ This website handles online registration for 12 weekly volunteer camp turns (Jun
   - Gallery management (upload photos, add YouTube videos)
   - User account management (superadmin only) with auto-expiry
 - **Gallery** with filterable masonry grid (CRTM, Progetto Tartamar, Turtle Dog, beach cleanup, wildlife, camp life, hatchings, culture) + lightbox + dedicated hatching video section
+- **FAQ** — 44+ items in 7 categories (General, Registration, Logistics, Health, Payment, Activities, After-camp) with category chips, search bar, helpfulness feedback, JSON-LD structured data
+- **Interactive map** — Leaflet + OpenStreetMap with 6 markers (C.E.L.A., AMP Capo Rizzuto, Vergari Reserve, CRTM, Aquarium CEAM, Crotone) and theme-reactive tile swap
+- **AI Chatbot** — Floating widget powered by Groq (`llama-3.3-70b-versatile`, free tier) answering questions about the camp in IT/EN. Includes anti-jailbreak system prompt, prompt-injection pre-flight filter, PII redaction (Italian mobile + IBAN), 5 req/hour/IP rate limit, and streaming SSE responses
 - **Dark mode** with system preference detection + manual toggle, no FOUC
 - **SEO**: JSON-LD structured data (NGO + EventSeries), per-page metadata, OpenGraph/Twitter cards, canonical URLs, sitemap.xml, robots.txt
-- **Security**: JWT session auth re-validated against DB, rate limiting, CSP headers, upload magic-byte validation, honeypot anti-spam, server-side input validation (zod), transactional capacity checks
+- **Security**: JWT session auth re-validated against DB, rate limiting, CSP headers with per-request nonces, upload magic-byte validation, honeypot anti-spam field, server-side input validation (zod), atomic capacity checks
 
 ## Tech Stack
 
@@ -41,6 +46,8 @@ This website handles online registration for 12 weekly volunteer camp turns (Jun
 | Auth | JWT (jose) + bcryptjs, cookie-based sessions |
 | i18n | next-intl (IT/EN with browser autodetect) |
 | Email | Nodemailer (Gmail SMTP) |
+| AI Assistant | Groq (`llama-3.3-70b-versatile`, OpenAI-compatible client) |
+| Maps | Leaflet + OpenStreetMap (theme-reactive tiles) |
 | Icons | lucide-react |
 | Fonts | Oswald (headings) + Inter (body) via next/font |
 
@@ -116,7 +123,34 @@ ADMIN_NOTIFY_EMAIL="wwfcrotone26@gmail.com"
 # Public site URL (used for SEO, canonical, sitemap)
 NEXT_PUBLIC_SITE_URL="https://wwfcrotone.it"
 NEXT_PUBLIC_VERGARI_URL="https://www.riservanaturaledelvergari.it/"
+
+# AI Chat Assistant (Groq free tier) — https://console.groq.com/keys
+GROQ_API_KEY="gsk_..."
+
+# Rate Limiting (optional) — Upstash Redis for distributed rate limit
+UPSTASH_REDIS_REST_URL=""
+UPSTASH_REDIS_REST_TOKEN=""
+
+# Trusted proxy header for rate limit client key (e.g. cf-connecting-ip, x-real-ip)
+TRUSTED_PROXY_HEADER=""
+
+# Admin token for /api/iscrizione/lookup bypass (for staff scripts)
+LOOKUP_ADMIN_TOKEN=""
 ```
+
+### AI Provider Choice
+
+We chose **Groq** as the chatbot backend after evaluating the alternatives:
+
+| Provider | Verdict |
+|---|---|
+| **Groq** ✅ | 1,000 RPD free tier, 30 RPM, 100K TPD, `llama-3.3-70b-versatile` is strong in Italian, OpenAI-compatible API, no credit card required |
+| Google AI Studio | Plausible fallback — Gemini 2.0 Flash has a generous free tier |
+| Mistral | Free tier is limited and rate-constrained |
+| OpenRouter | Free models vary in quality and availability |
+| Cohere | Rejected — weaker Italian, less generous free tier |
+
+Groq is more than enough for a small volunteer camp site. If the free tier ever becomes insufficient, switching providers only requires changing the API endpoint and model name in `src/lib/chatbot-knowledge.ts` (and the SDK call in `src/app/api/chat/route.ts`) — the OpenAI SDK is used throughout.
 
 ## Available Scripts
 
@@ -166,12 +200,13 @@ NEXT_PUBLIC_VERGARI_URL="https://www.riservanaturaledelvergari.it/"
 │   │   ├── api/               # API routes
 │   │   │   ├── iscrizione/     # Public registration endpoint
 │   │   │   ├── newsletter/    # Newsletter signup
+│   │   │   ├── chat/          # AI chatbot (SSE streaming)
 │   │   │   └── admin/         # Admin API routes
 │   │   ├── globals.css        # Global styles + dark mode tokens
 │   │   ├── sitemap.ts         # Sitemap.xml
 │   │   └── robots.ts          # Robots.txt
 │   ├── components/            # React components
-│   ├── lib/                  # Utilities (auth, prisma, mail, rateLimit)
+│   ├── lib/                  # Utilities (auth, prisma, mail, rateLimit, chatbot-knowledge)
 │   ├── messages/             # i18n translation files
 │   │   ├── it.json
 │   │   └── en.json
@@ -212,10 +247,12 @@ pm2 startup
 ### Environment checklist for production
 
 - [ ] `DATABASE_URL` points to PostgreSQL (not SQLite)
-- [ ] `AUTH_SECRET` generated with `openssl rand -base64 48`
+- [ ] `AUTH_SECRET` generated with `openssl rand -base64 48` (no placeholder allowed at boot)
 - [ ] `SMTP_USER` / `SMTP_PASS` set to Gmail app password
+- [ ] `GROQ_API_KEY` set for the AI chatbot
 - [ ] `NEXT_PUBLIC_SITE_URL` set to your domain
 - [ ] `NODE_ENV=production`
+- [ ] `TRUSTED_PROXY_HEADER` set if running behind Cloudflare / Nginx
 - [ ] Change the superadmin password after first login
 - [ ] Configure Nginx reverse proxy with SSL (Let's Encrypt)
 
@@ -235,14 +272,25 @@ The design follows WWF Italia's visual language:
 
 ## Security
 
+- **Cookie session** — 8h expiry, `Secure` always-on in production, `httpOnly` + `SameSite=strict`
+- **AUTH_SECRET** — refuses to start with placeholder or missing value (no dev fallback)
 - JWT sessions re-validated against DB on every request (deleted/demoted users lose access immediately)
-- `sameSite: strict` cookies with `httpOnly` + `secure` (production)
-- Rate limiting: 3 registrations/hour/IP, 5 newsletter/hour/IP, 10 login attempts/15min/IP
+- **CSP with per-request nonces** — `'unsafe-inline'` removed from `script-src` in production; middleware-generated nonces forwarded to inline scripts
+- **Rate limiting**:
+  - 3 registrations/hour/IP
+  - 5 newsletter signups/hour/IP
+  - 5 chat requests/hour/IP (chatbot)
+  - 10 login attempts/15min/IP
+  - 10 lookups/15min/IP (`/api/iscrizione/lookup`)
+- **Persistent rate limit (optional)** — Upstash Redis-backed; falls back to in-memory when not configured. Anti-spoof: `clientKey()` ignores `X-Forwarded-For` in production, uses `TRUSTED_PROXY_HEADER` if set
+- **GDPR-compliant newsletter** — consent IP + UA + timestamp recorded; signed unsubscribe token; `unsubscribedAt` field
+- **Atomic capacity counter** (`Turno.bookedCount`) — prevents over-booking race on PostgreSQL
+- **AI Chatbot hardening** — prompt-injection pre-flight filter, output PII redaction (Italian mobile + IBAN), role restricted to `user` only, control-char stripping
+- **Sentry scrubbing** — `beforeSend` hooks strip request bodies/cookies for `/api/chat`, `/api/admin/*`, `/api/iscrizione` to prevent PII leakage to error tracking
 - Content-Security-Policy with `frame-ancestors: none`, `object-src: none`
 - Upload validation: MIME + magic-byte check, extension whitelist
 - Server-side validation with zod for all public endpoints
 - Honeypot anti-spam field
-- Transactional capacity checks (no overbooking race conditions)
 - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, HSTS, Referrer-Policy
 
 ## License
@@ -255,6 +303,7 @@ This project is proprietary to WWF Crotone — Sezione locale di WWF Italia ETS.
 - **Development** — Elisey Rotar (Tecnico)
 - **Photos** — WWF Crotone volunteers + Wikimedia Commons (CC-licensed)
 - **Design** — Based on [wwf.it](https://www.wwf.it) visual language
+- **AI** — Powered by [Groq](https://groq.com) (`llama-3.3-70b-versatile`)
 
 ---
 
