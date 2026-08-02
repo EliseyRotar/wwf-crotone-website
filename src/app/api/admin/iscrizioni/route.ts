@@ -41,6 +41,8 @@ export async function PATCH(req: Request) {
       feePaidDate?: Date | null;
       balancePaid?: boolean;
       balancePaidDate?: Date | null;
+      depositReceiptApprovedAt?: Date | null;
+      balanceReceiptApprovedAt?: Date | null;
       managedBy?: string;
     } = {};
     if (status) data.status = status;
@@ -48,10 +50,23 @@ export async function PATCH(req: Request) {
     if (feePaid !== undefined) {
       data.feePaid = feePaid;
       data.feePaidDate = feePaid ? new Date() : null;
+      // Phase 2: stamp the approval timestamp when the admin confirms
+      // the deposit receipt. We only set it on the "true" transition
+      // so a later un-set doesn't leave a stale approval time.
+      if (feePaid) {
+        data.depositReceiptApprovedAt = new Date();
+      } else {
+        data.depositReceiptApprovedAt = null;
+      }
     }
     if (balancePaid !== undefined) {
       data.balancePaid = balancePaid;
       data.balancePaidDate = balancePaid ? new Date() : null;
+      if (balancePaid) {
+        data.balanceReceiptApprovedAt = new Date();
+      } else {
+        data.balanceReceiptApprovedAt = null;
+      }
     }
     data.managedBy = session.id;
 
