@@ -973,11 +973,12 @@
       "scheduled": "Invio programmato per {when}."
     },
     "login": {
-      "title": "Area Admin",
-      "subtitle": "WWF Crotone — Campi di volontariato",
+      "title": "Admin Area",
+      "subtitle": "WWF Crotone — Campi di Volontariato",
       "email": "Email",
       "password": "Password",
-      "submit": "Entra",
+      "submit": "Accedi",
+      "loading": "Accesso in corso…",
       "invalid": "Credenziali non valide",
       "error": "Errore. Riprova.",
       "networkError": "Errore di rete. Riprova."

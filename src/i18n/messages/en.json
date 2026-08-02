@@ -978,6 +978,7 @@
       "email": "Email",
       "password": "Password",
       "submit": "Login",
+      "loading": "Signing in…",
       "invalid": "Invalid credentials",
       "error": "Error. Try again.",
       "networkError": "Network error. Try again."
