@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getSession } from "@/lib/auth";
 import AdminNav from "@/components/admin/AdminNav";
 import { ToastProvider } from "@/components/admin/ToastProvider";
@@ -28,13 +28,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const themeCookie = store.get("theme")?.value;
   const isDark = themeCookie === "dark";
 
+  // Read the per-request CSP nonce minted by middleware (see
+  // src/middleware.ts). Inline <script> tags must carry it, otherwise
+  // the browser blocks them under the strict CSP we ship in production.
+  const hdrs = await headers();
+  const nonce = hdrs.get("x-nonce") ?? undefined;
+
   const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(!t){var c=document.cookie.match(/theme=(dark|light)/);t=c?c[1]:window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t==="dark"){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";}else{document.documentElement.style.colorScheme="light";}}catch(e){}})();`;
 
   if (!session) {
     return (
       <html lang="it" className={isDark ? "dark" : ""} suppressHydrationWarning>
         <head>
-          <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+          <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
         </head>
         <body className="bg-sand dark:bg-[#0f1a0c] min-h-screen flex items-center justify-center p-6">
           <NextIntlClientProvider locale={locale} messages={messages}>
@@ -48,7 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <html lang="it" className={isDark ? "dark" : ""} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="bg-sand dark:bg-[#141413] min-h-screen text-ink dark:text-ink">
         <a href="#main" className="skip-link">Salta al contenuto</a>
