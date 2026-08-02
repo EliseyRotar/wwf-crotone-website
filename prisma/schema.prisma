@@ -18,6 +18,9 @@ model User {
   assignedTurns String? // CSV of Turno.id for managers, null = all turns (superadmin)
   expiresAt     DateTime? // when the account expires (e.g. when the last assigned turn ends)
   active        Boolean  @default(true) // false = disabled
+  totpSecret    String? // M4: TOTP secret for 2FA
+  totpEnabled   Boolean  @default(false) // M4: 2FA enabled flag
+  deletedAt     DateTime? // M1: soft delete timestamp
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   iscrizioniManaged Iscrizione[] @relation("ManagedBy")
@@ -26,15 +29,17 @@ model User {
 // Weekly camp turns. The 12 turns for summer 2026 are seeded.
 // capacity is the max volunteers per turn (configurable from admin).
 model Turno {
-  id        String   @id @default(cuid())
-  number    Int      @unique // 1..12
-  startDate DateTime
-  endDate   DateTime
-  capacity  Int      @default(20)
-  isActive  Boolean  @default(true)
-  iscrizioni Iscrizione[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  number      Int      @unique // 1..12
+  startDate   DateTime
+  endDate     DateTime
+  capacity    Int      @default(20)
+  bookedCount Int      @default(0) // C-07: atomic counter for capacity
+  isActive    Boolean  @default(true)
+  iscrizioni  Iscrizione[]
+  iscrizioneTurni IscrizioneTurno[] // M5: junction for multi-week registrations
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([number])
 }
@@ -46,7 +51,8 @@ model Iscrizione {
   // Personal
   firstName     String
   lastName      String
-  birthDate     DateTime
+  birthDate     DateTime? // null when only age is known (imported from Excel)
+  age           Int?     // used when birthDate is unknown; admin can add birthDate later
   email         String
   phone         String
   isMinor       Boolean
@@ -55,10 +61,10 @@ model Iscrizione {
   guardianEmail String?
   guardianPhone String?
   guardianConsent Boolean @default(false)
-  // Turn — primary turn + optional additional turns for multi-week registrations
+  // Turn — primary turn; multi-week registrations use the IscrizioneTurno junction
   turnoId       String
   turno         Turno   @relation(fields: [turnoId], references: [id])
-  additionalTurns String? // CSV of additional Turno.id for multi-week registrations
+  iscrizioneTurni IscrizioneTurno[] // M5: junction for multi-week registrations
   // Health & diet
   allergies     String?
   medications   String?
@@ -79,21 +85,42 @@ model Iscrizione {
   feePaidDate   DateTime?
   balancePaid   Boolean  @default(false) // remaining balance paid
   balancePaidDate DateTime?
-  notes         String? // internal admin notes
+  paymentIntentId String? // M6: external payment intent reference (e.g. Stripe)
+  notes         String? // internal admin notes (length validated at app level)
   // Consent
   privacyConsent   Boolean @default(false)
   marketingConsent  Boolean @default(false)
   imageDataConsent Boolean @default(false)
   // Meta
+  deletedAt  DateTime? // M1: soft delete timestamp
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   managedBy  String? // User.id who last changed status
   manager    User?   @relation("ManagedBy", fields: [managedBy], references: [id])
   receipts   Receipt[]
+  payments   Payment[] // M6: payment history
 
   @@index([turnoId])
   @@index([status])
   @@index([email])
+  @@index([createdAt])
+  @@index([turnoId, status])
+  @@index([managedBy])
+}
+
+// M5: Junction table for multi-week registrations.
+// isPrimary flags the main turn on the Iscrizione row.
+model IscrizioneTurno {
+  id           String   @id @default(cuid())
+  iscrizioneId String
+  iscrizione   Iscrizione @relation(fields: [iscrizioneId], references: [id], onDelete: Cascade)
+  turnoId      String
+  turno        Turno   @relation(fields: [turnoId], references: [id])
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@unique([iscrizioneId, turnoId])
+  @@index([turnoId])
 }
 
 model GalleryItem {
@@ -108,6 +135,7 @@ model GalleryItem {
   category    String   // "tartarughe" | "cleanup" | "wildlife" | "campo" | "schiuse" | "cultura"
   year        Int      @default(2026)
   uploaderId  String?  // User.id
+  deletedAt   DateTime? // M1: soft delete timestamp
   createdAt   DateTime @default(now())
 
   @@index([category])
@@ -115,11 +143,16 @@ model GalleryItem {
 }
 
 model NewsletterSubscriber {
-  id       String   @id @default(cuid())
-  email    String   @unique
-  locale   String   @default("it")
-  consent  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id             String    @id @default(cuid())
+  email          String    @unique
+  locale         String    @default("it")
+  consent        Boolean   @default(false)
+  consentedAt    DateTime?
+  consentIp      String?
+  consentUa      String?
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 // Camp operators / staff (distinct from volunteer registrations).
@@ -135,10 +168,25 @@ model Operatore {
   // CSV of Turno.id — which turns the operator is assigned to
   assignedTurns String?
   notes     String?
+  deletedAt DateTime? // M1: soft delete timestamp
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([role])
+}
+
+// M3: In-progress draft registrations saved between wizard steps.
+model DraftIscrizione {
+  id        String   @id @default(cuid())
+  email     String
+  data      String   // JSON blob
+  step      Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([expiresAt])
 }
 
 // Receipt/bonifico uploaded by the volunteer
@@ -152,6 +200,24 @@ model Receipt {
   uploadedAt DateTime @default(now())
 
   @@index([iscrizioneId])
+}
+
+// M6: Payment history. One Iscrizione can have multiple Payments
+// (deposit + balance + future Stripe intents).
+model Payment {
+  id            String   @id @default(cuid())
+  iscrizioneId  String
+  iscrizione    Iscrizione @relation(fields: [iscrizioneId], references: [id], onDelete: Cascade)
+  amountCents   Int
+  currency      String   @default("EUR")
+  provider      String   // "stripe" | "bank_transfer" | "cash"
+  status        String   @default("pending") // "pending" | "completed" | "failed" | "refunded"
+  externalId    String?  // Stripe payment intent id
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([iscrizioneId])
+  @@index([status])
 }
 
 // Blog / news posts
@@ -168,11 +234,28 @@ model BlogPost {
   published Boolean  @default(false)
   publishedAt DateTime?
   authorId  String?
+  deletedAt DateTime? // M1: soft delete timestamp
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([published])
+  @@index([published, publishedAt])
+}
+
+// Audit log for admin actions
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // "create" | "update" | "delete" | "status_change" | "payment" | "login"
+  entity    String   // "iscrizione" | "turno" | "operatore" | "user" | "gallery" | "blog" | "settings"
+  entityId  String?
+  details   String?  // JSON or human-readable description
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
 }
 
 // Camp settings — year, dates, number of turns (for recurring camp config)
@@ -191,4 +274,6 @@ model CampSettings {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([isActive])
 }
