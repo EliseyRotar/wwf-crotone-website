@@ -1,14 +1,18 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import Link from "next/link";
 
 export default async function PrivacyPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Privacy");
-  const tNav = await getTranslations("Nav");
   const cookie = await getTranslations("Cookie");
+  const tNav = await getTranslations("Nav");
   const loc = locale;
 
   const sections = (await t.raw("sections")) as { h: string; p: string }[];
+  const necessaryTable = (await cookie.raw("necessaryTable")) as { name: string; type: string; duration: string; purpose: string }[];
+  const analyticsTable = (await cookie.raw("analyticsTable")) as { name: string; type: string; duration: string; purpose: string }[];
+  const thirdPartyTable = (await cookie.raw("thirdPartyTable")) as { name: string; type: string; duration: string; purpose: string }[];
 
   return (
     <div className="container section">
@@ -17,34 +21,136 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
         <li aria-current="page">{t("title")}</li>
       </nav>
 
-      <h1 className="text-4xl md:text-5xl mb-3">{t("title")}</h1>
-      <p className="text-sm text-ink-grey mb-10">{t("updated")}</p>
-      <p className="text-lg text-ink-2 max-w-3xl mb-12 leading-relaxed">{t("intro")}</p>
+      <h1 className="mb-4">{t("title")}</h1>
+      <p className="text-sm text-ink-grey mb-12">{t("updated")}</p>
+      <p className="text-lg text-ink-2 max-w-3xl mb-16 leading-relaxed">{t("intro")}</p>
 
-      <div className="max-w-3xl space-y-8 mb-16">
+      {/* Table of contents */}
+      <nav className="mb-16 p-6 bg-sand rounded-xl border border-ink-grey-light/50" aria-label={t("toc")}>
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-ink-grey mb-4">{t("toc")}</h2>
+        <ol className="space-y-2 text-sm">
+          {sections.map((s, i) => (
+            <li key={i}>
+              <a href={`#section-${i + 1}`} className="text-ink-2 hover:text-wwf-green transition-colors">
+                {s.h}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href="#cookie-policy" className="text-ink-2 hover:text-wwf-green transition-colors">
+              {cookie("title")}
+            </a>
+          </li>
+        </ol>
+      </nav>
+
+      {/* Privacy sections */}
+      <div className="max-w-3xl space-y-12 mb-20">
         {sections.map((s, i) => (
-          <section key={i}>
-            <h2 className="text-xl md:text-2xl mb-3">{s.h}</h2>
-            <p className="text-ink-2 leading-relaxed">{s.p}</p>
+          <section key={i} id={`section-${i + 1}`} className="scroll-mt-24">
+            <h2 className="text-xl mb-4">{s.h}</h2>
+            {s.p.split("\n\n").map((paragraph, j) => (
+              <p key={j} className="text-ink-2 leading-relaxed mb-3">{paragraph}</p>
+            ))}
           </section>
         ))}
       </div>
 
-      <div className="border-t border-ink-grey-light pt-12">
-        <h2 className="text-3xl md:text-4xl mb-3">{cookie("title")}</h2>
-        <p className="text-lg text-ink-2 max-w-3xl mb-8 leading-relaxed">{cookie("intro")}</p>
-        <div className="space-y-6 max-w-3xl">
+      {/* Cookie Policy */}
+      <div id="cookie-policy" className="border-t border-ink-grey-light pt-16 scroll-mt-24">
+        <h2 className="mb-4">{cookie("title")}</h2>
+        <p className="text-lg text-ink-2 max-w-3xl mb-10 leading-relaxed">{cookie("intro")}</p>
+
+        <div className="max-w-3xl space-y-12">
           <section>
-            <h3 className="text-lg mb-2">{cookie("necessary")}</h3>
-            <p className="text-ink-2">{cookie("necessaryBody")}</p>
+            <h3 className="text-lg mb-3">{cookie("whatAre")}</h3>
+            <p className="text-ink-2 leading-relaxed">{cookie("whatAreBody")}</p>
           </section>
+
           <section>
-            <h3 className="text-lg mb-2">{cookie("analytics")}</h3>
-            <p className="text-ink-2">{cookie("analyticsBody")}</p>
+            <h3 className="text-lg mb-3">{cookie("cookieList")}</h3>
+
+            <h4 className="text-base font-semibold text-wwf-green mb-3 mt-8">{cookie("necessary")}</h4>
+            <p className="text-ink-2 leading-relaxed mb-4">{cookie("necessaryBody")}</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-ink-grey-light/50 rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-sand">
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Nome" : "Name"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Tipo" : "Type"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Durata" : "Duration"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Finalità" : "Purpose"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {necessaryTable.map((row, i) => (
+                    <tr key={i} className="border-t border-ink-grey-light/30">
+                      <td className="p-3 font-mono text-xs">{row.name}</td>
+                      <td className="p-3 text-ink-2">{row.type}</td>
+                      <td className="p-3 text-ink-2">{row.duration}</td>
+                      <td className="p-3 text-ink-2">{row.purpose}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h4 className="text-base font-semibold text-wwf-green mb-3 mt-8">{cookie("analytics")}</h4>
+            <p className="text-ink-2 leading-relaxed mb-4">{cookie("analyticsBody")}</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-ink-grey-light/50 rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-sand">
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Servizio" : "Service"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Tipo" : "Type"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Durata" : "Duration"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Finalità" : "Purpose"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analyticsTable.map((row, i) => (
+                    <tr key={i} className="border-t border-ink-grey-light/30">
+                      <td className="p-3 font-mono text-xs">{row.name}</td>
+                      <td className="p-3 text-ink-2">{row.type}</td>
+                      <td className="p-3 text-ink-2">{row.duration}</td>
+                      <td className="p-3 text-ink-2">{row.purpose}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h4 className="text-base font-semibold text-wwf-green mb-3 mt-8">{cookie("thirdParty")}</h4>
+            <p className="text-ink-2 leading-relaxed mb-4">{cookie("thirdPartyBody")}</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-ink-grey-light/50 rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-sand">
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Servizio" : "Service"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Tipo" : "Type"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Durata" : "Duration"}</th>
+                    <th className="p-3 text-left font-semibold uppercase tracking-widest text-ink-grey text-xs">{loc === "it" ? "Finalità" : "Purpose"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {thirdPartyTable.map((row, i) => (
+                    <tr key={i} className="border-t border-ink-grey-light/30">
+                      <td className="p-3 font-mono text-xs">{row.name}</td>
+                      <td className="p-3 text-ink-2">{row.type}</td>
+                      <td className="p-3 text-ink-2">{row.duration}</td>
+                      <td className="p-3 text-ink-2">{row.purpose}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
+
           <section>
-            <h3 className="text-lg mb-2">{cookie("thirdParty")}</h3>
-            <p className="text-ink-2">{cookie("thirdPartyBody")}</p>
+            <h3 className="text-lg mb-3">{cookie("manage")}</h3>
+            {cookie("manageBody").split("\n\n").map((paragraph: string, j: number) => (
+              <p key={j} className="text-ink-2 leading-relaxed mb-3">{paragraph}</p>
+            ))}
           </section>
         </div>
       </div>

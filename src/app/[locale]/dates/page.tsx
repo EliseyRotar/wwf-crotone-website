@@ -1,10 +1,17 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import nextDynamic from "next/dynamic";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { SITE } from "@/lib/site";
+import { SITE } from "@/config/site";
 import { Download } from "lucide-react";
-import BookingForm from "@/components/BookingForm";
-import FaqAccordion from "@/components/FaqAccordion";
+import FaqAccordion from "@/components/ui/FaqAccordion";
+import { getTurnStatus, fmtDateShort } from "@/lib/turns";
+import LiveAvailability from "@/components/features/LiveAvailability";
+
+const BookingForm = nextDynamic(() => import("@/components/features/BookingForm"), {
+  loading: () => <div className="card max-w-3xl"><div className="card-body animate-pulse h-96" /></div>
+});
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -40,27 +47,35 @@ export default async function DatesPage({ params }: { params: Promise<{ locale: 
 
   const turni = await prisma.turno.findMany({
     where: { isActive: true },
-    orderBy: { number: "asc" }
+    orderBy: { number: "asc" },
+    // C-07: atomic counter is the source of truth; the groupBy below
+    // only catches drift in legacy data.
+    select: { id: true, number: true, startDate: true, endDate: true, capacity: true, bookedCount: true }
   });
 
-  const counts = await Promise.all(
-    turni.map(async (turno) => ({
-      id: turno.id,
-      count: await prisma.iscrizione.count({
-        where: { turnoId: turno.id, status: { notIn: ["cancelled"] } }
-      })
-    }))
-  );
-  const countMap = new Map(counts.map((c) => [c.id, c.count]));
+  const turnIds = turni.map((t) => t.id);
+  const counts = await prisma.iscrizione.groupBy({
+    by: ["turnoId"],
+    where: { turnoId: { in: turnIds }, status: { notIn: ["cancelled"] } },
+    _count: { id: true }
+  });
+  const countMap = new Map(counts.map((c) => [c.turnoId, c._count.id]));
 
   const includedList = (await t.raw("includedList")) as string[];
   const inlineFaqs = ((await tFaq.raw("items")) as { q: string; a: string }[]).slice(0, 5);
 
-  const fmtDate = (d: Date) =>
-    d.toLocaleDateString(loc === "it" ? "it-IT" : "en-GB", { day: "2-digit", month: "short" });
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: tNav("home"), item: `${baseUrl}/${loc}` },
+      { "@type": "ListItem", position: 2, name: t("title"), item: `${baseUrl}/${loc}/dates` }
+    ]
+  };
 
   return (
     <div className="container section">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <nav className="breadcrumb" aria-label="breadcrumb">
         <a href={`/${loc}`}>{tNav("home")}</a>
         <li aria-current="page">{t("title")}</li>
@@ -69,16 +84,21 @@ export default async function DatesPage({ params }: { params: Promise<{ locale: 
       <h1 className="text-4xl md:text-5xl mb-5">{t("title")}</h1>
       <p className="text-lg text-ink-2 max-w-3xl mb-10 leading-relaxed">{t("intro")}</p>
 
-      <section className="mb-16" aria-label={t("turnsTitle")}>
-        <h2 className="text-2xl md:text-3xl mb-6">{t("turnsTitle")}</h2>
-        <div id="turns" className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section className="mb-16" aria-label={t("campiTitle")}>
+        <h2 className="text-2xl md:text-3xl mb-6">{t("campiTitle")}</h2>
+        <LiveAvailability
+          initial={turni.map((t) => ({
+            id: t.id,
+            number: t.number,
+            capacity: t.capacity,
+            booked: Math.max(t.bookedCount ?? 0, countMap.get(t.id) ?? 0),
+            isPast: t.endDate.getTime() < Date.now()
+          }))}
+        />
+        <div id="campi" className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {turni.map((turno) => {
-            const booked = countMap.get(turno.id) ?? 0;
-            const free = turno.capacity - booked;
-            const now = new Date();
-            const isPast = turno.endDate.getTime() < now.getTime();
-            const status: "available" | "few" | "full" | "past" =
-              isPast ? "past" : free <= 0 ? "full" : free <= 4 ? "few" : "available";
+            const booked = Math.max(turno.bookedCount ?? 0, countMap.get(turno.id) ?? 0);
+            const status = getTurnStatus(booked, turno.capacity, turno.endDate);
             const tagClass =
               status === "past" ? "tag-grey" : status === "available" ? "tag-green" : status === "few" ? "tag-orange" : "tag-red";
             const labelText =
@@ -87,17 +107,21 @@ export default async function DatesPage({ params }: { params: Promise<{ locale: 
               : status === "few" ? tC("few")
               : tC("full");
             return (
-              <div key={turno.id} className={`card ${isPast ? "opacity-60" : ""}`}>
+              <Link
+                key={turno.id}
+                href={`#form`}
+                className={`card hover:shadow-lg transition-shadow ${status === "past" ? "opacity-60" : "cursor-pointer"}`}
+              >
                 <div className="card-body">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="tag tag-green">{tC("field")} {turno.number}</span>
                     <span className={`tag ${tagClass}`}>{labelText}</span>
                   </div>
                   <p className="font-head text-xl">
-                    {fmtDate(turno.startDate)} – {fmtDate(turno.endDate)}
+                    {fmtDateShort(turno.startDate, loc)} – {fmtDateShort(turno.endDate, loc)}
                   </p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -117,6 +141,21 @@ export default async function DatesPage({ params }: { params: Promise<{ locale: 
           </div>
         </div>
         <p className="text-sm text-ink-2 mb-6 max-w-3xl">{t("depositBody")}</p>
+
+        <div className="mb-6 p-5 bg-wwf-green/5 border-l-4 border-wwf-green rounded-r-lg">
+          <h3 className="text-lg mb-2 text-wwf-green-dark font-bold">{t("discountTitle")}</h3>
+          <p className="text-ink-2 mb-3 leading-relaxed">{t("discountBody")}</p>
+          <ul className="space-y-2 mb-3">
+            <li className="flex items-center gap-2 text-ink-2">
+              <span className="text-wwf-green font-bold">✓</span> {t("discountWeek2")}
+            </li>
+            <li className="flex items-center gap-2 text-ink-2">
+              <span className="text-wwf-green font-bold">✓</span> {t("discountWeek3plus")}
+            </li>
+          </ul>
+          <p className="text-sm text-ink-grey italic">{t("discountExample")}</p>
+        </div>
+
         <h3 className="text-lg mb-3">{t("includedTitle")}</h3>
         <ul className="grid sm:grid-cols-2 gap-2 max-w-3xl">
           {includedList.map((item, i) => (

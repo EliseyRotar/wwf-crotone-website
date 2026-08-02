@@ -1,7 +1,7 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import GalleryClient, { type GalleryItemData } from "@/components/GalleryClient";
+import GalleryClient, { type GalleryItemData } from "@/components/features/GalleryClient";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -24,7 +24,7 @@ export async function generateMetadata({
   };
 }
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function GalleryPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -34,7 +34,20 @@ export default async function GalleryPage({ params }: { params: Promise<{ locale
   const loc = locale;
 
   const dbItems = await prisma.galleryItem.findMany({
-    orderBy: [{ year: "desc" }, { createdAt: "desc" }]
+    where: { deletedAt: null },
+    orderBy: [{ year: "desc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      type: true,
+      src: true,
+      thumbnail: true,
+      titleIt: true,
+      titleEn: true,
+      captionIt: true,
+      captionEn: true,
+      category: true,
+      year: true
+    }
   });
 
   const items: GalleryItemData[] = dbItems.map((g) => ({
@@ -50,8 +63,18 @@ export default async function GalleryPage({ params }: { params: Promise<{ locale
     year: g.year
   }));
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: tNav("home"), item: `${baseUrl}/${loc}` },
+      { "@type": "ListItem", position: 2, name: t("title"), item: `${baseUrl}/${loc}/gallery` }
+    ]
+  };
+
   return (
     <div className="container section">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <nav className="breadcrumb" aria-label="breadcrumb">
         <a href={`/${loc}`}>{tNav("home")}</a>
         <li aria-current="page">{t("title")}</li>
