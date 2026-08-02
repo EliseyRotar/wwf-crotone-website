@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { buildSystemPrompt, type Locale } from "@/lib/chatbot-knowledge";
+import { guardMessage, guardResponse } from "@/lib/chatGuard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -42,6 +43,46 @@ function getClient(): OpenAI | null {
   });
 }
 
+/**
+ * Run Groq's prompt-injection classifier (meta-llama/llama-prompt-guard-2-86m)
+ * on a single user message. Returns "injection" if the model judges the
+ * message as an injection attempt, "safe" otherwise, or "skipped" on any
+ * error so the chat still works if Groq's guard endpoint is down.
+ *
+ * Groq's prompt-guard is a binary classifier exposed as a normal chat
+ * completion. It is part of the free tier (30 RPM, 14.4K RPD) — well
+ * within our budget. We pass the user content as the user message and
+ * ask for a single-word verdict.
+ */
+async function runPromptGuard(
+  client: OpenAI,
+  content: string
+): Promise<"safe" | "injection" | "skipped"> {
+  try {
+    const resp = await client.chat.completions.create({
+      model: "meta-llama/llama-prompt-guard-2-86m",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a security classifier. Reply with exactly one word: either 'safe' or 'injection'. Do not add any other text."
+        },
+        { role: "user", content }
+      ],
+      temperature: 0,
+      max_tokens: 4
+    });
+    const verdict = resp.choices?.[0]?.message?.content?.trim().toLowerCase();
+    if (verdict?.startsWith("inject")) return "injection";
+    if (verdict?.startsWith("safe")) return "safe";
+    return "skipped";
+  } catch {
+    // If the guard call fails (rate limit, network), fail open: our regex
+    // + topic guard is the second line of defence.
+    return "skipped";
+  }
+}
+
 function jsonError(status: number, error: string) {
   return new Response(JSON.stringify({ ok: false, error }), {
     status,
@@ -59,6 +100,25 @@ function sseError(error: string) {
       Connection: "keep-alive"
     }
   });
+}
+
+// Friendly refusal streamed as a single token. The client renders it like
+// any other assistant reply. We avoid a JSON error so the chat history
+// shows a coherent "sorry, I can't help with that" message.
+function sseRefusal(text: string) {
+  const payload = JSON.stringify({ delta: text });
+  return new Response(
+    `event: token\ndata: ${payload}\n\nevent: done\ndata: {}\n\n`,
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Chat-Refusal": "1"
+      }
+    }
+  );
 }
 
 // C-05: defence-in-depth output PII filter. The system prompt instructs
@@ -103,24 +163,49 @@ export async function POST(req: Request) {
     return jsonError(400, "input-too-large");
   }
 
-  // C-05: pre-flight injection filter — check every user message.
-  for (const m of parsed.messages) {
-    if (RE_INJECTION.test(m.content)) {
-      return sseError("invalid-request");
-    }
-  }
-
   const locale: Locale = parsed.locale;
-  const systemPrompt = buildSystemPrompt(locale);
+  const isIt = locale === "it";
 
-  // C-06: bound history at 6 messages (was 20). Pairs the message-role
+  // C-06: bound history at 6 messages (was 20). Pairs with the message-role
   // lock above — since all messages are now "user" anyway, the helper just
   // slices the tail.
   const recent = parsed.messages.slice(-6);
 
+  // C-05: pre-flight injection + topic guard. Layered:
+  //   1. Regex injection patterns (multilingual, typo-tolerant via chatGuard)
+  //   2. Off-topic classifier (rejects recipes, coding, etc.)
+  // Both reject with a friendly refusal SSE so the user is told why.
+  for (const m of parsed.messages) {
+    const guard = guardMessage(m.content);
+    if (!guard.allowed) {
+      if (guard.reason === "off-topic") {
+        return sseRefusal(
+          isIt
+            ? "Posso rispondere solo a domande sui campi di volontariato WWF Crotone — date, costi, attività, logistica, salute. Se hai una domanda sul campo, chiedi pure!"
+            : "I can only answer questions about WWF Crotone volunteer camps — dates, costs, activities, logistics, health. If you have a camp-related question, feel free to ask!"
+        );
+      }
+      return sseError("invalid-request");
+    }
+  }
+
+  const systemPrompt = buildSystemPrompt(locale);
+
+  // Optional but recommended: run the last user message through Groq's
+  // dedicated prompt-injection classifier. meta-llama/llama-prompt-guard-2-86m
+  // is free, runs in <50ms, and catches obfuscated injections that our
+  // regex / fuzzy matcher miss. We only run it if the key is present.
   const client = getClient();
   if (!client) {
     return sseError("unconfigured");
+  }
+
+  const lastUser = [...recent].reverse().find((m) => m.role === "user");
+  if (lastUser) {
+    const guardVerdict = await runPromptGuard(client, lastUser.content);
+    if (guardVerdict === "injection") {
+      return sseError("invalid-request");
+    }
   }
 
   type UpstreamChunk = { choices?: { delta?: { content?: string | null } }[] };
@@ -150,14 +235,50 @@ export async function POST(req: Request) {
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let fullText = "";
+      let responseTripped = false;
       try {
         for await (const chunk of upstream) {
           const delta = chunk.choices?.[0]?.delta?.content;
           if (!delta) continue;
+
+          // Defensive response guard. We accumulate the model output and
+          // check every ~200 chars: if it looks off-topic (recipe, code,
+          // essay...) we close the stream and substitute a refusal.
+          // This catches the case where the model bypasses the input guard
+          // (e.g. by following the user's rephrased "ignore" instruction).
+          fullText += delta;
+          if (!responseTripped && fullText.length > 120) {
+            const verdict = guardResponse(fullText);
+            if (!verdict.allowed) {
+              responseTripped = true;
+              const refuse = isIt
+                ? "Mi dispiace, posso rispondere solo a domande sui campi di volontariato WWF Crotone. Se hai una domanda sul campo, chiedi pure!"
+                : "Sorry, I can only answer questions about the WWF Crotone volunteer camps. If you have a camp-related question, feel free to ask!";
+              const payload = JSON.stringify({ delta: refuse });
+              controller.enqueue(encoder.encode(`event: token\ndata: ${payload}\n\n`));
+              controller.enqueue(encoder.encode(`event: done\ndata: {}\n\n`));
+              controller.close();
+              return;
+            }
+          }
+
           // C-05: scrub PII before forwarding each token to the client.
           const safe = redactPII(delta);
           const payload = JSON.stringify({ delta: safe });
           controller.enqueue(encoder.encode(`event: token\ndata: ${payload}\n\n`));
+        }
+        // Final guard check at end of stream in case we never hit the
+        // mid-stream threshold.
+        if (!responseTripped && fullText.length > 0) {
+          const verdict = guardResponse(fullText);
+          if (!verdict.allowed) {
+            const refuse = isIt
+              ? "Mi dispiace, posso rispondere solo a domande sui campi di volontariato WWF Crotone."
+              : "Sorry, I can only answer questions about the WWF Crotone volunteer camps.";
+            const payload = JSON.stringify({ delta: refuse });
+            controller.enqueue(encoder.encode(`event: token\ndata: ${payload}\n\n`));
+          }
         }
         controller.enqueue(encoder.encode(`event: done\ndata: {}\n\n`));
         controller.close();
