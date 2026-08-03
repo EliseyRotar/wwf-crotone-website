@@ -446,7 +446,21 @@
     "car": "Con mezzi propri",
     "carBody": "È possibile raggiungere il C.E.L.A. autonomamente.",
     "transferTitle": "Servizio WWF",
-    "transferBody": "Trasferimento da/per aeroporto, autostazione e stazione a cura dei volontari. Per chi arriva/parte da Lamezia Terme il costo extra è di € 10 a tratta. Si consigliano arrivi e partenze nelle ore centrali della giornata."
+    "transferBody": "Trasferimento da/per aeroporto, autostazione e stazione a cura dei volontari. Per chi arriva/parte da Lamezia Terme il costo extra è di € 10 a tratta. Si consigliano arrivi e partenze nelle ore centrali della giornata.",
+    "legalTitle": "Sede legale e identità",
+    "legalRagione": "Ragione sociale",
+    "legalRagioneValue": "WWF PROVINCIA DI CROTONE-ETS",
+    "legalForma": "Forma giuridica",
+    "legalFormaValue": "Organizzazione di Volontariato (ODV) — D.Lgs. 117/2017",
+    "legalCf": "Codice Fiscale",
+    "legalCfValue": "91034580794",
+    "legalSede": "Sede legale",
+    "legalSedeValue": "Località Marinella San Leonardo di Cutro, 88842 Cutro (KR), Calabria, Italia",
+    "legalPresidente": "Presidente e legale rappresentante",
+    "legalPresidenteValue": "Paolo Asteriti",
+    "legalPec": "PEC",
+    "legalPecValue": "wwfcrotone@legalmail.it",
+    "legalPecLabel": "Posta Elettronica Certificata"
   },
   "Privacy": {
     "title": "Privacy Policy",

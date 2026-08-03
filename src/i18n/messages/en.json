@@ -446,7 +446,21 @@
     "car": "By car",
     "carBody": "You can reach the C.E.L.A. on your own.",
     "transferTitle": "WWF service",
-    "transferBody": "Transfer to/from airport, bus station and train station by volunteers. For those arriving/departing from Lamezia Terme the extra cost is €10 per leg. Arrivals and departures in the middle of the day are recommended."
+    "transferBody": "Transfer to/from airport, bus station and train station by volunteers. For those arriving/departing from Lamezia Terme the extra cost is €10 per leg. Arrivals and departures in the middle of the day are recommended.",
+    "legalTitle": "Registered office and legal identity",
+    "legalRagione": "Legal name",
+    "legalRagioneValue": "WWF PROVINCIA DI CROTONE-ETS",
+    "legalForma": "Legal form",
+    "legalFormaValue": "Volunteer Organisation (ODV) — Italian Legislative Decree 117/2017",
+    "legalCf": "Fiscal Code",
+    "legalCfValue": "91034580794",
+    "legalSede": "Registered office",
+    "legalSedeValue": "Località Marinella San Leonardo di Cutro, 88842 Cutro (KR), Calabria, Italy",
+    "legalPresidente": "President and legal representative",
+    "legalPresidenteValue": "Paolo Asteriti",
+    "legalPec": "PEC",
+    "legalPecValue": "wwfcrotone@legalmail.it",
+    "legalPecLabel": "Certified email (PEC)"
   },
   "Privacy": {
     "title": "Privacy Policy",

@@ -1,6 +1,6 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Mail, Phone, MessageCircle, Facebook, Instagram, Plane, Train, Bus, Car } from "lucide-react";
+import { Mail, Phone, MessageCircle, Facebook, Instagram, Plane, Train, Bus, Car, Building2, FileText, User, AtSign } from "lucide-react";
 import { SITE } from "@/config/site";
 import WeatherWidget from "@/components/features/WeatherWidget";
 
@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: t("title"),
     description: t("intro"),
     alternates: { canonical: `${baseUrl}/${locale}/contact` },
-    openGraph: { title: `${t("title")} · WWF Crotone`, description: t("intro"), url: `${baseUrl}/${locale}/contact` }
+    openGraph: { title: `${t("title")} · ${SITE.legalName}`, description: t("intro"), url: `${baseUrl}/${locale}/contact` }
   };
 }
 
@@ -153,6 +153,81 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <div className="card-body">
             <h3 className="text-lg mb-2">{t("transferTitle")}</h3>
             <p className="text-ink-2 leading-relaxed">{t("transferBody")}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-20" aria-labelledby="sede-legale">
+        <h2 id="sede-legale" className="mb-2">{t("legalTitle")}</h2>
+        <p className="text-ink-2 mb-8 max-w-3xl text-lg leading-relaxed">
+          {loc === "it"
+            ? "Informazioni legali e sede dell'associazione, come da Statuto e Atto Costitutivo."
+            : "Legal details and registered office of the association, as per Articles of Association."}
+        </p>
+        <div className="card">
+          <div className="card-body">
+            <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Building2 size={18} className="text-wwf-green" aria-hidden />
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalRagione")}</dt>
+                  <dd className="text-base font-semibold mt-0.5">{t("legalRagioneValue")}</dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText size={18} className="text-wwf-green" aria-hidden />
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalForma")}</dt>
+                  <dd className="text-base mt-0.5">{t("legalFormaValue")}</dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText size={18} className="text-wwf-green" aria-hidden />
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalCf")}</dt>
+                  <dd className="text-base font-mono mt-0.5">{t("legalCfValue")}</dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <User size={18} className="text-wwf-green" aria-hidden />
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalPresidente")}</dt>
+                  <dd className="text-base mt-0.5">{t("legalPresidenteValue")}</dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 sm:col-span-2">
+                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Building2 size={18} className="text-wwf-green" aria-hidden />
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalSede")}</dt>
+                  <dd className="text-base mt-0.5">{t("legalSedeValue")}</dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 sm:col-span-2">
+                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <AtSign size={18} className="text-wwf-green" aria-hidden />
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">
+                    {t("legalPec")} <span className="font-normal normal-case text-ink-grey/80">— {t("legalPecLabel")}</span>
+                  </dt>
+                  <dd>
+                    <a href={`mailto:${SITE.pec}`} className="text-base mt-0.5 text-ink-2 hover:text-wwf-green transition-colors break-all">
+                      {t("legalPecValue")}
+                    </a>
+                  </dd>
+                </div>
+              </div>
+            </dl>
           </div>
         </div>
       </section>
