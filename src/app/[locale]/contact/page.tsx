@@ -1,6 +1,6 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Mail, Phone, Facebook, Instagram, Plane, Train, Bus, Car } from "lucide-react";
+import { Mail, Phone, MessageCircle, Facebook, Instagram, Plane, Train, Bus, Car } from "lucide-react";
 import { SITE } from "@/config/site";
 import WeatherWidget from "@/components/features/WeatherWidget";
 
@@ -84,6 +84,22 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 <div>
                   <p className="font-semibold">{t("fieldLabel")}</p>
                   <p className="text-ink-grey">{SITE.phoneField}</p>
+                </div>
+              </a>
+            </li>
+            <li>
+              <a
+                href={`https://wa.me/${SITE.phoneField.replace(/[^\d]/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 text-ink-2 hover:text-wwf-green transition-colors group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-wwf-green/10 flex items-center justify-center shrink-0 group-hover:bg-wwf-green/20 transition-colors">
+                  <MessageCircle size={22} className="text-wwf-green" />
+                </div>
+                <div>
+                  <p className="font-semibold">{loc === "it" ? "WhatsApp" : "WhatsApp"}</p>
+                  <p className="text-ink-grey">{loc === "it" ? "Scrivici su WhatsApp" : "Message us on WhatsApp"}</p>
                 </div>
               </a>
             </li>

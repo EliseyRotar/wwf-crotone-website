@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import CookieBanner from "@/components/ui/CookieBanner";
 import MobileStickyCta from "@/components/layout/MobileStickyCta";
 import ChatWidget from "@/components/features/ChatWidget";
+import PlausibleAnalytics from "@/components/layout/PlausibleAnalytics";
 import { SITE } from "@/config/site";
 import "@/app/globals.css";
 
@@ -237,13 +238,7 @@ export default async function LocaleLayout({
         <meta name="theme-color" content={isDark ? "#141413" : "#007932" } />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
-          <>
-            <link rel="preconnect" href="https://plausible.io" />
-            <link rel="dns-prefetch" href="https://plausible.io" />
-            <script defer data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN} src="https://plausible.io/js/script.js" />
-          </>
-        )}
+        <PlausibleAnalytics />
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
