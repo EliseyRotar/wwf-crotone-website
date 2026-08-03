@@ -40,3 +40,19 @@ export const STATS = {
   volunteers: 650,
   years: 20
 } as const;
+
+/**
+ * Official legal identity of the organization — confirmed from the Statuto
+ * and Atto Costitutivo. Use this object on legal/regulatory surfaces (footer
+ * legal block, cookie policy, GDPR notices, donation receipts, PEC headers,
+ * ricevute, etc.). For branding / display, prefer `SITE`.
+ */
+export const ORG = {
+  legalName: "WWF PROVINCIA DI CROTONE-ETS",
+  formaGiuridica: "Organizzazione di Volontariato (ODV)",
+  codiceFiscale: "91034580794",
+  sedeLegale: "Località Marinella San Leonardo di Cutro, 88842 Cutro (KR)",
+  presidente: "Paolo Asteriti",
+  presidenteCF: "STRPLA75B18D122G",
+  pec: "wwfcrotone@legalmail.it"
+} as const;
