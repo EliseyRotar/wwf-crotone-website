@@ -1,7 +1,7 @@
 # WWF Crotone Volunteer Camps — Production Architecture
 
 **Version:** 2.0 — lean budget
-**Domain:** `wwfprovinciadicrotone.it`
+**Domain:** `wwfcrotone.it` (apex). `www.wwfcrotone.it` is a server alias that 301-redirects to the apex. `status.wwfcrotone.it` is a CNAME to Instatus (`wwfcrotone.instatus.com`). `admin.wwfcrotone.it` serves the Italian-only admin panel.
 **Target launch:** Summer 2026 camp season (June 21)
 **Hard budget cap:** €200/year TOTAL (VPS + domain + everything)
 
@@ -88,9 +88,39 @@ A public volunteer registration site for 12 weekly camps, per-volunteer accounts
                   ┌───────┴─────────────────────────┴───────┐  ┌─────────────┐
                   │  Outbound email: Brevo SMTP (free)      │  │  Instatus   │
                   │  300/day cap, Gmail SMTP fallback       │  │  (free)     │
-                  │  wwfcrotone26@gmail.com existing inbox  │  │ status.*    │
-                  └─────────────────────────────────────────┘  └─────────────┘
+                   │  wwfcrotone26@gmail.com existing inbox  │  │ status.*    │
+                   └─────────────────────────────────────────┘  └─────────────┘
 ```
+
+### 3.5 Domain at Aruba, nameservers pointed at Cloudflare
+
+The `.it` apex (`wwfcrotone.it`) is **registered at Aruba.it**, not at Cloudflare Registrar. The reason is simple: **Cloudflare Registrar does not sell `.it` domains.** ICANN's registry for Italy is NIC.it (IT-NIC), and only a small number of accredited registrars can sell `.it` directly. Cloudflare used to act as a reseller via a partnership, but as of 2026 they no longer offer `.it` to new customers; their storefront explicitly hides `.it` from the search results. So even if you want everything else (DNS, CDN, DDoS, Email Routing, R2) on Cloudflare, you still have to buy the domain itself from a `.it`-accredited registrar.
+
+**Why Aruba, specifically:**
+- **Italian ICANN-accredited registrar** (one of the largest in Italy, parent company Aruba S.p.A., Arezzo). Handles the NIC.it registry interaction on our behalf.
+- **EUC-compliant for `.it` rules:** `.it` requires either an EU-resident individual or an EU-registered organization (Codice Fiscale / P.IVA) at registration. WWF Italia ETS qualifies as an EU-registered org; we register under WWF Italia ETS's P.IVA with WWF Crotone as the local section. The registrant is the org, not a private individual.
+- **WHOIS privacy** is included free (NIC.it does not expose personal data by default for `.it`; the public WHOIS shows only the registrar and the technical/admin contacts, which we set to a generic role address).
+- **DNS hosting is decoupled from registration.** Aruba gives us a default DNS panel, but we do not use it: we change the nameservers (NS) to point at Cloudflare, and from that moment every DNS record (A, CNAME, MX, TXT, SPF, DMARC) is managed inside Cloudflare's dashboard. Aruba only acts as the billing/renewal entity.
+
+**The €8/yr markup (vs Cloudflare at-cost):**
+Cloudflare Registrar sells most TLDs at cost (no markup, ~€8/yr for a `.com`, etc.). Aruba charges the same registry fee for `.it` (NIC.it sets it; it has been ~€7-9/yr for years) but adds a small service fee and IVA (22% Italian VAT), landing at ~€8-12/yr total. The few euros of "markup" over a hypothetical at-cost option is the price of admission for being able to buy `.it` at all in 2026 — there is no cheaper path that doesn't require going through an `.it`-accredited registrar. We accept this as a fixed cost of doing business in Italy.
+
+**Step-by-step provisioning (one-time, ~20 min):**
+
+1. **Register at Aruba.it.** Go to `https://www.aruba.it` → "Domini" → "Registra dominio" → enter `wwfcrotone.it`. During checkout Aruba will:
+   - Ask for the registrant's Codice Fiscale / P.IVA (use WWF Italia ETS's P.IVA — `02121111005` — and the legal address in Via Po 25/c, 00198 Roma).
+   - Ask for an admin-c and tech-c contact email. Use a role address that forwards to `wwfcrotone26@gmail.com` (e.g. `admin@wwfcrotone.it` once Email Routing is set up, or `wwfcrotone26@gmail.com` in the meantime).
+   - Collect ~€8-10 + IVA via carta / PayPal / bonifico.
+   - Send a confirmation email to the admin-c with a link to verify the registration within 7 days (NIC.it requirement). Click it.
+2. **Add the zone in Cloudflare.** Log into Cloudflare → "Add a site" → enter `wwfcrotone.it` → select the **Free plan**. Cloudflare will do a DNS scan and find no existing records (because nothing is using the domain yet). Click "Continue".
+3. **Change nameservers at Aruba.** Cloudflare shows you two nameserver hostnames, e.g. `isla.ns.cloudflare.com` and `sid.ns.cloudflare.com` (exact names vary per assignment). Copy them. In the Aruba control panel go to `Pannello Domini` → click on `wwfcrotone.it` → `Gestione DNS` / `Nameserver` → "Usa nameserver personalizzati" / "Usa nameserver esterni" → paste the two Cloudflare hostnames → confirm. Aruba will propagate the NS change to NIC.it (usually instant, can take up to 24h).
+4. **Wait for Cloudflare to detect the NS switch.** Back in Cloudflare, the status will change from "Pending" to "Active" once NIC.it confirms (typically 5-30 min after Aruba's change, but DNS TTL can extend this to a few hours). You will get an email from Cloudflare when it goes active.
+5. **Add the DNS records from §7 below.** All A, CNAME, MX, TXT, SPF, DMARC records are created inside Cloudflare's DNS panel. Aruba's DNS panel is now irrelevant — leave it untouched (or, if Aruba complains, set its records to garbage; Cloudflare will always win because it owns the NS).
+6. **Set up Email Routing in Cloudflare.** Once the zone is active: Cloudflare dashboard → `wwfcrotone.it` → `Email` → `Email Routing` → enable, verify the destination address (`wwfcrotone26@gmail.com`) by clicking the confirmation email Cloudflare sends to the existing inbox, then add the rules: `info@` → `wwfcrotone26@gmail.com` (forwarded), catch-all `*@` → `wwfcrotone26@gmail.com` (forwarded). The MX records shown in §7 are auto-created by Email Routing — do not edit them manually.
+7. **Set up R2 bucket (if not done).** Cloudflare → R2 → Create bucket `wwf-backups` (EU region hint) → generate API token scoped to that bucket → paste into `infra/.env.production.example` (lines `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
+8. **Annual renewal.** Aruba will send a renewal email ~30 days before the `.it` expires (NIC.it does 1-year terms by default, multi-year is also an option). Pay it via Aruba's control panel. Cloudflare does not get involved in renewal because it does not own the domain.
+
+**Why we don't move the registration to Cloudflare later:** even if Cloudflare re-enables `.it` someday, moving the registration would require a NIC.it transfer code, an auth code, ~2 weeks of DNS propagation, and a small fee — for no operational benefit, because all the operational DNS is already on Cloudflare's NS. The registrar matters only for billing and the legal registrant record; the NS controls everything else.
 
 ---
 
@@ -121,8 +151,8 @@ A public volunteer registration site for 12 weekly camps, per-volunteer accounts
 | **What we gave up** | Custom WAF rules, advanced analytics, 24h email support. **Mitigation:** Nginx `limit_req` + per-route app rate limits + fail2ban cover abuse vectors. |
 | **Why Free not Pro** | WAF custom rules are nice-to-have, not need-to-have. |
 
-### 4.4 Domain — `wwfprovinciadicrotone.it`
-At-cost via Cloudflare Registrar (~€8/yr, NIC.it registry fee). Free WHOIS privacy. `.it` requires EU-resident individual or EU-registered org (Codice Fiscale or VAT ID at registration).
+### 4.4 Domain — `wwfcrotone.it`
+Registered at **Aruba.it** (Italian ICANN-accredited registrar — Cloudflare Registrar does not sell `.it`), nameservers pointed at Cloudflare Free so DNS, CDN, SSL, Email Routing, and R2 all live in Cloudflare. See §3.5 for the full step-by-step. Cost ~€8-12/yr (NIC.it registry fee + small Aruba service fee + 22% IVA). Registrant is WWF Italia ETS (P.IVA `02121111005`), local section WWF Crotone. `.it` requires an EU-registered org or EU-resident individual (Codice Fiscale or P.IVA at registration). Free WHOIS privacy (NIC.it does not expose personal data by default for `.it`). Apex `wwfcrotone.it` is canonical; `www.wwfcrotone.it` 301-redirects to it.
 
 ### 4.5 Database — Self-hosted Postgres 16
 `postgres:16-alpine` in Docker, 30 GB on VPS SSD, WAL-G → Cloudflare R2. Self-hosted = cheapest + zero third-party data access (best for GDPR). Migrations run via `docker compose run migrate` on every deploy.
@@ -151,7 +181,7 @@ Redis 7 in Docker, 128 MB cap, LRU eviction, no persistence (cache only). Sessio
 | Tool | What |
 |---|---|
 | **UptimeRobot Free** | 5 HTTP/HTTPS probes, 5-min interval, email + webhook alerts on `*/api/health` |
-| **Instatus Free** | Public status page (`wwfprovinciadicrotone.instatus.com` or `status.wwfprovinciadicrotone.it`). Components: Site, API, Database, Email. |
+| **Instatus Free** | Public status page (`wwfcrotone.instatus.com`, branded as `status.wwfcrotone.it` via Cloudflare CNAME). Components: Site, API, Database, Email. |
 
 **Why no Prometheus/Grafana:** self-hosting on the same VPS wastes RAM and adds a stack to babysit. UptimeRobot + Instatus covers 95% of observability (uptime, public status, email alerts). Deep debugging via SSH + `docker stats` / `htop`.
 
@@ -212,7 +242,7 @@ All managed in Cloudflare. Orange-cloud = proxied (CDN + DDoS). Grey-cloud = dir
 | A | `@` | `<VPS_IP>` | ✅ | Main site |
 | A | `www` | `<VPS_IP>` | ✅ | www redirect |
 | A | `admin` | `<VPS_IP>` | ✅ | /admin (Italian-only) |
-| CNAME | `status` | `wwfprovinciadicrotone.instatus.com` | ✅ | Instatus status page |
+| CNAME | `status` | `wwfcrotone.instatus.com` | ✅ | Instatus status page |
 | MX | `@` | `route1.mx.cloudflare.net` (prio 18) | n/a | CF Email Routing in |
 | MX | `@` | `route2.mx.cloudflare.net` (prio 92) | n/a | CF Email Routing in backup |
 | MX | `@` | `route3.mx.cloudflare.net` (prio 92) | n/a | CF Email Routing in backup |
@@ -303,7 +333,7 @@ WALG_RETENTION_DAYS=30            # 30 days of WAL
 ### 9.2 Step-by-step provisioning
 
 **Steps 1-6 (you, ~40 min total):** sign up & order.
-1. **Cloudflare** — add site `wwfprovinciadicrotone.it` on Free plan, confirm NIC.it delegation, transfer .it to CF Registrar (or just point NIC.it nameservers to CF).
+1. **Aruba + Cloudflare** — register `wwfcrotone.it` at Aruba.it (under WWF Italia ETS's P.IVA `02121111005`, ~€8-12/yr), add the zone to Cloudflare on Free plan, change the nameservers at Aruba to the two Cloudflare NS records Cloudflare provides. From this moment on, every DNS record (A, CNAME, MX, TXT, SPF, DMARC) lives in Cloudflare's dashboard. See §3.5 for the full step-by-step.
 2. **Contabo** — order Cloud VPS 4 (24-mo promo), EU (Germany), Ubuntu 24.04, your SSH key, name `wwf-prod-01`. Note the IPv4.
 3. **Cloudflare R2** — create bucket `wwf-backups` (EU), generate API token scoped to that bucket.
 4. **Brevo** — sign up free, Settings → SMTP & API → generate SMTP key.
@@ -327,7 +357,7 @@ SSH in as root: apt update, install Docker + Compose plugin, UFW (only 22/80/443
 
 | Item | Monthly | Yearly | Notes |
 |---|---|---|---|
-| Domain `wwfprovinciadicrotone.it` | — | ~€8 | At-cost via CF Registrar |
+| Domain `wwfcrotone.it` (Aruba + NIC.it registry fee) | — | ~€10 | Italian VAT 22% included; €8-12/yr typical |
 | Contabo Cloud VPS 4 | €5.50 | €66 | 24-mo promo, EU |
 | Cloudflare Free (DNS/CDN/SSL/DDoS/WAF-managed/Email Routing) | €0 | €0 | — |
 | Cloudflare R2 free tier (10 GB) | €0 | €0 | Backups + ops |
@@ -487,8 +517,8 @@ cd /srv/wwf && docker compose up -d --force-recreate app
 5. **WhatsApp number** — confirm `+39 351 3945109`?
 6. **Pre-launch comms** — maintenance page during cutover?
 7. **Backup retention** — 30d OK, or longer for compliance?
-8. **Staging domain** — `staging.wwfprovinciadicrotone.it` (free CNAME) to test deploys before going live?
-9. **Instatus subdomain** — `status.wwfprovinciadicrotone.it` (CNAME) or `wwfprovinciadicrotone.instatus.com`?
+8. **Staging domain** — `staging.wwfcrotone.it` (free CNAME) to test deploys before going live?
+9. **Instatus subdomain** — `status.wwfcrotone.it` (CNAME to `wwfcrotone.instatus.com`) or `wwfcrotone.instatus.com`?
 10. **Sentry alert recipient** — confirm `wwfcrotone26@gmail.com` is the single Sentry user?
 
 ---
