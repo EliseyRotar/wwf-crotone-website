@@ -6,7 +6,7 @@ import { MessageCircle, X, Send, Loader2, Sparkles } from "lucide-react";
 import { SUGGESTED_QUESTIONS } from "@/lib/chatbot-knowledge";
 
 type ChatRole = "user" | "assistant";
-type ChatMessage = { id: string; role: ChatRole; content: string; pending?: boolean; error?: boolean };
+type ChatMessage = { id: string; role: ChatRole; content: string; pending?: boolean; error?: boolean; toolHint?: string };
 
 type Copy = Record<string, string>;
 
@@ -213,6 +213,9 @@ export default function ChatWidget() {
         const decoder = new TextDecoder();
         let acc = "";
         let buffer = "";
+        // Sub-status shown when the assistant invokes a tool (e.g. checking
+        // live availability). Cleared as soon as regular tokens arrive.
+        let toolHint = "";
 
         while (true) {
           const { value, done } = await reader.read();
@@ -235,8 +238,31 @@ export default function ChatWidget() {
                 const parsed = JSON.parse(dataStr) as { delta?: string };
                 if (parsed.delta) {
                   acc += parsed.delta;
+                  if (toolHint) toolHint = "";
                   setMessages((prev) =>
-                    prev.map((m) => (m.id === placeholderId ? { ...m, content: acc, pending: false } : m))
+                    prev.map((m) =>
+                      m.id === placeholderId
+                        ? { ...m, content: acc, pending: false, toolHint }
+                        : m
+                    )
+                  );
+                }
+              } catch {
+                // ignore malformed
+              }
+            } else if (event === "tool") {
+              // Server told us a tool was invoked. Show a small hint while
+              // we wait for the streamed answer.
+              try {
+                const parsed = JSON.parse(dataStr) as { name?: string };
+                if (parsed.name === "check_availability") {
+                  toolHint = isIt
+                    ? "Controllo la disponibilità in tempo reale…"
+                    : "Checking live availability…";
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === placeholderId ? { ...m, content: acc, pending: false, toolHint } : m
+                    )
                   );
                 }
               } catch {
@@ -378,6 +404,12 @@ export default function ChatWidget() {
                   className={`chat-bubble ${m.role === "user" ? "chat-bubble-user" : "chat-bubble-bot"}${m.error ? " chat-bubble-error" : ""}`}
                 >
                   {m.content || (m.pending ? <span className="chat-typing" aria-label={t.thinking}><span /><span /><span /></span> : "")}
+                  {!m.content && m.toolHint && (
+                    <span className="chat-tool-hint" aria-live="polite">{m.toolHint}</span>
+                  )}
+                  {m.content && m.toolHint && (
+                    <span className="chat-tool-hint chat-tool-hint-inline" aria-live="polite">{m.toolHint}</span>
+                  )}
                 </div>
               </div>
             ))}
