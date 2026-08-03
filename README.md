@@ -281,56 +281,60 @@ conclusion: success` — i.e. it only fires after CI is green.
 
 ### First-time VPS bootstrap (manual, one-time)
 
-The GitHub Actions `deploy` job assumes the VPS is already prepared. Run the
-following once, as `root`, on a fresh Ubuntu 22.04+ VPS:
+The GitHub Actions `deploy` job assumes the VPS is already prepared. All of
+the following is automated by **`infra/scripts/bootstrap-vps.sh`** — run it
+once, as `root`, on a fresh Ubuntu 24.04 VPS, then follow the printed
+"next steps" section.
+
+#### Prerequisites
+
+- Contabo Cloud VPS 4 (or equivalent) with a known public IP
+- SSH key delivered by Contabo (or your own keypair)
+- DNS for `wwfcrotone.it` already pointed at Cloudflare
+
+#### Order of execution
 
 ```bash
-# 1. System packages + Docker
-apt-get update && apt-get -y upgrade
-apt-get install -y ca-certificates curl gnupg ufw fail2ban
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
-apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-systemctl enable --now docker
+# 0. SSH in as root
+ssh root@<VPS_IP>
 
-# 2. Firewall
-ufw default deny incoming && ufw default allow outgoing
-ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp
-ufw enable
-
-# 3. deploy user (no password, sudo NOPASSWD only for docker)
-useradd -m -s /bin/bash deploy
-usermod -aG docker deploy
-echo "deploy ALL=(ALL) NOPASSWD: /usr/bin/docker" > /etc/sudoers.d/deploy-deploy
-
-# 4. Authorize the GitHub Actions SSH key (paste the *public* half of VPS_SSH_KEY)
-mkdir -p /home/deploy/.ssh && chmod 700 /home/deploy/.ssh
-cat > /home/deploy/.ssh/authorized_keys <<'EOF'
-ssh-ed25519 AAAA… github-actions-deploy
-EOF
-chmod 600 /home/deploy/.ssh/authorized_keys && chown -R deploy:deploy /home/deploy/.ssh
-
-# 5. Clone the repo
-sudo -u deploy git clone https://github.com/EliseyRotar/wwf-crotone-website.git /srv/wwf/repo
-sudo -u deploy mkdir -p /srv/wwf/{nginx/conf.d,nginx/log,assets/images,assets/logos,assets/downloads,assets/uploads,postgres/data,redis/data,scripts}
-sudo -u deploy cp -r /srv/wwf/repo/infra/nginx/conf.d/* /srv/wwf/nginx/conf.d/
-sudo -u deploy cp /srv/wwf/repo/infra/docker-compose.yml /srv/wwf/docker-compose.yml
-sudo -u deploy cp /srv/wwf/repo/scripts/smoke-test.sh /srv/wwf/scripts/smoke-test.sh
-chmod +x /srv/wwf/scripts/smoke-test.sh
-
-# 6. Production env (see infra/.env.production.example for the full template)
-sudo -u deploy nano /srv/wwf/.env.production   # chmod 600 automatically
-
-# 7. Cloudflare Origin certificate (15y, *.wwfcrotone.it + wwfcrotone.it)
-mkdir -p /etc/ssl/cloudflare
-# …paste cert.pem and key.pem from the Cloudflare dashboard → SSL/TLS → Origin Server
-chmod 600 /etc/ssl/cloudflare/key.pem
-
-# 8. Bring up the stack
-cd /srv/wwf && docker compose up -d --build
-docker compose logs -f app    # wait for "Ready" + /api/health 200
+# 1. Fetch the script (or rsync it from your workstation)
+curl -fsSL https://raw.githubusercontent.com/EliseyRotar/wwf-crotone-website/main/infra/scripts/bootstrap-vps.sh -o /tmp/bootstrap-vps.sh
+bash /tmp/bootstrap-vps.sh
 ```
+
+The script is **idempotent** (uses `set -euo pipefail`, skips completed steps)
+and performs, in order:
+
+1. `apt update && apt -y upgrade` + base packages (ufw, fail2ban, unattended-upgrades, curl, git, jq…)
+2. UFW firewall (22, 80, 443) + fail2ban
+3. `unattended-upgrades` for security patches only
+4. `deploy` user with NOPASSWD sudo + docker group
+5. Docker Engine + Compose plugin (via `get.docker.com`)
+6. `/srv/wwf/{nginx,postgres,redis,assets,backups,scripts,walg,repo}` + `/var/log/wwf` + `/etc/ssl/cloudflare`
+7. `git clone` of the repo into `/srv/wwf/repo`
+8. `cp -r infra/.` into `/srv/wwf` + helper scripts into `/srv/wwf/scripts/`
+9. `/etc/cron.d/wwf-backups` (nightly R2 base backup @ 03:00 UTC, WAL archive every minute, weekly restore drill Sunday 04:00 UTC)
+10. Final summary with the public IP, SSH host-key fingerprint, and explicit next steps
+
+#### After the script finishes
+
+| # | Action | Command |
+|---|---|---|
+| 1 | Authorize your (and GitHub Actions') SSH keys for `deploy` | `sudo -u deploy bash -c 'echo "ssh-ed25519 AAAA…" >> /home/deploy/.ssh/authorized_keys'` |
+| 2 | Drop the Cloudflare **Origin** certificate (15y, `*.wwfcrotone.it` + `wwfcrotone.it`) into `/etc/ssl/cloudflare/{cert.pem,key.pem}` | `chmod 644 /etc/ssl/cloudflare/cert.pem && chmod 600 /etc/ssl/cloudflare/key.pem` |
+| 3 | Fill the production env from the template | `sudo -u deploy cp /srv/wwf/.env.production.example /srv/wwf/.env.production && sudo -u deploy nano /srv/wwf/.env.production` |
+| 4 | Bring the stack up | `cd /srv/wwf && docker compose up -d --build` |
+| 5 | Verify | `bash /srv/wwf/scripts/smoke-test.sh` then `bash /srv/wwf/scripts/post-deploy.sh` |
+| 6 | Schedule the restore drill (already installed as a weekly cron, but you can run it on-demand to verify) | `bash /srv/wwf/scripts/test-restore.sh` |
+
+#### Helper scripts in `infra/scripts/`
+
+| Script | Purpose | When it runs |
+|---|---|---|
+| `bootstrap-vps.sh` | One-time provisioning of the VPS (OS, firewall, Docker, dirs, repo clone, cron). | Once, as `root`. |
+| `post-deploy.sh` | Post-deploy smoke + health summary. Exits non-zero on failure so the CI `deploy` job fails loudly. | After every GitHub Actions deploy. |
+| `test-restore.sh` | Pulls the latest WAL-G base backup from R2, restores into a throwaway Postgres, and emails `wwfcrotone26@gmail.com` the result. | Weekly (Sunday 04:00 UTC) via cron, or on-demand. |
 
 After this, every push to `main` that passes CI is deployed automatically.
 The first deploy job will run `prisma migrate deploy` (via the `migrate`
