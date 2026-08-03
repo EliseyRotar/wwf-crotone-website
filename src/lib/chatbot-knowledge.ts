@@ -170,7 +170,7 @@ const IT_BODY = `INFORMAZIONI SUI CAMPI DI VOLONTARIATO WWF CROTONE — Estate 2
 - Per qualsiasi dubbio: wwfcrotone26@gmail.com.
 
 LINK UTILI
-- Sito: https://www.wwfcrotone.it
+- Sito: https://wwfcrotone.it
 - Brochure completa: /downloads/INFO_CAMPI_2026_WWF.pdf
 - Privacy policy: /privacy
 - Contatti: /contact
@@ -311,7 +311,7 @@ const EN_BODY = `INFORMATION ABOUT WWF CROTONE VOLUNTEER CAMPS — Summer 2026
 - For any question: wwfcrotone26@gmail.com.
 
 USEFUL LINKS
-- Website: https://www.wwfcrotone.it
+- Website: https://wwfcrotone.it
 - Full brochure: /downloads/INFO_CAMPI_2026_WWF.pdf
 - Privacy policy: /privacy
 - Contact: /contact
