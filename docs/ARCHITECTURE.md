@@ -1,57 +1,63 @@
 # WWF Crotone Volunteer Camps — Production Architecture
 
-**Version:** 1.0 — pre-launch
+**Version:** 2.0 — lean budget
 **Domain:** `wwfprovinciadicrotone.it`
 **Target launch:** Summer 2026 camp season (June 21)
+**Hard budget cap:** €200/year TOTAL (VPS + domain + everything)
 
-This document is the source of truth for how the site is deployed, why each piece was chosen, and exactly how to provision it.
+This document is the source of truth for how the site is deployed, why each piece was chosen, and how to provision it. It supersedes v1.0 (see git history) and reflects a reduced budget while preserving GDPR, security, and reliability.
 
 ---
 
-## 1. Goals & non-goals
+## 1. Executive summary
+
+A public volunteer registration site for 12 weekly camps, per-volunteer accounts, admin panel, IT/EN bilingual, GDPR-compliant — all for €200/year total. Roughly 5× cheaper than the original €940/yr stack. We gave up: Cloudflare Pro WAF custom rules, 1-min uptime checks, Sentry Team (multi-user, 90d retention), Grafana self-hosted, paid email at scale. We did **not** give up: GDPR, magic-link auth, AI chatbot, audit log, automated backups, EU data residency, PII scrubbing, rate limiting, or any security hardening. Every cut has a documented mitigation.
+
+---
+
+## 2. Goals & non-goals
 
 **Goals**
-- Public volunteer registration site (12 weekly camps June–September 2026)
-- Per-volunteer account area (magic-link login, editable booking, receipt upload, GDPR)
-- Admin panel for managing bookings, receipts, gallery, blog
+- Public volunteer registration (12 weekly camps, June–Sept 2026)
+- Per-volunteer account area (magic-link, editable booking, receipt upload, GDPR)
+- Admin panel for bookings, receipts, gallery, blog
 - Italian + English bilingual
-- GDPR-compliant (EU data residency, self-service export/delete, cookie consent)
-- Cheap enough for an NGO but reliable enough that registrations don't drop during peak weeks
-- Auditable, recoverable, observable
+- GDPR-compliant (EU residency, self-service export/delete, cookie consent)
+- Total cost ≤ €200/yr
+- Auditable, recoverable, observable enough for an NGO
 
-**Non-goals (for v1)**
+**Non-goals (v1)**
 - Multi-region failover
-- Real-time chat between volunteers
+- Real-time volunteer chat
 - Native mobile app
-- WhatsApp Business API (wa.me link is the v1 contact channel)
-- Stripe / online payments (bank transfer only for v1)
+- WhatsApp Business API (wa.me link only)
+- Online payments (bank transfer only)
+- 24/7 staffed on-call (Instatus + email alerts)
 
 ---
 
-## 2. The architecture in one picture
+## 3. The architecture in one picture
 
 ```
                                    ┌─────────────────────────────────┐
-   Internet visitor ─── HTTPS ────► │   Cloudflare (Pro, edge proxy)  │
-                                   │   ─ DNS, CDN, WAF, DDoS, SSL   │
-                                   │   ─ Email Routing               │
-                                   │   ─ Access (Grafana + admin)   │
+   Internet visitor ─── HTTPS ────► │   Cloudflare (Free plan)        │
+                                   │   ─ DNS, CDN, SSL, DDoS (L3-7)  │
+                                   │   ─ Email Routing (free)        │
+                                   │   ─ R2 (free 10 GB)             │
                                    └────────────────┬────────────────┘
-                                                    │  (CF-Connecting-IP = real IP)
+                                                    │  (CF-Connecting-IP)
                                                     ▼
                           ┌─────────────────────────────────────────┐
-                          │  Hetzner Falkenstein (CCX23, €29.90/mo) │
+                          │  Contabo Cloud VPS 4 (€5.50/mo promo)   │
+                          │  4 vCPU · 8 GB RAM · 100 GB SSD · EU    │
                           │  ──────────────────────────────────── │
                           │  Docker Compose stack:                  │
                           │   ┌─────────────────────────────────┐   │
-                          │   │ nginx (reverse proxy + TLS)     │◄──┼─── CF Universal SSL terminates here
+                          │   │ nginx (reverse proxy + TLS)     │◄──┼── CF Origin cert
                           │   └────────┬────────────────────────┘   │
                           │            ▼                             │
                           │   ┌─────────────────────────────────┐   │
                           │   │ app  (Next.js 15 standalone)    │   │
-                          │   │  — Port 3000                    │   │
-                          │   │  — Build: npm run build && start│   │
-                          │   │  — Health: /api/health          │   │
                           │   └────┬─────────────────────┬──────┘   │
                           │        │                     │          │
                           │        ▼                     ▼          │
@@ -59,509 +65,212 @@ This document is the source of truth for how the site is deployed, why each piec
                           │   │ postgres│          │ walg-sidecar│   │
                           │   │  (16)   │◄─────────│  (backup)   │   │
                           │   └─────────┘          └──────┬──────┘   │
-                          │                               │          │
                           │   ┌─────────┐                  ▼          │
                           │   │ redis   │           ┌──────────┐     │
-                          │   │ (cache  │           │Backblaze │     │
-                          │   │  only)  │           │   B2     │     │
-                          │   └─────────┘           │wwf-backups    │
-                          │                        └──────────┘     │
-                          │                                          │
-                          │   ┌─────────────────────────────────┐   │
-                          │   │ prometheus  (scrapes /metrics)  │   │
-                          │   │ grafana     (admin dashboards)  │◄──┼─── Behind Cloudflare Access
-                          │   │ node-exporter                    │   │
-                          │   └─────────────────────────────────┘   │
-                          │                                          │
-                          │   ┌─────────────────────────────────┐   │
-                          │   │ fail2ban + ufw (host firewall)  │   │
-                          │   │ unattended-upgrades (Ubuntu)    │   │
-                          │   └─────────────────────────────────┘   │
+                          │   │(cache)  │           │ Cloudflare│     │
+                          │   └─────────┘           │   R2     │     │
+                          │                        │ (10 GB)  │     │
+                          │   fail2ban + ufw +      └──────────┘     │
+                          │   unattended-upgrades                    │
                           └─────────────────────────────────────────┘
                                                     │
                           ┌─────────────────────────┼─────────────────┐
                           ▼                         ▼                 ▼
                   ┌───────────────┐         ┌───────────────┐   ┌─────────────┐
-                  │  Groq Cloud   │         │ Sentry.io     │   │ Upstash     │
-                  │  (free tier)  │         │ (Team $26/mo) │   │ Redis free  │
-                  │  llama-3.3    │         │  + sourcemaps │   │ tier        │
-                  └───────────────┘         └───────────────┘   └─────────────┘
-                          ▲                         ▲
-                          │ chatbot tokens           │ server + client errors
-                          │ (server-side only)       │ (scrubbed for PII)
-                          │                         │
-                  ┌───────┴─────────────────────────┴───────┐
-                  │  Outbound email: Gmail SMTP             │
-                  │  (wwfcrotone26@gmail.com → volunteers)   │
-                  └─────────────────────────────────────────┘
+                  │  Groq Cloud   │         │ Sentry.io     │   │ UptimeRobot │
+                  │  (free)       │         │ Developer     │   │ (free, 5-mo │
+                  │  llama-3.3    │         │ (free)        │   │  5-min int) │
+                  └───────────────┘         └───────┬───────┘   └──────┬──────┘
+                          ▲                         │                 │
+                          │ chatbot tokens           │ 1 user, 5K/mo  │ 1 probe
+                          │ server-side only         │ 30d retention  │
+                          │                         │                ▼
+                  ┌───────┴─────────────────────────┴───────┐  ┌─────────────┐
+                  │  Outbound email: Brevo SMTP (free)      │  │  Instatus   │
+                  │  300/day cap, Gmail SMTP fallback       │  │  (free)     │
+                  │  wwfcrotone26@gmail.com existing inbox  │  │ status.*    │
+                  └─────────────────────────────────────────┘  └─────────────┘
 ```
 
 ---
 
-## 3. Stack & rationale
+## 4. Stack & rationale
 
-### 3.1 Frontend & runtime
+### 4.1 Frontend & runtime
 | Layer | Choice | Why |
 |---|---|---|
-| Framework | Next.js 15 App Router | Already built. Server components + RSC + edge middleware. |
+| Framework | Next.js 15 App Router | Already built. |
 | Language | TypeScript (strict) | Already in place. |
 | Styling | Tailwind 3 + CSS variables | Already in place. |
 | i18n | next-intl | Already in place. |
 
-### 3.2 Hosting — Hetzner Cloud
+### 4.2 Hosting — Contabo Cloud VPS 4
 | | |
 |---|---|
-| **Tier** | CCX23 (Dedicated vCPU) |
-| **vCPU** | 4 (AMD) |
-| **RAM** | 16 GB |
-| **SSD** | 160 GB |
-| **Region** | Falkenstein, Germany (`fsn1`) |
-| **Cost** | €29.90/mo |
-| **Why Hetzner** | EU data residency (GDPR), 5× cheaper than AWS/GCP equivalent, excellent network, instant provisioning |
-| **Why CCX23** | Generous headroom for Postgres + Next.js + Redis + Prometheus + Grafana + WAL-G sidecar all on one box. CCX23 dedicated vCPU avoids noisy-neighbour issues. |
+| **Tier** | Cloud VPS 4 (promo, 24-mo commit) |
+| **Spec** | 4 vCPU shared · 8 GB RAM · 100 GB NVMe · IPv4+IPv6 |
+| **Traffic** | "Unlimited" (200 Mbps fair-use) |
+| **Region** | EU (Germany) |
+| **Cost** | ~€5.50/mo · ~€66/yr |
+| **Why Contabo** | ~5× cheaper than Hetzner CCX23, EU residency, instant provisioning. Shared vCPU is fine — we are the only workload on the box. |
 
-### 3.3 Edge — Cloudflare Pro
+### 4.3 Edge — Cloudflare Free
 | | |
 |---|---|
-| **Plan** | Pro ($20/mo) |
-| **What it gives us** | Global CDN (300+ POPs), WAF, unmetered DDoS protection (L3/L4/L7), Universal SSL, advanced analytics, Email Routing (free), Access (free up to 50 users), Registrar (at-cost) |
-| **Why Pro not Free** | WAF custom rules + 24h email support + rate-limit rules. Free tier's WAF is too limited. |
+| **What it gives us** | Global CDN, unmetered DDoS (L3-L7), Universal SSL, managed WAF ruleset, Email Routing, R2 (10 GB free), Registrar at-cost. |
+| **What we gave up** | Custom WAF rules, advanced analytics, 24h email support. **Mitigation:** Nginx `limit_req` + per-route app rate limits + fail2ban cover abuse vectors. |
+| **Why Free not Pro** | WAF custom rules are nice-to-have, not need-to-have. |
 
-### 3.4 Domain — `wwfprovinciadicrotone.it`
-| | |
-|---|---|
-| **Registrar** | Cloudflare Registrar |
-| **Cost** | At-cost (~€10-15/yr, NIC.it registry fee) |
-| **Why Cloudflare Registrar** | At-cost pricing, free WHOIS privacy, instant DNS propagation, no markup |
-| **Requirement** | .it requires EU-resident individual or EU-registered organization. Provide your Codice Fiscale or VAT ID at registration. |
+### 4.4 Domain — `wwfprovinciadicrotone.it`
+At-cost via Cloudflare Registrar (~€8/yr, NIC.it registry fee). Free WHOIS privacy. `.it` requires EU-resident individual or EU-registered org (Codice Fiscale or VAT ID at registration).
 
-### 3.5 Database — Self-hosted Postgres 16
-| | |
-|---|---|
-| **Engine** | PostgreSQL 16 (Docker image: `postgres:16-alpine`) |
-| **Storage** | 20 GB on VPS SSD (volume mount: `/srv/wwf/postgres`) |
-| **Backups** | WAL-G → Backblaze B2 (continuous WAL + nightly base backup) |
-| **Why self-hosted** | Cheapest for this size. Supabase free tier would also work, but self-hosted gives full control + zero third-party data access (best for GDPR). |
-| **Migration** | `prisma migrate deploy` runs as a one-shot on every deploy via `docker compose run migrate` |
+### 4.5 Database — Self-hosted Postgres 16
+`postgres:16-alpine` in Docker, 30 GB on VPS SSD, WAL-G → Cloudflare R2. Self-hosted = cheapest + zero third-party data access (best for GDPR). Migrations run via `docker compose run migrate` on every deploy.
 
-### 3.6 Rate limiting — Upstash Redis free tier
-| | |
-|---|---|
-| **Tier** | Free (10K commands/day, 1 database, 256 MB) |
-| **What it's for** | Distributed rate limiter (replaces in-memory when running multi-instance in future) |
-| **Why Upstash** | Zero ops, free, HTTP API (works with edge), GDPR-compliant (EU region available) |
+### 4.6 Cache + rate limiting — local Redis
+Redis 7 in Docker, 128 MB cap, LRU eviction, no persistence (cache only). Sessions live in JWT-signed cookies (`jose`), not Redis — so cache loss on restart is harmless. We have 8 GB RAM to spare; no need for Upstash.
 
-### 3.7 Email
+### 4.7 Email
 | Address | Purpose | How |
 |---|---|---|
-| `wwfcrotone26@gmail.com` | Existing inbox, all replies | Stays as-is |
-| `wwfcrotone@legalmail.it` | Legal PEC (Italian certified email) | Stays as-is (separate provider) |
-| **Outbound** transactional | Booking confirmations, magic links, admin notifications | Gmail SMTP via `wwfcrotone26@gmail.com` (current setup) |
-| `info@wwfprovinciadicrotone.it` | Public-facing contact | Cloudflare Email Routing → forwards to `wwfcrotone26@gmail.com` |
-| `noreply@wwfprovinciadicrotone.it` | (Future) System emails | Cloudflare Email Routing → drops to black hole |
+| `wwfcrotone26@gmail.com` | Existing inbox, replies | Stays as-is |
+| `wwfcrotone@legalmail.it` | Italian PEC | Stays as-is (separate provider) |
+| Outbound transactional | Confirmations, magic links, admin alerts | **Brevo SMTP** (free, 300/day) · fallback Gmail SMTP |
+| `info@…` | Public contact | CF Email Routing → Gmail |
+| `noreply@…` | (Future) System mail | CF Email Routing → black hole |
 
-**Note on Gmail SMTP:** works for low volume (≤500 emails/day). When you exceed 500/day, switch to Resend (free 100/day, $20/mo for 50K) or Amazon SES ($0.10 per 1K).
+**Why Brevo:** 300/day covers peak (June launch ≈ 130/day). The app's mailer transparently falls back to Gmail SMTP if Brevo's quota is hit.
 
-### 3.8 WhatsApp
-| | |
+### 4.8 WhatsApp
+`wa.me/393513945109` link on `/contact` and `/account`. No Business API (Meta onboarding is too heavy for a volunteer NGO).
+
+### 4.9 Error tracking — Sentry Developer (free)
+5K errors/mo, 50K spans, 30d retention, 1 user. Mature Next.js integration, sourcemap support, beforeSend PII scrub already in `sentry.server.config.ts`. Only the admin gets alerts (via `wwfcrotone26@gmail.com`).
+
+### 4.10 Monitoring — UptimeRobot + Instatus
+| Tool | What |
 |---|---|
-| **Channel** | `wa.me/393513945109` (link only, no API) |
-| **Where** | `/contact` page + `/account` dashboard footer |
-| **Why no Business API** | Meta onboarding takes ~2 weeks and requires business documents. wa.me link is instant and free. |
+| **UptimeRobot Free** | 5 HTTP/HTTPS probes, 5-min interval, email + webhook alerts on `*/api/health` |
+| **Instatus Free** | Public status page (`wwfprovinciadicrotone.instatus.com` or `status.wwfprovinciadicrotone.it`). Components: Site, API, Database, Email. |
 
-### 3.9 Error tracking — Sentry Team
-| | |
-|---|---|
-| **Plan** | Team ($26/mo) |
-| **Errors** | 50K/month included |
-| **Spans** | 5M/month |
-| **Logs** | 5 GB/month |
-| **Retention** | 90 days |
-| **Why Sentry** | Industry standard, mature Next.js integration, sourcemap support, beforeSend hooks already wired in `sentry.server.config.ts` to scrub PII |
+**Why no Prometheus/Grafana:** self-hosting on the same VPS wastes RAM and adds a stack to babysit. UptimeRobot + Instatus covers 95% of observability (uptime, public status, email alerts). Deep debugging via SSH + `docker stats` / `htop`.
 
-### 3.10 Monitoring — Prometheus + Grafana
-| | |
-|---|---|
-| **Prometheus** | Self-hosted in Docker, scrapes `/metrics` endpoints (app + nginx + node-exporter) |
-| **Grafana** | Self-hosted in Docker, behind Cloudflare Access |
-| **URL** | `status.wwfprovinciadicrotone.it` |
-| **Auth** | Cloudflare Access email OTP (free, ≤50 users) |
-| **Dashboards** | App latency, DB connections, Redis ops, container CPU/mem, Nginx req/s, 4xx/5xx rate, disk usage |
+### 4.11 Backups — WAL-G → Cloudflare R2
+- **Tool:** WAL-G (continuous WAL archiver)
+- **Dest:** R2 bucket `wwf-backups` (EU region hint)
+- **Retention:** 30 days of WAL + 12 monthly base backups (auto-pruned)
+- **Schedule:** Base backup nightly 03:00 UTC, WAL continuous
+- **Restore drill:** Weekly Sunday 04:00 UTC — spin up throwaway Postgres, restore + integrity-check, email result to admin
+- **Free-tier math:** R2 free = 10 GB storage, 1M Class A / 10M Class B ops/mo. Estimated usage: 2-3 GB, ~50K ops/mo. 5× headroom.
 
-### 3.11 Backups — WAL-G → Backblaze B2
-| | |
-|---|---|
-| **Tool** | WAL-G (Postgres continuous WAL archiver) |
-| **Destination** | Backblaze B2 bucket `wwf-backups` (EU region) |
-| **Retention** | 30 days of continuous WAL + 12 monthly base backups |
-| **Schedule** | Base backup: nightly at 03:00 UTC. WAL: continuous (every ~16 MB or 60s). |
-| **Restore drill** | Weekly cron at Sunday 04:00 UTC: spins up a throwaway Postgres container, restores latest backup, runs integrity check, emails result to admin. |
-
-### 3.12 CI/CD — GitHub Actions
-| | |
-|---|---|
-| **Trigger** | Push to `main` |
-| **Pipeline** | `npm ci` → `npm run typecheck` → `npm run lint` → `npm test` → `npm run build` → `docker build` → `docker save` → `rsync` to VPS → `docker compose up -d` |
-| **Rollback** | `git revert && git push` (last good image is kept on VPS for 7 days) |
-| **Why not GHCR** | Simpler — no separate registry. Image size is ~500 MB, rsync takes 5s on a Hetzner internal network. |
+### 4.12 CI/CD — GitHub Actions
+`push to main` → `npm ci` → typecheck/lint/test → `npm run build` → `docker build` → `docker save` → `rsync` to VPS → `docker compose up -d`. Rollback = `git revert && git push`. No separate registry (image is ~500 MB, rsync is fast on Contabo internal network).
 
 ---
 
-## 4. DNS records
+## 5. Trade-offs we accepted (and how we mitigate them)
 
-All managed in Cloudflare. Orange-cloud = proxied through CF (DDoS protection, CDN). Grey-cloud = direct.
+| What we cut | Why it hurts | Mitigation |
+|---|---|---|
+| **No CF WAF custom rules** | Can't block specific UAs / countries / paths at edge. | Nginx `limit_req` zones (general 30 r/s, api 10 r/s, auth 2 r/s) + per-route token buckets in `src/lib/rateLimit.ts` + fail2ban on SSH. CF's *managed* WAF ruleset still active. |
+| **5-min uptime interval** (not 1-min) | 4-5 min of downtime could pass before alert. | Acceptable for a registration site, not a payment system. UptimeRobot fires email + webhook the moment the 5-min probe fails. |
+| **Brevo free = 300/day** | Hard cap on transactional email. | 300/day is 3× expected peak (≈130/day at launch). Mailer falls back to Gmail SMTP (≤500/day). Magic-link requests rate-limited per email (1/60s, 10/day). |
+| **R2 free = 10 GB** | Backups beyond 10 GB would fail or bill. | WAL-G retention = 30d + 12 monthly. Estimated 2-3 GB. Nightly `du` warning to admin if approaching limit. |
+| **Sentry Dev = 1 user** | Only admin sees Sentry. | We don't need multi-user access. Errors route to a single Gmail inbox. |
+| **Sentry Dev = 5K errors/mo, 30d** | Below old 50K cap, 30d history. | beforeSend drops 4xx noise + PII; real errors stay well under 5K/mo. 30d is enough to catch seasonal regressions. |
+| **No Grafana** | No per-container CPU/mem/latency views. | UptimeRobot (up/down) + Instatus (public) covers the 95% case. SSH + `docker stats` for deep debugging. |
+| **Contabo fair-use 200 Mbps** | Heavy traffic could be throttled. | CF CDN serves static assets; origin only sees dynamic. 50-100 concurrent users at peak won't hit 200 Mbps. |
+| **No Redis persistence** | Cache loss on restart. | Cache is non-critical (DB is source of truth). Sessions are JWT-signed cookies. |
+
+---
+
+## 6. What we kept at full quality
+
+These cost nothing extra to keep and are non-negotiable for an NGO handling personal data:
+
+- **GDPR** — EU residency (Contabo EU + R2 EU), privacy policy, cookie consent, self-service data export, deletion request, DPIA-ready
+- **TLS everywhere** — HSTS preload, TLS 1.2/1.3 only, CF Origin cert pinned in Nginx
+- **CSP strict** — no `unsafe-inline` in prod (in `next.config.js`)
+- **Magic-link auth** — jose-signed JWT, single-use tokens, 15-min expiry, bcrypt for any password fallback
+- **PII scrubbing in Sentry** — `beforeSend` strips email, phone, fiscal code, PII regex matches
+- **AI chatbot** — Groq Cloud free, llama-3.3, server-side only, system prompt restricted to WWF domain
+- **Audit log** — every booking edit, magic-link request, admin action logged with actor + timestamp + before/after diff
+- **Backups** — continuous WAL + nightly base, weekly restore drill with email report
+- **File upload validation** — magic bytes (not MIME) for receipts
+- **Rate limiting** — Nginx edge + per-route app
+- **Firewall** — UFW (only 22/80/443), fail2ban on SSH, unattended-upgrades
+- **IT/EN i18n** — full parity; admin panel Italian-only by design
+
+---
+
+## 7. DNS records
+
+All managed in Cloudflare. Orange-cloud = proxied (CDN + DDoS). Grey-cloud = direct.
 
 | Type | Name | Value | Proxy | Purpose |
 |---|---|---|---|---|
 | A | `@` | `<VPS_IP>` | ✅ | Main site |
 | A | `www` | `<VPS_IP>` | ✅ | www redirect |
 | A | `admin` | `<VPS_IP>` | ✅ | /admin (Italian-only) |
-| A | `status` | `<VPS_IP>` | ❌ | Grafana (only reachable behind CF Access) |
-| A | `cdn` | `<VPS_IP>` | ✅ | Static assets subdomain (future use) |
-| MX | `@` | `route1.mx.cloudflare.net` (priority 18) | n/a | Cloudflare Email Routing inbound |
-| MX | `@` | `route2.mx.cloudflare.net` (priority 92) | n/a | Cloudflare Email Routing inbound backup |
-| MX | `@` | `route3.mx.cloudflare.net` (priority 92) | n/a | Cloudflare Email Routing inbound backup |
-| TXT | `@` | `v=spf1 include:_spf.google.com ~all` | n/a | SPF (allow Gmail to send as this domain) |
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:wwfcrotone26@gmail.com` | n/a | DMARC policy |
-| TXT | `cf2024-1` | `<cloudflare-verification>` | n/a | Cloudflare domain verification (auto-added) |
+| CNAME | `status` | `wwfprovinciadicrotone.instatus.com` | ✅ | Instatus status page |
+| MX | `@` | `route1.mx.cloudflare.net` (prio 18) | n/a | CF Email Routing in |
+| MX | `@` | `route2.mx.cloudflare.net` (prio 92) | n/a | CF Email Routing in backup |
+| MX | `@` | `route3.mx.cloudflare.net` (prio 92) | n/a | CF Email Routing in backup |
+| TXT | `@` | `v=spf1 include:_spf.brevo.com include:_spf.google.com ~all` | n/a | SPF (Brevo + Gmail) |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:wwfcrotone26@gmail.com` | n/a | DMARC |
+| TXT | `cf2024-1` | `<cloudflare-verification>` | n/a | CF domain verification (auto) |
 
-**Cloudflare Email Routing rules** (set up in CF dashboard after domain added):
-- `info@wwfprovinciadicrotone.it` → `wwfcrotone26@gmail.com` (catch-all to your inbox)
-- `*@wwfprovinciadicrotone.it` (catch-all) → `wwfcrotone26@gmail.com`
+**CF Email Routing rules:** `info@…` → `wwfcrotone26@gmail.com`; catch-all `*@…` → `wwfcrotone26@gmail.com`.
 
 ---
 
-## 5. Server architecture
+## 8. Server architecture
 
-### 5.1 Filesystem layout (on VPS)
+### 8.1 Filesystem layout (on VPS)
 
 ```
 /srv/wwf/
 ├── docker-compose.yml          # Main stack
-├── docker-compose.monitoring.yml  # Prometheus + Grafana (separate so monitor can survive app restart)
 ├── .env                        # Secrets (chmod 600, owned by deploy user)
-├── nginx/
-│   ├── nginx.conf              # Reverse proxy config
-│   └── conf.d/
-│       ├── app.conf            # Site config
-│       └── grafana.conf        # Grafana subdomain
-├── postgres/
-│   └── data/                   # PG data dir (mounted into container)
-├── walg/
-│   └── env                     # WAL-G env vars (chmod 600)
+├── nginx/conf.d/app.conf       # Reverse proxy
+├── postgres/data/              # PG data dir
+├── walg/env                    # WAL-G env (chmod 600)
 ├── backups/                    # Local copy of recent backups (last 7 days)
-├── letsencrypt/                # Backup of Cloudflare Origin cert (we use CF Universal SSL)
-└── deploy/
-    └── latest.tar.gz           # Last successful deploy bundle
+└── deploy/latest.tar.gz        # Last successful deploy bundle
 
 /etc/
 ├── fail2ban/jail.local         # SSH brute-force protection
-├── ufw/                        # Firewall rules (managed by ufw CLI)
-└aptic/                         # Auto-update schedule
+├── ufw/                        # Firewall rules
+└── apt/20auto-upgrades         # Security-patch schedule
 
-/var/log/wwf/
-├── nginx-access.log
-├── nginx-error.log
-├── app.log                     # Next.js stdout
-└── prometheus/
+/var/log/wwf/                   # nginx + app logs
 ```
 
-### 5.2 Docker Compose — main stack (`/srv/wwf/docker-compose.yml`)
+### 8.2 Docker Compose — main stack
+Services: `app` (Next.js, port 3000), `migrate` (one-shot `prisma migrate deploy`), `postgres:16-alpine` (30 GB volume), `redis:7-alpine` (128 MB cap, no persistence), `nginx:1.27-alpine` (ports 80/443, CF Origin cert mounted).
 
-```yaml
-services:
-  app:
-    image: wwf-app:latest
-    build: .
-    restart: unless-stopped
-    expose: ["3000"]
-    environment:
-      DATABASE_URL: postgresql://wwf:${POSTGRES_PASSWORD}@postgres:5432/wwf
-      REDIS_URL: redis://redis:6379
-      NODE_ENV: production
-      AUTH_SECRET: ${AUTH_SECRET}
-      GROQ_API_KEY: ${GROQ_API_KEY}
-      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
-      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
-      SMTP_HOST: smtp.gmail.com
-      SMTP_PORT: "465"
-      SMTP_SECURE: "true"
-      SMTP_USER: wwfcrotone26@gmail.com
-      SMTP_PASS: ${SMTP_PASS}
-      ADMIN_NOTIFY_EMAIL: wwfcrotone26@gmail.com
-      SENTRY_DSN: ${SENTRY_DSN}
-      NEXT_PUBLIC_SITE_URL: https://wwfprovinciadicrotone.it
-      NEXT_PUBLIC_VERGARI_URL: https://www.riservanaturaledelvergari.it/
-      TRUSTED_PROXY_HEADER: cf-connecting-ip
-    depends_on:
-      postgres: { condition: service_healthy }
-      redis: { condition: service_healthy }
-    networks: [appnet]
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+Each service has `restart: unless-stopped` (except `migrate`), healthchecks, and a private `appnet` bridge network. Only Nginx publishes ports.
 
-  migrate:
-    image: wwf-app:latest
-    build: .
-    restart: "no"
-    command: ["npx", "prisma", "migrate", "deploy"]
-    environment: # same as app
-    depends_on:
-      postgres: { condition: service_healthy }
-    networks: [appnet]
+Full compose file: see `infra/docker-compose.yml` in the repo (kept in sync with this doc).
 
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: wwf
-      POSTGRES_USER: wwf
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - /srv/wwf/postgres/data:/var/lib/postgresql/data
-    expose: ["5432"]
-    networks: [appnet]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U wwf -d wwf"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
-    expose: ["6379"]
-    networks: [appnet]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  nginx:
-    image: nginx:1.27-alpine
-    restart: unless-stopped
-    ports: ["80:80", "443:443"]
-    volumes:
-      - /srv/wwf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /srv/wwf/nginx/conf.d:/etc/nginx/conf.d:ro
-      - /var/log/wwf:/var/log/wwf
-    depends_on:
-      app: { condition: service_healthy }
-    networks: [appnet]
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-networks:
-  appnet:
-    driver: bridge
-```
-
-### 5.3 Monitoring stack (`/srv/wwf/docker-compose.monitoring.yml`)
-
-```yaml
-services:
-  prometheus:
-    image: prom/prometheus:v2.55.0
-    restart: unless-stopped
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=30d'
-    volumes:
-      - /srv/wwf/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
-    expose: ["9090"]
-    networks: [monnet]
-
-  grafana:
-    image: grafana/grafana:11.3.0
-    restart: unless-stopped
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      GF_USERS_ALLOW_SIGN_UP: "false"
-    volumes:
-      - grafana-data:/var/lib/grafana
-    expose: ["3001"]
-    networks: [monnet, appnet]
-
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    restart: unless-stopped
-    command: ['--path.rootfs=/host', '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)']
-    volumes:
-      - /:/host:ro,rslave
-    expose: ["9100"]
-    networks: [monnet]
-
-  nginx-exporter:
-    image: nginx/nginx-prometheus-exporter:1.3.0
-    restart: unless-stopped
-    command:
-      - '--nginx.scrape-uri=http://nginx/stub_status'
-    depends_on:
-      - nginx  # in main stack — uses appnet
-    networks: [appnet, monnet]
-
-volumes:
-  prometheus-data:
-  grafana-data:
-
-networks:
-  monnet:
-    driver: bridge
-  appnet:
-    external: true
-```
-
-### 5.4 Nginx config (`/srv/wwf/nginx/conf.d/app.conf`)
-
+### 8.3 Nginx rate-limit zones (in `nginx.conf`)
 ```nginx
-# Real client IP from Cloudflare
-set_real_ip_from 173.245.48.0/20;
-set_real_ip_from 103.21.244.0/22;
-set_real_ip_from 103.22.200.0/22;
-set_real_ip_from 103.31.4.0/22;
-set_real_ip_from 141.101.64.0/18;
-set_real_ip_from 108.162.192.0/18;
-set_real_ip_from 190.93.240.0/20;
-set_real_ip_from 188.114.96.0/20;
-set_real_ip_from 197.234.240.0/22;
-set_real_ip_from 198.41.128.0/17;
-set_real_ip_from 162.158.0.0/15;
-set_real_ip_from 104.16.0.0/13;
-set_real_ip_from 104.24.0.0/14;
-set_real_ip_from 172.64.0.0/13;
-set_real_ip_from 131.0.72.0/22;
-real_ip_header CF-Connecting-IP;
-
-# Rate limit (defense in depth — Nginx layer in front of app rate limits)
 limit_req_zone $binary_remote_addr zone=general:10m rate=30r/s;
 limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
-
-upstream nextjs {
-    server app:3000;
-    keepalive 64;
-}
-
-server {
-    listen 80;
-    server_name wwfprovinciadicrotone.it www.wwfprovinciadicrotone.it admin.wwfprovinciadicrotone.it;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name wwfprovinciadicrotone.it www.wwfprovinciadicrotone.it admin.wwfprovinciadicrotone.it;
-
-    ssl_certificate     /etc/ssl/cloudflare/cert.pem;
-    ssl_certificate_key /etc/ssl/cloudflare/key.pem;
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
-
-    # Security headers (also set in middleware, but defense in depth)
-    add_header X-Frame-Options "DENY" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-
-    client_max_body_size 10M;
-
-    # Logging
-    log_format wwf '$remote_addr - $remote_user [$time_local] '
-                    '"$request" $status $body_bytes_sent '
-                    '"$http_referer" "$http_user_agent" '
-                    'rt=$request_time uct="$upstream_connect_time" '
-                    'uht="$upstream_header_time" urt="$upstream_response_time"';
-    access_log /var/log/wwf/nginx-access.log wwf;
-    error_log  /var/log/wwf/nginx-error.log warn;
-
-    # Static assets — Nginx serves directly, bypasses Next.js
-    location /images/ {
-        alias /srv/wwf/assets/images/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        try_files $uri =404;
-    }
-
-    location /logos/ {
-        alias /srv/wwf/assets/logos/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        try_files $uri =404;
-    }
-
-    location /downloads/ {
-        alias /srv/wwf/assets/downloads/;
-        expires 1d;
-        try_files $uri =404;
-    }
-
-    location /uploads/ {
-        alias /srv/wwf/assets/uploads/;
-        expires 1d;
-        try_files $uri =404;
-    }
-
-    # API rate limit
-    location /api/ {
-        limit_req zone=api burst=20 nodelay;
-        proxy_pass http://nextjs;
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 60s;
-    }
-
-    # Everything else
-    location / {
-        limit_req zone=general burst=60 nodelay;
-        proxy_pass http://nextjs;
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 60s;
-    }
-
-    # Health check (no logging)
-    location = /health {
-        access_log off;
-        return 200 "ok\n";
-    }
-}
+limit_req_zone $binary_remote_addr zone=auth:10m rate=2r/s;
 ```
+Applied per-location: `auth/magic-link` → `auth` (burst 5), `/api/*` → `api` (burst 20), everything else → `general` (burst 60). `set_real_ip_from` block includes all CF IP ranges; `real_ip_header CF-Connecting-IP;`. Security headers: HSTS preload, X-Frame-Options DENY, CSP via Next.js middleware, Permissions-Policy (no camera/mic/geo). `client_max_body_size 10M`.
 
-### 5.5 systemd + auto-restart
-
-Docker's `restart: unless-stopped` handles crashes. Server OS-level restart is handled by Hetzner (auto-power-on).
-
-### 5.6 Backups
-
-**WAL-G setup:**
-```bash
+### 8.4 Backups (WAL-G)
+```ini
 # /srv/wwf/walg/env
 WALG_S3_PREFIX=s3://wwf-backups
-AWS_ACCESS_KEY_ID=${BACKBLAZE_B2_KEY_ID}
-AWS_SECRET_ACCESS_KEY=${BACKBLAZE_B2_APPLICATION_KEY}
-AWS_ENDPOINT=https://s3.eu-central-003.backblazeb2.com
-AWS_REGION=eu-central-003
+AWS_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+AWS_REGION=auto
+AWS_S3_FORCE_PATH_STYLE=true
 WALG_COMPRESSION_METHOD=lz4
-WALG_DELTA_MAX_STEPS=5
+WALG_RETENTION_FULL=12            # 12 monthly base backups
+WALG_RETENTION_DAYS=30            # 30 days of WAL
 
 # crontab
 0 3 * * *  docker exec postgres bash -c 'wal-g backup-push $PGDATA'
@@ -569,282 +278,219 @@ WALG_DELTA_MAX_STEPS=5
 0 4 * * 0  /srv/wwf/scripts/test-restore.sh
 ```
 
-**Restore drill script** (`/srv/wwf/scripts/test-restore.sh`):
-1. Pulls latest base backup from B2
-2. Spins up throwaway Postgres container
-3. Restores + runs `pg_dump --schema-only` to validate
-4. Emails result to `wwfcrotone26@gmail.com`
-5. Tears down container
+---
+
+## 9. Pre-launch checklist
+
+### 9.1 Credentials needed
+
+**Cloudflare:** `CLOUDFLARE_API_TOKEN` (Zone Read/Edit, DNS Edit, Email Routing Edit), `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_ZONE_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
+
+**Contabo:** `CONTABO_VPS_IP`, `CONTABO_SSH_PUBLIC_KEY`.
+
+**Brevo (free):** `BREVO_SMTP_USER`, `BREVO_SMTP_PASS` (Settings → SMTP & API).
+
+**Sentry (free):** `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`.
+
+**UptimeRobot (free):** `UPTIMEROBOT_API_KEY` (optional, for webhook automation).
+
+**Instatus (free):** no API key needed; just sign up and create the component page.
+
+**App secrets (generated on VPS):** `AUTH_SECRET` (`openssl rand -base64 48`), `POSTGRES_PASSWORD` (`openssl rand -base64 32`).
+
+**Existing (no change):** Gmail app password for fallback, `GROQ_API_KEY` (you have one).
+
+### 9.2 Step-by-step provisioning
+
+**Steps 1-6 (you, ~40 min total):** sign up & order.
+1. **Cloudflare** — add site `wwfprovinciadicrotone.it` on Free plan, confirm NIC.it delegation, transfer .it to CF Registrar (or just point NIC.it nameservers to CF).
+2. **Contabo** — order Cloud VPS 4 (24-mo promo), EU (Germany), Ubuntu 24.04, your SSH key, name `wwf-prod-01`. Note the IPv4.
+3. **Cloudflare R2** — create bucket `wwf-backups` (EU), generate API token scoped to that bucket.
+4. **Brevo** — sign up free, Settings → SMTP & API → generate SMTP key.
+5. **Sentry** — sign up free (Developer), create Next.js project, note DSN + auth token.
+6. **UptimeRobot + Instatus** — add 5 health monitors, create 4-component status page (Site, API, Database, Email).
+
+**Step 7 — VPS bootstrap (me, ~30 min after you provide SSH access).**
+SSH in as root: apt update, install Docker + Compose plugin, UFW (only 22/80/443), fail2ban, unattended-upgrades, create `deploy` user, build `/srv/wwf/` tree, drop in `.env` / `docker-compose.yml` / Nginx / WAL-G env, `docker compose up -d`, install CF Origin cert, `prisma migrate deploy` + seed, smoke test.
+
+**Step 8 — DNS + CF config (me, ~15 min).** All records in §7, Email Routing, R2 CORS if needed, UptimeRobot probes, Instatus webhook from UptimeRobot (auto-flip on probe failure).
+
+**Step 9 — CI/CD (me, ~30 min).** Generate deploy SSH key (private on VPS, public in GitHub Actions), add `CONTABO_SSH_PRIVATE_KEY` / `CONTABO_VPS_IP` / `SENTRY_AUTH_TOKEN` to repo secrets, write `.github/workflows/deploy.yml`.
+
+**Step 10 — Pre-launch audit (me, ~1 hour).** Security (CSP, headers, auth, rate limits), performance (Lighthouse, bundle), accessibility (axe-core, keyboard), GDPR (cookie consent, export, delete), smoke (booking flow, magic link, receipt, admin), trigger test Sentry error + test UptimeRobot "down" event, verify Brevo test email lands.
+
+**Step 11 — Cutover (me, ~30 min).** TTL=300s 24h before, confirm NIC.it nameservers, wait for propagation, verify UptimeRobot + Instatus show operational, verify Brevo test email arrives.
 
 ---
 
-## 6. Pre-launch checklist
+## 10. Cost summary
 
-### 6.1 Credentials you need to provide
+| Item | Monthly | Yearly | Notes |
+|---|---|---|---|
+| Domain `wwfprovinciadicrotone.it` | — | ~€8 | At-cost via CF Registrar |
+| Contabo Cloud VPS 4 | €5.50 | €66 | 24-mo promo, EU |
+| Cloudflare Free (DNS/CDN/SSL/DDoS/WAF-managed/Email Routing) | €0 | €0 | — |
+| Cloudflare R2 free tier (10 GB) | €0 | €0 | Backups + ops |
+| Brevo free tier (300/day SMTP) | €0 | €0 | — |
+| Sentry Developer free (5K/mo, 1 user, 30d) | €0 | €0 | — |
+| UptimeRobot free (5 monitors, 5-min) | €0 | €0 | — |
+| Instatus free (public status page) | €0 | €0 | — |
+| Groq Cloud free (chatbot) | €0 | €0 | Already in use |
+| Gmail SMTP fallback (existing) | €0 | €0 | Already in use |
+| wa.me link | €0 | €0 | — |
+| **Subtotal** | **€5.50/mo** | **€74/yr** | |
+| **Buffer** (overage, VAT, renewal spike, Brevo upgrade) | | **~€126/yr** | See §10.1 |
+| **TOTAL CAP** | | **~€200/yr** | |
 
-**Cloudflare:**
-- `CLOUDFLARE_API_TOKEN` — scope: `Zone:Read, Zone:Edit, DNS:Edit, Email Routing:Edit, Access:Edit`
-- `CLOUDFLARE_ACCOUNT_ID` — from the dashboard sidebar
-- `CLOUDFLARE_ZONE_ID` — after the .it domain is added
+### 10.1 What the €126 buffer covers
 
-**Hetzner:**
-- `HETZNER_API_TOKEN` — scope: Read & Write
-- `HETZNER_SSH_PUBLIC_KEY` — the public key you'll use to SSH in
+The buffer is not waste — it's insurance:
+- **VAT** (~€14/yr) — Contabo's €66 is ex-VAT; 22% Italian VAT on €66 = €14.52.
+- **Domain renewal spike** (~€5/yr) — NIC.it occasionally adjusts .it pricing.
+- **Brevo upgrade** (~€25/yr) — if peak season exceeds 300/day, one month of Brevo Starter (€25) covers it. Mitigation: rate-limit magic-link + Gmail fallback at 300/day.
+- **Contabo renewal after promo** (~€80/yr) — if we lose the 24-mo rate, full-price ≈ €8/mo. Buffer covers one such year.
+- **R2 overage** (~€0-1) — 10 GB headroom is 5× our 2-3 GB usage.
+- **Sentry upgrade** (~€0) — if we hit 5K errors/mo, fix the bug causing them.
+- **Incident response** (~€0) — buffer covers a few days of paid service if we ever need it (e.g., Sentry Pro for 7 days during a debugging crisis).
 
-**Backblaze B2:**
-- `BACKBLAZE_B2_KEY_ID`
-- `BACKBLAZE_B2_APPLICATION_KEY`
-- `BACKBLAZE_B2_BUCKET_NAME` (must create `wwf-backups` first)
-
-**Upstash:**
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
-
-**Sentry:**
-- `SENTRY_DSN`
-- `SENTRY_AUTH_TOKEN` (for sourcemap upload from GitHub Actions)
-- `SENTRY_ORG`
-- `SENTRY_PROJECT`
-
-**App secrets (to be generated and stored on VPS):**
-- `AUTH_SECRET` — `openssl rand -base64 48`
-- `POSTGRES_PASSWORD` — `openssl rand -base64 32`
-- `GRAFANA_ADMIN_PASSWORD` — `openssl rand -base64 24`
-- `GROQ_API_KEY` — you already have one
-
-**Existing (no change):**
-- `SMTP_USER` = `wwfcrotone26@gmail.com`
-- `SMTP_PASS` = your existing Gmail app password
-
-### 6.2 Step-by-step provisioning
-
-#### Step 1 — Cloudflare account + domain (you, ~10 min)
-1. Sign up at https://dash.cloudflare.com/
-2. Click "Add a site" → `wwfprovinciadicrotone.it`
-3. Choose Free plan initially (we upgrade after)
-4. Cloudflare will scan for existing DNS records — accept whatever it finds
-5. Cloudflare assigns two nameservers (e.g. `anna.ns.cloudflare.com`, `bob.ns.cloudflare.com`)
-6. NIC.it sends a verification email to the address you registered with — click the link
-7. NIC.it emails you again when the domain is delegated — log in to NIC.it and confirm the nameservers
-8. In Cloudflare dashboard → Billing → Subscribe → Pro ($20/mo)
-
-#### Step 2 — Hetzner Cloud account + VPS (you, ~10 min)
-1. Sign up at https://console.hetzner.cloud/
-2. Create a new project: `wwf-crotone`
-3. Add your SSH public key: Security → SSH Keys → Add
-4. Add a server:
-   - Location: Falkenstein (FSN)
-   - Image: Ubuntu 24.04
-   - Type: CCX23 (Intel/AMD dedicated vCPU, 4 vCPU, 16 GB)
-   - Networking: Public IPv4 + IPv6
-   - SSH key: your key
-   - Name: `wwf-prod-01`
-5. Note the public IPv4 (e.g. `78.46.123.45`)
-
-#### Step 3 — Backblaze B2 (you, ~5 min)
-1. Sign up at https://www.backblaze.com/b2/
-2. Create a bucket: `wwf-backups`, Private, EU-central region
-3. Create application key: `wwf-backups-key`, with read+write to this bucket only
-4. Note the `keyID` and `applicationKey`
-
-#### Step 4 — Upstash Redis (you, ~2 min)
-1. Sign up at https://console.upstash.com/
-2. Create database: `wwf-rate-limit`, region: EU (closest to Hetzner)
-3. Note the REST URL and token
-
-#### Step 5 — Sentry (you, ~5 min)
-1. Sign up at https://sentry.io
-2. Choose Team plan ($26/mo)
-3. Create project → Platform: Next.js
-4. Note: DSN, Auth Token, Org slug, Project slug
-
-#### Step 6 — Bootstrapping the VPS (me, ~30 min after you provide SSH access)
-1. SSH in as `root`
-2. Update + install base packages
-3. Install Docker + Docker Compose plugin
-4. Configure UFW firewall
-5. Install + configure fail2ban
-6. Configure unattended-upgrades for security patches
-7. Create `deploy` user (non-root)
-8. Create `/srv/wwf/` directory tree
-9. Drop in `.env`, `docker-compose.yml`, nginx config, WAL-G env
-10. `docker compose up -d`
-11. Set up `cloudflared` tunnel OR configure Nginx with Cloudflare Origin certificate
-12. Run `prisma migrate deploy` + `tsx prisma/seed.ts`
-13. Smoke test all endpoints
-
-#### Step 7 — DNS + Cloudflare config (me, ~15 min)
-1. Add all DNS records (A, MX, TXT, DMARC)
-2. Configure Email Routing (info@ → Gmail)
-3. Configure Cloudflare Access for `status.wwfprovinciadicrotone.it`
-4. Configure WAF rules (block known bad paths, geo-restrict /admin to Italy + EU if desired)
-5. Configure rate-limit rules at the edge
-
-#### Step 8 — CI/CD (me, ~30 min)
-1. Generate deployment SSH key (one on VPS, public key in GitHub Actions secret)
-2. Add `HETZNER_SSH_PRIVATE_KEY`, `HETZNER_VPS_IP`, `SENTRY_AUTH_TOKEN` to GitHub repo secrets
-3. Write `.github/workflows/deploy.yml`
-
-#### Step 9 — Pre-launch audit (me, ~1 hour)
-- Security review (CSP, headers, auth, rate limits)
-- Performance (Lighthouse, bundle size)
-- Accessibility (axe-core, manual keyboard test)
-- GDPR (cookie consent, data export, delete)
-- Smoke tests (booking flow, magic link, receipt upload, admin approval)
-
-#### Step 10 — DNS cutover + monitoring (me, ~30 min)
-- Set TTL to 300s 24h before cutover (cache invalidation ready)
-- Cutover: change NIC.it nameservers if not already done
-- Wait for propagation (up to 24h)
-- Enable Grafana alerts (email on high error rate, low disk, etc.)
+**Net:** €74/yr is the optimistic number. €200/yr is the realistic number including everything that could go up.
 
 ---
 
-## 7. Cost summary
-
-| Item | Monthly | Yearly |
-|---|---|---|
-| Domain `wwfprovinciadicrotone.it` | — | ~€12/yr |
-| Hetzner CCX23 | €29.90 | €358.80 |
-| Cloudflare Pro | $20 | $240 |
-| Sentry Team | $26 | $312 |
-| Backblaze B2 (estimated 5 GB) | $0.03 | $0.40 |
-| Upstash Redis (free tier) | $0 | $0 |
-| Cloudflare Email Routing (free) | $0 | $0 |
-| Cloudflare Access (free ≤50 users) | $0 | $0 |
-| **Total** | **~$46/mo + €29.90/mo** | **~$552/yr + €371/yr** |
-
-At EUR/USD ~1.08, that's **~$78/mo or ~$940/yr total**.
-
----
-
-## 8. Capacity planning
+## 11. Capacity planning
 
 | Metric | Current usage | Capacity | Headroom |
 |---|---|---|---|
-| Database size | ~50 MB (12 turns + bookings) | 20 GB on VPS | 400× |
-| Disk | ~3 GB (images + DB + logs) | 160 GB | 50× |
-| RAM | ~3 GB (Postgres + Redis + Next.js) | 16 GB | 5× |
-| CPU | ~5% baseline, peaks at 30% during camp sign-ups | 4 vCPU | 10× baseline, 3× peak |
-| Bandwidth | ~10 GB/mo | unmetered via CF | infinite |
-| Concurrent users | ~50 during peak | thousands via Nginx | 20× |
+| Database size | ~50 MB | 30 GB on VPS | 600× |
+| Disk | ~3 GB | 100 GB | 33× |
+| RAM | ~2 GB | 8 GB | 4× |
+| CPU (shared) | ~5% baseline, 25% peak | 4 vCPU | 20× / 4× |
+| Bandwidth | ~10 GB/mo | CF + 200 Mbps fair-use | enough |
+| Concurrent users | ~50 peak | thousands via Nginx | 20× |
+| Brevo emails | ~80/day peak | 300/day | 3.75× |
+| Sentry errors | <500/mo | 5,000/mo | 10× |
+| R2 storage | ~2 GB | 10 GB | 5× |
 
-We can handle **10× current load without scaling**. If we ever exceed that (unlikely for a volunteer camp), upgrade to CCX33 (8 vCPU, 32 GB) for €57.90/mo — still cheap.
+Can handle **5-10× current load without scaling**. If exceeded, upgrade to Contabo Cloud VPS 6 (6 vCPU, 12 GB) for ~€7.50/mo.
 
 ---
 
-## 9. Disaster recovery
+## 12. Disaster recovery
 
-| Scenario | RTO (downtime) | RPO (data loss) | How |
+| Scenario | RTO | RPO | How |
 |---|---|---|---|
-| App crash | <30s (Docker restart) | 0 | `restart: unless-stopped` |
-| VPS reboot | <2 min | 0 | Hetzner auto-power-on |
-| Postgres corruption | <1 hour | 0 (full DB backup) | `docker exec postgres bash -c 'wal-g backup-fetch ...'` |
-| Disk full | <30 min | 0 | Increase volume in Hetzner, redeploy |
-| VPS lost | <4 hours | <16 MB WAL (≈1 minute of writes) | Re-provision VPS + `wal-g backup-fetch` + restore |
-| Hetzner region down | <24 hours | <16 MB WAL | Provision new VPS in different region, restore from B2 |
+| App crash | <30s | 0 | `restart: unless-stopped` |
+| VPS reboot | <2 min | 0 | Contabo auto-power-on |
+| Postgres corruption | <1 hr | 0 | `wal-g backup-fetch` from R2 |
+| Disk full | <30 min | 0 | Increase VPS volume in Contabo, redeploy |
+| VPS lost | <4 hr | <16 MB WAL (≈1 min writes) | Re-provision VPS + restore from R2 |
+| Contabo region down | <24 hr | <16 MB WAL | Provision new VPS elsewhere, restore from R2 |
 | Cloudflare down | <5 min | 0 | Site unreachable but no data loss — CF caches most assets |
-| B2 region down | n/a | n/a | B2 has multiple regions; we use EU-central, backup is already off-site |
-| Ransomware on VPS | <8 hours | <24h | Restore from B2 (B2 bucket is separate credentials) |
-| Sentry outage | <1 hour | 0 (errors only, not user data) | Errors queue locally, retry on reconnect |
+| R2 region down | <1 hr | 0 | R2 has multiple regions; we use EU. Restore retries with backoff. |
+| Ransomware on VPS | <8 hr | <24h | Restore from R2 (separate credentials) |
+| Sentry outage | <1 hr | 0 | Errors queue locally in Next.js, retry on reconnect |
+| Brevo outage | <1 hr | 0 | Mailer transparently falls back to Gmail SMTP |
+| UptimeRobot / Instatus outage | n/a | 0 | Find out via stale public URL — manual check |
 
 ---
 
-## 10. Compliance checklist
+## 13. Compliance checklist
 
-### GDPR (EU)
-- ✅ EU data residency (Hetzner Falkenstein + B2 EU region)
-- ✅ Privacy policy in place (`/privacy` + `/cookie`)
-- ✅ Cookie consent banner (Plausible Analytics)
-- ✅ Self-service data export (`/account/profile`)
-- ✅ Self-service account deletion request (`/account/profile` → emails admin)
-- ✅ TLS everywhere (HSTS preload)
-- ✅ CSP strict (no unsafe-inline in prod)
-- ✅ PII scrubbing in Sentry (beforeSend hooks)
-- ✅ Audit log for every booking edit
-- ⏳ DPIA (Data Protection Impact Assessment) — should be done before launch, contact your DPO
+**GDPR (EU):**
+- EU data residency (Contabo EU + R2 EU)
+- Privacy policy (`/privacy` + `/cookie`)
+- Cookie consent banner
+- Self-service data export (`/account/profile`)
+- Self-service deletion request
+- TLS everywhere (HSTS preload)
+- CSP strict (no `unsafe-inline` in prod)
+- PII scrubbing in Sentry (beforeSend hooks)
+- Audit log for every booking edit
+- DPIA — to be drafted before launch (contact DPO)
 
-### Italian PEC
-- ✅ `wwfcrotone@legalmail.it` maintained separately (out of scope for this site)
+**Italian PEC:** `wwfcrotone@legalmail.it` maintained separately (out of scope).
 
-### WCAG 2.1 AA
-- ✅ Keyboard navigation
-- ✅ Focus management in chat widget
-- ✅ ARIA labels on icon-only buttons
-- ✅ Skip-to-content link
-- ✅ Color contrast verified in light + dark mode
-- ⏳ Manual screen reader test (NVDA + VoiceOver) before launch
+**WCAG 2.1 AA:** keyboard nav, focus in chat widget, ARIA on icon buttons, skip-to-content, color contrast light+dark. ⏳ Manual screen reader test (NVDA + VoiceOver) before launch.
 
 ---
 
-## 11. Operational runbook
+## 14. Migration path if budget increases
 
-### Deploy a new version
-```bash
-git push origin main
-# GitHub Actions builds, tests, deploys to VPS
-# Watch: https://github.com/EliseyRotar/wwf-crotone-website/actions
-```
+In priority order:
 
-### Roll back
+**Tier 1 — €300/yr (+€100 from baseline):**
+1. **Contabo Cloud VPS 6** (+€24 → €90/yr) — 6 vCPU, 12 GB RAM
+2. **Sentry Team** (~$26/mo ≈ €270 → €360/yr) — 50K errors, 90d, multi-user, 5M spans, 5 GB logs. Worth it the moment >1 person debugs.
+
+**Tier 2 — €500/yr (+€400):**
+3. **Cloudflare Pro** (~$20/mo ≈ €200 → €560/yr) — WAF custom rules, advanced analytics, 24h email support
+4. **Brevo Starter** (€25/mo for peak month) — removes Gmail fallback dependency
+
+**Tier 3 — €1000/yr (the original v1.0 budget):**
+5. **Hetzner CCX23** (+€290 → €850/yr) — 16 GB RAM, dedicated vCPU, Hetzner reputation
+6. **Dedicated Prometheus + Grafana** — bring back the in-house observability stack
+
+**We will NOT migrate to:** AWS / GCP / Azure (overkill, 10× cost); Kubernetes / ECS (single-VPS Compose is the right complexity); managed Postgres (self-hosted is cheaper and more private).
+
+---
+
+## 15. Operational runbook
+
 ```bash
+# Deploy
+git push origin main    # GitHub Actions builds, tests, deploys
+
+# Roll back
 git revert HEAD && git push origin main
-# OR on the VPS:
-ssh deploy@<vps>
-cd /srv/wwf && docker compose pull && docker compose up -d --force-recreate app
-```
+# or on VPS:
+ssh deploy@<vps> && cd /srv/wwf && docker compose up -d --force-recreate app
 
-### Check logs
-```bash
+# Logs
 ssh deploy@<vps>
 docker logs --tail 100 -f wwf-app-1
 tail -f /var/log/wwf/nginx-access.log
-```
 
-### Manual DB backup
-```bash
+# Manual DB backup
 ssh deploy@<vps>
 docker exec postgres bash -c 'wal-g backup-push $PGDATA'
-```
 
-### Restore from backup
-```bash
+# Restore from backup
 ssh deploy@<vps>
-docker compose stop app
+cd /srv/wwf && docker compose stop app
 docker exec postgres bash -c 'wal-g backup-fetch /tmp/restore'
 docker exec postgres bash -c 'rm -rf $PGDATA && mv /tmp/restore $PGDATA'
 docker compose start postgres app
-```
 
-### Rotate secrets
-```bash
+# Rotate secrets
 ssh deploy@<vps>
-openssl rand -base64 48 > /srv/wwf/.env.new
-# Edit .env.new with the new secret
+openssl rand -base64 48 > /srv/wwf/.env.new   # edit, then:
 mv /srv/wwf/.env.new /srv/wwf/.env
+cd /srv/wwf && docker compose up -d --force-recreate app
+
+# Add admin user
+ssh deploy@<vps>
+docker exec -it wwf-app-1 npx tsx scripts/create-admin.ts --email paolo@wwf.it --role superadmin
+
+# Switch SMTP to Gmail fallback
+ssh deploy@<vps>    # edit .env: SMTP_HOST=smtp.gmail.com, SMTP_PORT=465, SMTP_SECURE=true
 cd /srv/wwf && docker compose up -d --force-recreate app
 ```
 
-### Add an admin user
-```bash
-ssh deploy@<vps>
-docker exec -it wwf-app-1 npx tsx scripts/create-admin.ts --email paolo@wwf.it --role superadmin
-```
+---
+
+## 16. Open questions (before deployment)
+
+1. **Contabo 24-month commit** — OK with the 24-mo promo commit, or prefer month-to-month (slightly more)?
+2. **Geo-restrict /admin** — Italian/EU IPs only? Without CF WAF custom rules, this has to be done at Nginx level (country codes from CF header).
+3. **Cookie banner analytics** — keep Plausible (privacy-first, no consent needed) or switch to GA4 (requires consent)?
+4. **DPIA** — do you have a DPO or need help drafting one?
+5. **WhatsApp number** — confirm `+39 351 3945109`?
+6. **Pre-launch comms** — maintenance page during cutover?
+7. **Backup retention** — 30d OK, or longer for compliance?
+8. **Staging domain** — `staging.wwfprovinciadicrotone.it` (free CNAME) to test deploys before going live?
+9. **Instatus subdomain** — `status.wwfprovinciadicrotone.it` (CNAME) or `wwfprovinciadicrotone.instatus.com`?
+10. **Sentry alert recipient** — confirm `wwfcrotone26@gmail.com` is the single Sentry user?
 
 ---
 
-## 12. Open questions for you (before deployment)
-
-1. **Cloudflare WAF rules** — strict, balanced, or minimal? Recommended: balanced (block known-bad, allow normal traffic).
-2. **Geo-restrict /admin** — should only Italian IPs reach `/admin`? Or trusted IP allowlist?
-3. **Cookie banner analytics provider** — keep Plausible (privacy-first, no consent needed) or switch to GA4 (requires consent)?
-4. **DPIA** — do you have a Data Protection Officer or do you need help drafting one?
-5. **WhatsApp number** — confirm `+39 351 3945109` for the wa.me link?
-6. **Grafana admin users** — just you, or also Paolo?
-7. **Pre-launch comms** — do you want a maintenance page during the cutover?
-8. **Backup retention** — 30 days OK, or longer for compliance?
-9. **Test domain for staging** — `staging.wwfprovinciadicrotone.it` to test deploys before going live?
-
----
-
-**End of architecture document. Next step: provision the accounts in §6.1, then paste credentials and I'll execute §6.2 steps 6-10.**
+**End of architecture document. Next step: provision the accounts in §9.1, then paste credentials and I'll execute §9.2 steps 7-11.**
