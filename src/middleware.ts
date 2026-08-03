@@ -26,6 +26,17 @@ function mintNonce(): string {
 }
 
 /**
+ * Maintenance mode. When MAINTENANCE_MODE=true is set in the environment
+ * (or runtime config), every public page returns the static maintenance
+ * screen. Admin + API routes are exempted so operators can still
+ * troubleshoot. Toggle from `.env` or by redeploying with the flag
+ * flipped — no DB migration required.
+ */
+function isMaintenanceOn(): boolean {
+  return (process.env.MAINTENANCE_MODE ?? "").toLowerCase() === "true";
+}
+
+/**
  * H-06: build a per-request CSP with a per-request nonce. We removed the
  * static 'unsafe-inline' from script-src — the only safe exception in
  * production. In dev we still allow 'unsafe-eval' (Next.js HMR uses it)
@@ -60,11 +71,25 @@ export function middleware(req: NextRequest) {
   // CSP + security headers still apply — they're attached to the
   // response below.
   const { pathname } = req.nextUrl;
-  const skipI18n =
+  const isAdminPath =
     pathname === "/admin" ||
-    pathname.startsWith("/admin/") ||
+    pathname.startsWith("/admin/");
+  const isApiPath =
     pathname === "/api" ||
     pathname.startsWith("/api/");
+  const isMaintenancePath =
+    pathname.endsWith("/maintenance") || pathname.endsWith("/status");
+  const maintenanceOn = isMaintenanceOn() && !isAdminPath && !isApiPath && !isMaintenancePath;
+
+  // Maintenance-mode short circuit: redirect to /[locale]/maintenance
+  // so the user sees the static turtle page instead of a 500.
+  if (maintenanceOn) {
+    const lang = (req.headers.get("accept-language") ?? "it").split(",")[0] ?? "it";
+    const locale = lang.toLowerCase().startsWith("en") ? "en" : "it";
+    return NextResponse.redirect(new URL(`/${locale}/maintenance`, req.url), 302);
+  }
+
+  const skipI18n = isAdminPath || isApiPath;
   const res = skipI18n
     ? NextResponse.next({ request: { headers: requestHeaders } })
     : intlMiddleware(new NextRequest(req, { headers: requestHeaders })) ??
