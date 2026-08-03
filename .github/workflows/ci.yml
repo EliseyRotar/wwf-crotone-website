@@ -6,8 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel in-progress runs for the same branch on a new push.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Fail fast: if lint or typecheck fail, downstream jobs (test, build) are
+# skipped so we don't waste CI minutes building an image we know is broken.
 jobs:
-  build:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +31,59 @@ jobs:
 
       - run: npm run lint
 
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
       - run: npm run typecheck
+
+  test:
+    name: Test (Vitest)
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
+      - run: npm test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    # The build is the most expensive step and the one most likely to catch
+    # prod-only regressions (e.g. RSC boundaries, missing env vars), so it
+    # also gates the deploy workflow.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
 
       - run: npm run build
         env:

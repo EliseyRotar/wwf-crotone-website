@@ -1,0 +1,93 @@
+name: Deploy
+
+# Run only on push to main, AND only after the CI workflow on the same
+# commit has finished successfully. This is the standard "needs: ci"
+# sequencing pattern using workflow_run, which is more reliable than
+# relying on branch-protection alone (works even if a maintainer with
+# bypass permissions merges a red PR).
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false   # never cancel an in-flight deploy
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    environment:
+      name: production
+      url: https://wwfcrotone.it
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # Catch any prod-only regressions (RSC boundaries, missing env
+      # vars, dynamic = "error" pages) that didn't surface in dev mode.
+      - name: Production build
+        env:
+          DATABASE_URL: "file:./dev.db"
+          AUTH_SECRET: "ci-test-secret-not-used-in-production-xxxxxxxxxxxxxxxx"
+          NEXT_PUBLIC_SITE_URL: "https://wwfcrotone.it"
+        run: npm run build
+
+      # Create the Sentry release and upload sourcemaps so stacktraces
+      # in production errors are symbolicated. The release is associated
+      # with the exact git SHA that's being deployed.
+      - name: Create Sentry release
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: |
+          npx @sentry/cli releases new "$GITHUB_SHA"
+          npx @sentry/cli releases set-commits "$GITHUB_SHA" --auto
+          npx @sentry/cli sourcemaps inject \
+            --org "$SENTRY_ORG" \
+            --project "$SENTRY_PROJECT" \
+            --release "$GITHUB_SHA" \
+            .next
+          npx @sentry/cli sourcemaps upload \
+            --org "$SENTRY_ORG" \
+            --project "$SENTRY_PROJECT" \
+            --release "$GITHUB_SHA" \
+            .next
+          npx @sentry/cli releases finalize "$GITHUB_SHA"
+
+      - name: Deploy via SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST \
+            "cd /srv/wwf/repo && git pull origin main && cd /srv/wwf && docker compose up -d --build app && docker compose restart nginx && /srv/wwf/scripts/smoke-test.sh"
+          rm -f ~/.ssh/deploy_key
