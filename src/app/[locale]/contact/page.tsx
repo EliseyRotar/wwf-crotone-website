@@ -133,6 +133,38 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         </section>
       </div>
 
+      <section className="mt-20 card section-sand border-l-4 border-l-wwf-green">
+        <div className="card-body">
+          <h2 className="text-xl mb-4">{loc === "it" ? "Sede legale e dati associativi" : "Registered office & association data"}</h2>
+          <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+            <div>
+              <dt className="text-ink-grey">{loc === "it" ? "Ragione sociale" : "Legal name"}</dt>
+              <dd className="font-semibold">WWF PROVINCIA DI CROTONE-ETS</dd>
+            </div>
+            <div>
+              <dt className="text-ink-grey">{loc === "it" ? "Forma giuridica" : "Legal form"}</dt>
+              <dd>Organizzazione di Volontariato (ODV) — D.Lgs. 117/2017</dd>
+            </div>
+            <div>
+              <dt className="text-ink-grey">{loc === "it" ? "Codice Fiscale" : "Tax ID"}</dt>
+              <dd className="font-mono">91034580794</dd>
+            </div>
+            <div>
+              <dt className="text-ink-grey">{loc === "it" ? "Presidente" : "President"}</dt>
+              <dd>Paolo Asteriti</dd>
+            </div>
+            <div>
+              <dt className="text-ink-grey">{loc === "it" ? "Sede legale" : "Registered office"}</dt>
+              <dd>Località Marinella San Leonardo di Cutro, 88842 Cutro (KR)</dd>
+            </div>
+            <div>
+              <dt className="text-ink-grey">PEC</dt>
+              <dd><a href="mailto:wwfcrotone@legalmail.it" className="hover:text-wwf-green underline">wwfcrotone@legalmail.it</a></dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
       <section className="mt-20">
         <h2 className="mb-4">{t("reachTitle")}</h2>
         <p className="text-ink-2 mb-10 max-w-3xl text-lg leading-relaxed">{t("reachIntro")}</p>
