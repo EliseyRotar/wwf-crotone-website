@@ -1,0 +1,117 @@
+# Production Docker Compose — Contabo Cloud VPS 4 (DE)
+# Stack: Next.js 15 standalone + Postgres 16 + Redis 7 + Nginx + WAL-G
+#
+# Deployed via: `docker compose up -d` after GitHub Actions SSH + rsync.
+# Backups: cron-driven `docker exec wwf-postgres wal-g backup-push` → Cloudflare R2.
+
+services:
+  app:
+    image: wwf-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose: ["3000"]
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://wwf:${POSTGRES_PASSWORD}@postgres:5432/wwf
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+      TRUSTED_PROXY_HEADER: cf-connecting-ip
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+
+  migrate:
+    image: wwf-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: "no"
+    command: ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts || true"]
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://wwf:${POSTGRES_PASSWORD}@postgres:5432/wwf
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [appnet]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wwf
+      POSTGRES_USER: wwf
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - /srv/wwf/postgres/data:/var/lib/postgresql/data
+    expose: ["5432"]
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wwf -d wwf"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2048M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", "60", "1000"]
+    volumes:
+      - /srv/wwf/redis/data:/data
+    expose: ["6379"]
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 256M
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /srv/wwf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /srv/wwf/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro
+      - /srv/wwf/assets:/srv/wwf/assets:ro
+      - /var/log/wwf:/var/log/wwf
+    depends_on:
+      app: { condition: service_healthy }
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  appnet:
+    driver: bridge
