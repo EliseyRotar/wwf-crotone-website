@@ -3,6 +3,31 @@ import { SITE } from "@/config/site";
 
 let transporter: nodemailer.Transporter | null = null;
 
+/**
+ * Transactional email provider toggle.
+ *
+ * Default (USE_BREVO_EMAIL="true"): Brevo SMTP. The free tier gives us
+ * 300 emails/day which covers the camp's peak registration window.
+ * SMTP_HOST / SMTP_PORT / SMTP_SECURE are taken as-is and should point
+ * at `smtp-relay.brevo.com:587` per .env.example. SMTP_USER / SMTP_PASS
+ * hold a Brevo SMTP key (NOT the account password).
+ *
+ * Fallback (USE_BREVO_EMAIL="false"): Gmail SMTP via an App Password.
+ * When the toggle is off we hardcode the host/port/secure to Gmail's
+ * documented SSL endpoint (smtp.gmail.com:465, secure=true) and
+ * override the env vars, so an operator only has to flip the flag and
+ * point SMTP_USER / SMTP_PASS at a Gmail address + 16-char App
+ * Password (https://myaccount.google.com/apppasswords). They don't
+ * need to remember to re-edit SMTP_HOST / SMTP_PORT / SMTP_SECURE.
+ *
+ * When to flip:
+ *   - Brevo daily quota exhausted (rare, only during a bulk-send spike)
+ *   - Brevo outage, or SMTP key rotated and not yet propagated
+ *   - Local dev where Brevo is overkill and a personal Gmail is fine
+ *
+ * The `transporter` is cached at module scope, so changing
+ * USE_BREVO_EMAIL requires a server restart to take effect.
+ */
 function getTransporter(): nodemailer.Transporter | null {
   if (transporter) return transporter;
   const user = process.env.SMTP_USER;
@@ -11,10 +36,20 @@ function getTransporter(): nodemailer.Transporter | null {
     console.warn("SMTP not configured — emails will be skipped");
     return null;
   }
+  const useBrevo = process.env.USE_BREVO_EMAIL === "true";
+  const host = useBrevo
+    ? (process.env.SMTP_HOST ?? "smtp-relay.brevo.com")
+    : "smtp.gmail.com";
+  const port = useBrevo
+    ? Number(process.env.SMTP_PORT ?? 587)
+    : 465;
+  const secure = useBrevo
+    ? (process.env.SMTP_SECURE ?? "false") === "true"
+    : true;
   transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST ?? "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT ?? 465),
-    secure: (process.env.SMTP_SECURE ?? "true") === "true",
+    host,
+    port,
+    secure,
     auth: { user, pass }
   });
   return transporter;
