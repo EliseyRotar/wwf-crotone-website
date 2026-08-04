@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+sudo -u deploy docker exec wwf-postgres-1 psql -U wwf -d wwf -A -F"|" -t -c "SELECT 'turni' as what, count(*)::text as n FROM \"Turno\" UNION ALL SELECT 'gallery', count(*)::text FROM \"GalleryItem\" UNION ALL SELECT 'operatori', count(*)::text FROM \"Operatore\" UNION ALL SELECT 'iscrizioni', count(*)::text FROM \"Iscrizione\" UNION ALL SELECT 'users', count(*)::text FROM \"User\";"
