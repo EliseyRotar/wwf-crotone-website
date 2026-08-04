@@ -189,7 +189,7 @@ async function main() {
   console.log(`Seeded ${GALLERY_SEED.length} gallery items.`);
 
   console.log("Seeding superadmin user...");
-  const adminEmail = "admin@wwfcrotone.local";
+  const adminEmail = "admin@wwfcrotone.it";
   const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!existing) {
     const hash = await bcrypt.hash("changeme-now", 12);
@@ -202,7 +202,7 @@ async function main() {
         assignedTurns: null
       }
     });
-    console.log("Created superadmin: admin@wwfcrotone.local / changeme-now (CHANGE IMMEDIATELY)");
+    console.log("Created superadmin: admin@wwfcrotone.it / changeme-now (CHANGE IMMEDIATELY via /admin/account)");
   } else {
     console.log("Superadmin already exists, skipping.");
   }

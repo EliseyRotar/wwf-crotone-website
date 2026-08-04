@@ -112,6 +112,19 @@ mkdir -p \
 mkdir -p "$LOG_DIR" "$SSL_DIR"
 chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_DIR" "$LOG_DIR"
 chmod 0750 "$SSL_DIR"
+
+# Copy static assets from repo to asset dirs (Nginx serves these directly
+# via /srv/wwf/assets/{images,logos,downloads,uploads} — see nginx/conf.d/app.conf).
+# Without this step, /logos/wwf.png and /images/* return 404.
+if [ -d "$APP_DIR/repo/public" ]; then
+  cp -rn "$APP_DIR/repo/public/logos/"* "$APP_DIR/assets/logos/" 2>/dev/null || true
+  cp -rn "$APP_DIR/repo/public/images/"* "$APP_DIR/assets/images/" 2>/dev/null || true
+  cp -rn "$APP_DIR/repo/public/downloads/"* "$APP_DIR/assets/downloads/" 2>/dev/null || true
+  chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_DIR/assets"
+  log_ok "Static assets seeded from repo/public/"
+else
+  warn "repo/public not found; skipping asset seed (will 404 until copied)"
+fi
 log "Directories created under $APP_DIR and $LOG_DIR."
 
 # -----------------------------------------------------------------------------
