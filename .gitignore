@@ -52,3 +52,4 @@ INFRASTRUCTURE.txt
 # Test coverage
 coverage
 # Spreadsheet with personal data (PII - GDPR)CAMPI_2026.xlsx*.xlsxROBE_LEGALI/*ROBE_LEGALI
+# Personal backup docs (have sensitive data — keep on USB only)RESUME_PROMPT.mdCREDENTIALS.mdPROJECT_STATE_2026-08-04.mdBACKUP_CONTENTS.mdSESSION_HISTORY.mdARCHITECTURE_CHEATSHEET.mdREADME_START_HERE.md
