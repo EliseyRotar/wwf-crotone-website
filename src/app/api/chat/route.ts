@@ -246,8 +246,8 @@ const RE_INJECTION =
   /ignore (all )?(previous|prior|above) instructions|reveal your (system )?prompt|repeat your (initial )?instructions|disregard (the )?system|pretend (to be|you are)/i;
 
 export async function POST(req: Request) {
-  // C-06: 5 requests per hour per IP (tightened from 10/hr).
-  if (!(await rateLimit(`chat:${clientKey(req)}`, 5, 3600_000))) {
+  // Rate limit: 60 requests per hour per IP (generous for public chatbot).
+  if (!(await rateLimit(`chat:${clientKey(req)}`, 60, 3600_000))) {
     return jsonError(429, "rate-limited");
   }
 

@@ -448,7 +448,68 @@ const CAMP_ANCHORS = [
   "kitchen",
   "breakfast",
   "lunch",
-  "dinner"
+  "dinner",
+  // Common conversational — camp context (IT)
+  "settimana", "settimane", "giorno", "giorni", "giornata", "giornate",
+  "fare", "fanno", "programma", "orario", "orari", "organizzazione",
+  "organizzato", "tipica", "tipico", "routine", "sveglia", "mattina",
+  "pomeriggio", "sera", "notte", "doccia", "docce", "bagno", "bagni",
+  "acqua", "calda", "fredda", "elettricit", "corrente", "wifi", "internet",
+  "cellulare", "telefono", "copertura", "segnale", "lavatrice", "lavanderia",
+  "supermercato", "negozio", "farmacia", "ospedale", "medico",
+  "zanzare", "zanzara", "insetti", "serpenti", "animali", "pericoloso",
+  "pericoli", "sicurezza", "sicuro", "gruppo", "gruppi", "età", "eta",
+  "compagni", "persone", "ragazzi", "ragazze", "numero", "quanti", "quante",
+  "posti", "disponibili", "disponibilit", "pieno", "posti liberi",
+  "lingua", "lingue", "inglese", "italiano", "stranieri", "belga", "belgi",
+  "francese", "tedesco", "spagnolo", "europa", "europei",
+  "tempo", "meteo", "clima", "caldo", "freddo", "pioggia", "sole",
+  "mare", "nuotare", "nuoto", "costume", "abbigliamento", "vestiti",
+  "scarpe", "ciabatte", "infradito", "asciugamano", "lenzuola", "cuscino",
+  "sacco a pelo", "materasso", "branda", "tenda", "campeggio",
+  "struttura", "edificio", "base", "sede", "indirizzo",
+  "dove", "quando", "come", "perché", "perche", "quale", "quali", "chi",
+  "info", "informazioni", "contatti", "contatto", "email",
+  "telefonare", "chiamare", "whatsapp", "social", "facebook", "instagram",
+  "foto", "fotografie", "video", "certificato", "certificati",
+  "modulo", "moduli", "liberatoria", "consenso", "privacy", "gdpr",
+  "dati", "personali", "regolamento", "regole", "norme", "divieti",
+  "vietato", "alcol", "alcool", "fumo", "fumare", "sigarette",
+  "droga", "droghe", "animali domestici", "cane", "cani", "gatto",
+  "check in", "check-in", "check out", "check-out",
+  "ritrovo", "appuntamento", "stazione", "aeroporto", "porto",
+  "navetta", "pullman", "macchina", "auto", "parcheggio", "parcheggiare",
+  "conferma", "confermato", "lista d'attesa", "lista attesa", "waitlist",
+  "cancellare", "cancellazione", "rimborso", "rimborsi",
+  "pagamento", "pagamenti", "ricevuta", "fattura",
+  "tessera", "tesseramento", "socio", "soci", "rinnovo",
+  "quota associativa", "donazione", "donazioni", "sostenere", "sostegno",
+  "adozione", "adotta", "simbolica", "gadget", "maglietta", "felpa", "cappello",
+  // Common conversational — English
+  "week", "weeks", "day", "days", "schedule", "timetable", "program",
+  "routine", "typical", "morning", "afternoon", "evening", "night",
+  "shower", "showers", "bathroom", "toilet", "water", "hot", "cold",
+  "electricity", "power", "wifi", "internet", "phone", "signal", "coverage",
+  "laundry", "supermarket", "shop", "pharmacy", "hospital", "doctor",
+  "mosquito", "mosquitoes", "insects", "bugs", "snakes", "animals",
+  "dangerous", "safety", "safe", "group", "groups", "age", "people",
+  "kids", "number", "how many", "spots", "available", "availability",
+  "full", "language", "languages", "english", "italian", "foreigners",
+  "belgian", "french", "german", "spanish", "europe", "european",
+  "weather", "climate", "rain", "sun", "sea", "swim", "swimming",
+  "clothes", "clothing", "shoes", "slippers", "flip flops", "towel",
+  "sheets", "pillow", "sleeping bag", "mattress", "tent", "camping",
+  "building", "base", "address", "where", "when", "how", "why",
+  "which", "who", "what", "info", "information", "contact", "contacts",
+  "email", "call", "whatsapp", "social", "facebook", "instagram",
+  "photos", "pictures", "video", "certificate", "form", "forms",
+  "consent", "privacy", "gdpr", "data", "rules", "alcohol", "smoking",
+  "smoke", "cigarettes", "drugs", "pets", "dog", "dogs", "cat",
+  "check in", "check-in", "check out", "check-out", "meeting point",
+  "station", "airport", "shuttle", "car", "parking", "confirmed",
+  "waitlist", "cancel", "cancellation", "refund", "refunds",
+  "receipt", "invoice", "membership", "member", "donation", "donate",
+  "support", "adopt", "adoption", "merchandise", "tshirt", "hoodie", "hat"
 ];
 
 // Short utterances that are conversation continuations, not new topics.
@@ -508,15 +569,15 @@ export function guardMessage(raw: string): GuardResult {
   }
 
   // Layer 3 + 4: topic classification
-  // If the message is long (≥ 6 words) and contains none of the camp
-  // anchors, treat it as off-topic. Short messages without an anchor
-  // fall through to a stricter check.
   const hasAnchor = CAMP_ANCHORS.some((a) => norm.includes(a));
 
-  // Layer 3: explicit off-topic keywords anywhere → reject.
-  for (const kw of OFFTOPIC_KEYWORDS) {
-    if (norm.includes(kw)) {
-      return { allowed: false, reason: "off-topic" };
+  // Layer 3: off-topic keywords only reject if NO camp anchor is present.
+  // This allows "Si può cucinare la pasta al campo?" (has "campo" anchor).
+  if (!hasAnchor) {
+    for (const kw of OFFTOPIC_KEYWORDS) {
+      if (norm.includes(kw)) {
+        return { allowed: false, reason: "off-topic" };
+      }
     }
   }
 
