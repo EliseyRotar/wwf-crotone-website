@@ -73,7 +73,7 @@ export default async function GalleryPage({ params }: { params: Promise<{ locale
   };
 
   return (
-    <div className="container section">
+    <div className="container section gallery-section">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <nav className="breadcrumb" aria-label="breadcrumb">
         <a href={`/${loc}`}>{tNav("home")}</a>

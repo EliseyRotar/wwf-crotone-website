@@ -108,13 +108,14 @@ export function middleware(req: NextRequest) {
 }
 
 function buildCsp(nonce: string): string {
-  const scriptSrc = ["'self'", `'nonce-${nonce}'`, "https://plausible.io"];
+  const scriptSrc = ["'self'", "https://plausible.io"];
   if (isDev) {
     scriptSrc.push("'unsafe-eval'");
     scriptSrc.push("'unsafe-inline'");
   } else {
-    // Next.js injects inline scripts for RSC hydration that don't always
-    // carry the nonce. Allow hashed inline scripts in production.
+    // Next.js injects inline scripts for RSC hydration that don't carry
+    // the nonce. Use 'unsafe-inline' without nonce — the nonce+unsafe-inline
+    // combination is ignored by browsers per CSP spec.
     scriptSrc.push("'unsafe-inline'");
   }
   const connectSrc = [

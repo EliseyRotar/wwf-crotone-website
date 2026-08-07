@@ -153,6 +153,12 @@ img {
   content-visibility: auto;
   contain-intrinsic-size: auto 500px;
 }
+/* Masonry galleries break with content-visibility: auto — the browser
+   can't estimate intrinsic size for CSS column layouts, causing janky
+   scroll and flicker. Disable it for gallery containers. */
+.gallery-section {
+  content-visibility: visible;
+}
 .hero, header, footer, .cookie-banner, .mobile-cta {
   content-visibility: visible;
 }

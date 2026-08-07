@@ -91,10 +91,10 @@ function jsonError(status: number, error: string) {
   });
 }
 
-function sseError(error: string) {
+function sseError(error: string, status = 200) {
   const payload = JSON.stringify({ error });
   return new Response(`event: error\ndata: ${payload}\n\n`, {
-    status: 200,
+    status,
     headers: {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
@@ -303,7 +303,7 @@ export async function POST(req: Request) {
   // regex / fuzzy matcher miss. We only run it if the key is present.
   const client = getClient();
   if (!client) {
-    return sseError("unconfigured");
+    return sseError("unconfigured", 503);
   }
 
   const lastUser = [...recent].reverse().find((m) => m.role === "user");
