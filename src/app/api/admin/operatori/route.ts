@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,10 @@ export async function POST(req: Request) {
 
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`admin-op:${clientKey(req)}`, 20, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
   const body = await req.json();
@@ -50,6 +55,10 @@ export async function PUT(req: Request) {
 
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`admin-op:${clientKey(req)}`, 20, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
   const body = await req.json();
@@ -88,6 +97,10 @@ export async function DELETE(req: Request) {
 
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`admin-op:${clientKey(req)}`, 10, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
   const { id } = await req.json();

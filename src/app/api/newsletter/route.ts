@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
+import { validateOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,10 @@ export async function POST(req: Request) {
     // Rate limit: 5 per hour per IP
     if (!(await rateLimit(`nl:${clientKey(req)}`, 5, 3600_000))) {
       return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+    }
+
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
     }
 
     const body = await req.json();

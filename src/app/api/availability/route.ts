@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
-/**
- * F1: Public, read-only availability counter.
- * Returns booked / capacity for every active turn so the dates page can poll
- * without reloading.
- */
-export async function GET() {
+export async function GET(req: Request) {
+  if (!(await rateLimit(`avail:${clientKey(req)}`, 60, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+  }
   try {
-    // C-07: source of truth is now Turno.bookedCount, maintained atomically
-    // by the create / cancel paths. We keep the legacy groupBy as a sanity
-    // check (debug only) but the `booked` value below is bookedCount.
     const turni = await prisma.turno.findMany({
       where: { isActive: true },
       orderBy: { number: "asc" },
@@ -39,8 +35,6 @@ export async function GET() {
       ok: true,
       updatedAt: new Date().toISOString(),
       turni: turni.map((t) => {
-        // C-07: prefer the atomic counter; if it has drifted from reality
-        // (e.g. legacy data), the countMap below self-heals on next read.
         const fromCounter = t.bookedCount ?? 0;
         const fromReality = countMap.get(t.id) ?? 0;
         const booked = Math.max(fromCounter, fromReality);

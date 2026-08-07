@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
+  if (!(await rateLimit(`admin-cs:${clientKey(req)}`, 10, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+  }
+
   const body = await req.json();
   const { year, startDate, endDate, numTurns, turnDurationDays, costNonMember, costMember, minorInsurance, registrationFee, iban, isActive } = body;
 
@@ -36,7 +41,7 @@ export async function PUT(req: Request) {
     costMember: Number(costMember) || 400,
     minorInsurance: Number(minorInsurance) || 20,
     registrationFee: Number(registrationFee) || 100,
-    iban: iban || "IT30V0306909606100000107334",
+    iban: iban || null,
     isActive: isActive ?? true
   };
 

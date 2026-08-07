@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { sanitizeHtml, LIMITS } from "@/lib/validate";
 import { logAudit } from "@/lib/audit";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
 
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`admin-blog:${clientKey(req)}`, 10, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
   const body = await req.json();
@@ -70,6 +75,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
+  if (!(await rateLimit(`admin-blog:${clientKey(req)}`, 10, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+  }
+
   const body = await req.json();
   const { id, ...fields } = body;
   if (!id) return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
@@ -105,6 +114,10 @@ export async function DELETE(req: Request) {
 
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`admin-blog:${clientKey(req)}`, 5, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
   const { id } = await req.json();

@@ -44,7 +44,7 @@ export default function AdminNav({ session }: { session: SessionUser }) {
   const switchLang = async () => {
     const current = document.cookie.match(/admin-lang=(\w+)/)?.[1] ?? "it";
     const next = current === "it" ? "en" : "it";
-    document.cookie = `admin-lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    document.cookie = `admin-lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax; Secure`;
     router.refresh();
   };
 

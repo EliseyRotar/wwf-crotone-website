@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession, canAccessTurn } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { logAudit } from "@/lib/audit";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,10 @@ export async function PATCH(req: Request) {
 
     if (!validateOrigin(req)) {
       return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+    }
+
+    if (!(await rateLimit(`admin-isc:${clientKey(req)}`, 30, 60000))) {
+      return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
     }
 
     const { id, status, notes, feePaid, balancePaid } = await req.json();
@@ -124,6 +129,10 @@ export async function DELETE(req: Request) {
 
     if (!validateOrigin(req)) {
       return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+    }
+
+    if (!(await rateLimit(`admin-del:${clientKey(req)}`, 10, 60000))) {
+      return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
     }
 
     const { id } = await req.json();

@@ -5,7 +5,7 @@ import { Sun, Moon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 function setThemeCookie(theme: string) {
-  document.cookie = `theme=${theme}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+  document.cookie = `theme=${theme}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax; Secure`;
 }
 
 function getInitialTheme(): "light" | "dark" {

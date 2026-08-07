@@ -197,12 +197,12 @@ export default function ViewVolunteer({ iscrizione }: { iscrizione: Iscrizione }
                   const w = window.open("", "_blank", "width=800,height=900");
                   if (!w) return;
                   const title = t("printDocumentTitle", { firstName: iscrizione.firstName, lastName: iscrizione.lastName, number: iscrizione.turnoNumber });
-                  w.document.write(`<!doctype html><html><head><title>${title}</title><style>body{font-family:Inter,system-ui,sans-serif;padding:24px;color:#101010}h1{font-size:24px;margin:0 0 8px}h2{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:#007932;border-bottom:2px solid #007932;padding-bottom:4px;margin:24px 0 8px}.row{display:flex;gap:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px}.label{min-width:160px;font-weight:600;color:#707070;text-transform:uppercase;font-size:11px;letter-spacing:.04em}.tag{display:inline-block;padding:2px 8px;border-radius:20px;background:#c9e8a0;color:#005a25;font-size:11px;font-weight:700;margin-right:4px}.red{color:#ed2b00}</style></head><body>`);
-                  w.document.write(`<h1>${title}</h1>`);
-                  w.document.write(`<p>${age} · ${t("printHeader")} <span class="tag">${statusLabel}</span>${iscrizione.isMinor ? ` <span class="tag" style="background:#f5d200;color:#101010">${t("printMinor")}</span>` : ''}</p>`);
-                  w.document.write(`<h2>${t("printSections.contacts")}</h2>`);
-                  w.document.write(`<div class="row"><span class="label">${t("printLabels.email")}</span><span>${iscrizione.email}</span></div>`);
-                  w.document.write(`<div class="row"><span class="label">${t("printLabels.phone")}</span><span>${iscrizione.phone}</span></div>`);
+                  w.document.write(`<!doctype html><html><head><title>${esc(title)}</title><style>body{font-family:Inter,system-ui,sans-serif;padding:24px;color:#101010}h1{font-size:24px;margin:0 0 8px}h2{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:#007932;border-bottom:2px solid #007932;padding-bottom:4px;margin:24px 0 8px}.row{display:flex;gap:12px;padding:4px 0;border-bottom:1px solid #eee;font-size:14px}.label{min-width:160px;font-weight:600;color:#707070;text-transform:uppercase;font-size:11px;letter-spacing:.04em}.tag{display:inline-block;padding:2px 8px;border-radius:20px;background:#c9e8a0;color:#005a25;font-size:11px;font-weight:700;margin-right:4px}.red{color:#ed2b00}</style></head><body>`);
+                  w.document.write(`<h1>${esc(title)}</h1>`);
+                  w.document.write(`<p>${esc(String(age))} · ${esc(t("printHeader"))} <span class="tag">${esc(statusLabel)}</span>${iscrizione.isMinor ? ` <span class="tag" style="background:#f5d200;color:#101010">${esc(t("printMinor"))}</span>` : ''}</p>`);
+                  w.document.write(`<h2>${esc(t("printSections.contacts"))}</h2>`);
+                  w.document.write(`<div class="row"><span class="label">${esc(t("printLabels.email"))}</span><span>${esc(iscrizione.email)}</span></div>`);
+                  w.document.write(`<div class="row"><span class="label">${esc(t("printLabels.phone"))}</span><span>${esc(iscrizione.phone)}</span></div>`);
                   if (iscrizione.isMinor) {
                     w.document.write(`<h2>${t("printSections.guardian")}</h2>`);
                     if (iscrizione.guardianName) w.document.write(`<div class="row"><span class="label">${t("printLabels.name")}</span><span>${esc(iscrizione.guardianName)}</span></div>`);

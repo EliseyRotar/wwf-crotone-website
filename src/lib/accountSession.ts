@@ -38,8 +38,12 @@ export const ACCOUNT_TTL_S = 24 * 60 * 60; // 24 hours
 
 function getSecret(): string {
   const raw = process.env.AUTH_SECRET;
-  if (raw && raw.length >= 32) return raw;
-  return "dev-only-account-secret-not-for-production-32+chars";
+  if (!raw || raw.length < 32) {
+    throw new Error(
+      "AUTH_SECRET is not set or too short. Generate one with: openssl rand -base64 48"
+    );
+  }
+  return raw;
 }
 
 function b64url(buf: Buffer): string {

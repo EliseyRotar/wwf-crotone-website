@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { notifyNewIscrizione, sendVolunteerConfirmation } from "@/lib/mail";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
+import { validateOrigin } from "@/lib/csrf";
 import { getCampStart, isUnder18 } from "@/lib/turns";
 import {
   signLookupToken,
@@ -48,6 +49,10 @@ export async function POST(req: Request) {
   try {
     if (!(await rateLimit(`isc:${clientKey(req)}`, 3, 3600_000))) {
       return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+    }
+
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
     }
 
     const body = await req.json();

@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  if (!(await rateLimit(`ig:${clientKey(req)}`, 30, 60000))) {
+    return NextResponse.json({ ok: false, posts: [] });
+  }
   const token = process.env.INSTAGRAM_TOKEN;
   if (!token) {
     return NextResponse.json({ ok: false, posts: [] });

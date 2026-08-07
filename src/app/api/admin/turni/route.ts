@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { logAudit } from "@/lib/audit";
+import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,10 @@ export async function PATCH(req: Request) {
 
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await rateLimit(`admin-turni:${clientKey(req)}`, 20, 60000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
   const { id, capacity, isActive } = await req.json();

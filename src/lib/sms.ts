@@ -26,7 +26,7 @@ export type SmsResult =
 
 const logOnly = (msg: SmsMessage): SmsResult => {
   const id = `sms-stub-${Date.now()}`;
-  console.log(`[sms:stub] to=${msg.to} tag=${msg.tag ?? "-"} body=${msg.body.slice(0, 80)}… id=${id}`);
+  console.log(`[sms:stub] tag=${msg.tag ?? "-"} id=${id}`);
   return { ok: true, provider: "twilio-stub", id };
 };
 
