@@ -11,7 +11,7 @@ export type ParticipantSeed = {
   sex: "M" | "F" | null;
   age: number | null;
   email: string | null;
-  phone: string | null;
+  phone?: string | null;
   arrivalMode?: string;
   arrivalTime?: string;
   departureTime?: string;
@@ -22,6 +22,7 @@ export type ParticipantSeed = {
   feePaidDate?: string;
   bonifico?: boolean;
   isMinorInsurance?: boolean;
+  imageDataConsent?: boolean;
 };
 
 export type OperatoreSeed = {

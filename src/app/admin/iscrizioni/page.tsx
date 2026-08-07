@@ -101,7 +101,7 @@ export default async function IscrizioniPage({
   const buildHref = (p: number) => {
     const params = new URLSearchParams();
     if (sp.status) params.set("status", sp.status);
-    if (sp.turno) params.set("campo", sp.turno);
+    if (sp.turno) params.set("turno", sp.turno);
     if (sp.from) params.set("from", sp.from);
     if (sp.to) params.set("to", sp.to);
     if (p > 1) params.set("page", String(p));
@@ -112,7 +112,7 @@ export default async function IscrizioniPage({
   const buildCsvHref = () => {
     const params = new URLSearchParams();
     if (sp.status) params.set("status", sp.status);
-    if (sp.turno) params.set("campo", sp.turno);
+    if (sp.turno) params.set("turno", sp.turno);
     if (sp.from) params.set("from", sp.from);
     if (sp.to) params.set("to", sp.to);
     const qs = params.toString();
@@ -212,11 +212,11 @@ export default async function IscrizioniPage({
                       </td>
                       <td className="p-3 font-bold">
                         {i.firstName} {i.lastName}
-                        {i.isMinor && <span className="tag tag-orange ml-2">{locale === "it" ? "minore" : "minor"}</span>}
+                        {i.isMinor && <span className="tag tag-orange ml-2">{t("minor")}</span>}
                       </td>
                       <td className="p-3">{i.email ? <a href={`mailto:${i.email}`} className="text-wwf-green hover:underline">{i.email}</a> : "—"}</td>
                       <td className="p-3"><a href={`tel:${i.phone}`} className="hover:underline">{i.phone || "—"}</a></td>
-                      <td className="p-3">{locale === "it" ? "Campo" : "Camp"} {i.turno.number}</td>
+                      <td className="p-3">{t("campo")} {i.turno.number}</td>
                       <td className="p-3">{age}</td>
                       <td className="p-3">
                         <IscrizioneRowControls id={i.id} status={i.status} feePaid={i.feePaid} balancePaid={i.balancePaid} notes={i.notes} />

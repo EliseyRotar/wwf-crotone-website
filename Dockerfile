@@ -14,8 +14,8 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-# Production runner
-FROM base AS runner
+# Production runner — Debian Bullseye (OpenSSL 1.1 built-in, Prisma 5.22 needs it)
+FROM node:20-bullseye-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -29,7 +29,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-RUN apk add --no-cache wget
+RUN apt-get update && apt-get install -y --no-install-recommends wget && rm -rf /var/lib/apt/lists/*
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000

@@ -112,6 +112,10 @@ function buildCsp(nonce: string): string {
   if (isDev) {
     scriptSrc.push("'unsafe-eval'");
     scriptSrc.push("'unsafe-inline'");
+  } else {
+    // Next.js injects inline scripts for RSC hydration that don't always
+    // carry the nonce. Allow hashed inline scripts in production.
+    scriptSrc.push("'unsafe-inline'");
   }
   const connectSrc = [
     "'self'",

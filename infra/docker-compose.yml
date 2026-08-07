@@ -92,7 +92,10 @@ services:
           memory: 256M
 
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: wwf-nginx:latest
     restart: unless-stopped
     ports:
       - "80:80"
