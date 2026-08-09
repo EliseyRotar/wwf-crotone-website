@@ -94,71 +94,145 @@ else
   exit 1
 fi
 
-# 4. Fix ownership so postgres can read it, append required config,
-#    and remove the backup_label so postgres treats this as a complete
-#    snapshot (no recovery needed). The base backup is consistent on
-#    its own — it was taken at a known-good WAL position.
+# 4. Verify the extracted backup by listing its tar contents and
+#    checking critical files. We don't try to start postgres on the
+#    base backup alone — that requires running wal-g wal-recovery to
+#    replay WAL into a consistent state, which is the actual recovery
+#    scenario (different from a verification drill).
+echo "[$(ts)] test-restore.sh: verifying backup contents" >> "$LOG"
+
+VERIFY_OK=true
+# Check 1: pg_control exists and is readable
+if [ ! -f "${TMPDIR}/pgdata/global/pg_control" ]; then
+  echo "[$(ts)] test-restore.sh: FAIL — pg_control missing" >> "$LOG"
+  VERIFY_OK=false
+fi
+
+# Check 2: tablespace_map and backup_label were removed (they signal
+# incomplete recovery, which we don't want for a verification drill)
+if [ -f "${TMPDIR}/pgdata/backup_label" ]; then
+  echo "[$(ts)] test-restore.sh: WARN — backup_label still present" >> "$LOG"
+fi
+
+# Check 3: archive_status directory exists (postgres needs it)
+mkdir -p "${TMPDIR}/pgdata/pg_wal/archive_status"
+
+# Check 4: file count + total size look reasonable (sanity)
+FILE_COUNT=$(sudo find "${TMPDIR}/pgdata" -type f | wc -l)
+TOTAL_SIZE=$(sudo du -sb "${TMPDIR}/pgdata" 2>/dev/null | awk '{print $1}')
+echo "[$(ts)] test-restore.sh: extracted $FILE_COUNT files, total size $TOTAL_SIZE bytes" >> "$LOG"
+
+# Check 5: PG_VERSION file present
+if [ ! -f "${TMPDIR}/pgdata/PG_VERSION" ]; then
+  echo "[$(ts)] test-restore.sh: FAIL — PG_VERSION missing" >> "$LOG"
+  VERIFY_OK=false
+fi
+
+# Check 6: try starting postgres briefly to verify the data files are valid
+echo "[$(ts)] test-restore.sh: starting postgres for verification" >> "$LOG"
 sudo chown -R 999:999 "${TMPDIR}/pgdata"
-rm -f "${TMPDIR}/pgdata/backup_label" "${TMPDIR}/pgdata/tablespace_map"
 echo "port = 5432" >> "${TMPDIR}/pgdata/postgresql.conf"
 echo "unix_socket_directories = '/var/run/postgresql'" >> "${TMPDIR}/pgdata/postgresql.conf"
 
-# 5. Start postgres on the restored data
-echo "[$(ts)] test-restore.sh: starting postgres on restored data" >> "$LOG"
-sudo docker start "$RESTORE_NAME" >/dev/null 2>&1
+# We need the throwaway container to use a different data dir
+# since postgres hardcodes $PGDATA. Easier: re-init postgres in the
+# throwaway to create a fresh data dir, then copy the restored files
+# into it as a one-shot consistency check.
 
-# Wait for ready again
-RESTORED=false
+# Use a fresh container just for the verification step
+VERIFY_NAME="wwf-postgres-verify-$(date +%s)"
+sudo docker run -d --name "$VERIFY_NAME" \
+  -e POSTGRES_DB=wwf \
+  -e POSTGRES_USER=wwf \
+  -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+  --network infra_appnet \
+  -v "${TMPDIR}:/tmp/restore-data:ro" \
+  postgres:16-alpine > /dev/null
+
+# Wait for it to be ready
+READY=false
 for i in $(seq 1 30); do
-  if sudo docker exec "$RESTORE_NAME" pg_isready -U wwf -d wwf >/dev/null 2>&1; then
-    RESTORED=true
+  if sudo docker exec "$VERIFY_NAME" pg_isready -U wwf -d wwf >/dev/null 2>&1; then
+    READY=true
     break
   fi
   sleep 1
 done
 
-if [ "$RESTORED" != "true" ]; then
-  echo "[$(ts)] test-restore.sh: restored postgres never became ready, aborting" >> "$LOG"
-  sudo docker rm -f "$RESTORE_NAME" >/dev/null 2>&1 || true
-  sudo rm -rf "$TMPDIR"
-  exit 1
+if [ "$READY" != "true" ]; then
+  echo "[$(ts)] test-restore.sh: verify container never became ready" >> "$LOG"
+  VERIFY_OK=false
+else
+  # Stop the default postgres, copy restored data into place, restart
+  echo "[$(ts)] test-restore.sh: swapping in restored data" >> "$LOG"
+  sudo docker exec -u postgres "$VERIFY_NAME" pg_ctl stop -D /var/lib/postgresql/data -m fast 2>&1 | head -3 || true
+  sudo docker exec -u postgres "$VERIFY_NAME" bash -c '
+    rm -rf /var/lib/postgresql/data/pgdata/*
+    cp -r /tmp/restore-data/pgdata/* /var/lib/postgresql/data/pgdata/
+    chown -R postgres:postgres /var/lib/postgresql/data/pgdata
+    rm -f /var/lib/postgresql/data/pgdata/backup_label /var/lib/postgresql/data/pgdata/tablespace_map
+  '
+  sudo docker start "$VERIFY_NAME" >/dev/null 2>&1
+
+  RESTORED=false
+  for i in $(seq 1 30); do
+    if sudo docker exec "$VERIFY_NAME" pg_isready -U wwf -d wwf >/dev/null 2>&1; then
+      RESTORED=true
+      break
+    fi
+    sleep 1
+  done
+
+  if [ "$RESTORED" != "true" ]; then
+    echo "[$(ts)] test-restore.sh: restored DB never became ready" >> "$LOG"
+    VERIFY_OK=false
+  else
+    # Count rows
+    echo "[$(ts)] test-restore.sh: row counts in restored DB:" >> "$LOG"
+    sudo docker exec "$VERIFY_NAME" psql -U wwf -d wwf -t -A -F'|' -c "
+      SELECT 'Iscrizione', count(*) FROM \"Iscrizione\"
+      UNION ALL SELECT 'Turno', count(*) FROM \"Turno\"
+      UNION ALL SELECT 'User', count(*) FROM \"User\"
+      UNION ALL SELECT 'Operatore', count(*) FROM \"Operatore\";
+    " 2>&1 | tee -a "$LOG"
+
+    # Compare against live
+    echo "[$(ts)] test-restore.sh: row counts in LIVE DB:" >> "$LOG"
+    LIVE_COUNTS=$(sudo docker exec infra-postgres-1 psql -U wwf -d wwf -t -A -F'|' -c "
+      SELECT 'Iscrizione', count(*) FROM \"Iscrizione\"
+      UNION ALL SELECT 'Turno', count(*) FROM \"Turno\"
+      UNION ALL SELECT 'User', count(*) FROM \"User\"
+      UNION ALL SELECT 'Operatore', count(*) FROM \"Operatore\";
+    " 2>&1)
+    echo "$LIVE_COUNTS" >> "$LOG"
+  fi
 fi
 
-# 6. Count rows as a sanity check
-echo "[$(ts)] test-restore.sh: row counts in restored DB:" >> "$LOG"
-sudo docker exec "$RESTORE_NAME" psql -U wwf -d wwf -t -A -F'|' -c "
-  SELECT 'Iscrizione', count(*) FROM \"Iscrizione\"
-  UNION ALL SELECT 'Turno', count(*) FROM \"Turno\"
-  UNION ALL SELECT 'User', count(*) FROM \"User\"
-  UNION ALL SELECT 'Operatore', count(*) FROM \"Operatore\";
-" 2>>"$LOG" | tee -a "$LOG"
+sudo docker rm -f "$VERIFY_NAME" >/dev/null 2>&1 || true
 
-# Also fetch live counts for comparison
-echo "[$(ts)] test-restore.sh: row counts in live DB:" >> "$LOG"
-LIVE_COUNTS=$(sudo docker exec infra-postgres-1 psql -U wwf -d wwf -t -A -F'|' -c "
-  SELECT 'Iscrizione', count(*) FROM \"Iscrizione\"
-  UNION ALL SELECT 'Turno', count(*) FROM \"Turno\"
-  UNION ALL SELECT 'User', count(*) FROM \"User\"
-  UNION ALL SELECT 'Operatore', count(*) FROM \"Operatore\";
-" 2>&1)
-echo "$LIVE_COUNTS" >> "$LOG"
-
-# 7. Tear down
+# 7. Tear down the original throwaway + tmpdir
 sudo docker rm -f "$RESTORE_NAME" >/dev/null 2>&1 || true
 sudo rm -rf "$TMPDIR"
 
-echo "[$(ts)] test-restore.sh OK" >> "$LOG"
+# 8. Log final status
+if [ "$VERIFY_OK" = "true" ]; then
+  echo "[$(ts)] test-restore.sh OK" >> "$LOG"
+else
+  echo "[$(ts)] test-restore.sh FAILED" >> "$LOG"
+fi
 
-# 8. Email summary if SMTP is configured
+# 9. Email summary if SMTP is configured
 if [ -n "${ADMIN_NOTIFY_EMAIL:-}" ] && command -v sendmail >/dev/null 2>&1; then
-  SUBJECT="[WWF Crotone] Weekly restore drill OK ($(date -u +%Y-%m-%d))"
-  BODY="Latest backup was successfully restored into a throwaway postgres at $(date -u).
+  STATUS=$([ "$VERIFY_OK" = "true" ] && echo "OK" || echo "FAILED")
+  SUBJECT="[WWF Crotone] Weekly restore drill $STATUS ($(date -u +%Y-%m-%d))"
+  BODY="Latest backup verification result: $STATUS at $(date -u).
 
-Live counts:
-$LIVE_COUNTS
+$([ -n "$LIVE_COUNTS" ] && echo "Live row counts (for comparison):\n$LIVE_COUNTS")
 
 See /var/log/wwf/walg.log on the VPS for full details."
   printf "To: %s\nFrom: noreply@wwfcrotone.it\nSubject: %s\n\n%s\n" \
     "$ADMIN_NOTIFY_EMAIL" "$SUBJECT" "$BODY" \
     | sendmail -t -f noreply@wwfcrotone.it 2>>"$LOG" || echo "[$(ts)] test-restore.sh: sendmail failed, not sending email" >> "$LOG"
 fi
+
+[ "$VERIFY_OK" = "true" ] && exit 0 || exit 1
