@@ -1,19 +1,26 @@
-# Production Docker Compose — Contabo Cloud VPS 4 (DE)
-# Stack: Next.js 15 standalone + Postgres 16 + Redis 7 + Nginx + WAL-G
+# Production Docker Compose — Netcup VPS 500 G12, Debian 13.
+# Stack: Next.js 15 standalone + Postgres 16 + Redis 7 + Nginx + WAL-G (R2).
 #
-# Deployed via: `docker compose up -d` after GitHub Actions SSH + rsync.
-# Backups: cron-driven `docker exec wwf-postgres wal-g backup-push` → Cloudflare R2.
+# This compose is meant to be invoked from /srv/wwf/ (so 'context: ./repo'
+# means the deploy-tree root). The Dockerfile lives at /srv/wwf/Dockerfile
+# (the actual build of the Next.js app); the custom postgres image with
+# wal-g baked in is built from infra/postgres.Dockerfile and pulled as
+# wwf-postgres:latest.
+#
+# Backups: cron-driven `docker exec infra-postgres-1 wal-g backup-push`
+# (script in infra/scripts/walg-backup.sh) → Cloudflare R2 bucket wwf-backups.
+# Continuous WAL archiving via postgres archive_command → wal-g wal-push.
 
 services:
   app:
     image: wwf-app:latest
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./repo
+      dockerfile: ../Dockerfile
     restart: unless-stopped
     expose: ["3000"]
     env_file:
-      - .env.production
+      - ./.env.production
     environment:
       DATABASE_URL: postgresql://wwf:${POSTGRES_PASSWORD}@postgres:5432/wwf
       REDIS_URL: redis://redis:6379
@@ -37,12 +44,12 @@ services:
   migrate:
     image: wwf-app:latest
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./repo
+      dockerfile: ../Dockerfile
     restart: "no"
     command: ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts || true"]
     env_file:
-      - .env.production
+      - ./.env.production
     environment:
       DATABASE_URL: postgresql://wwf:${POSTGRES_PASSWORD}@postgres:5432/wwf
     depends_on:
@@ -50,17 +57,39 @@ services:
     networks: [appnet]
 
   postgres:
-    image: postgres:16-alpine
+    image: wwf-postgres:latest
+    build:
+      context: .
+      dockerfile: postgres.Dockerfile
     restart: unless-stopped
+    env_file:
+      - ./.env.production
     environment:
       POSTGRES_DB: wwf
       POSTGRES_USER: wwf
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
+      # WAL-G → Cloudflare R2
+      WALG_S3_PREFIX: ${WALG_S3_PREFIX:-s3://wwf-backups}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-https://CHANGE_ME.r2.cloudflarestorage.com}
+      AWS_REGION: ${AWS_REGION:-auto}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      WALG_COMPRESSION_METHOD: ${WALG_COMPRESSION_METHOD:-lz4}
+      WALG_DELTA_MAX_STEPS: "5"
     volumes:
       - /srv/wwf/postgres/data:/var/lib/postgresql/data
     expose: ["5432"]
     networks: [appnet]
+    # Enable WAL archiving. wal-g wal-push is called from the entrypoint
+    # so every time postgres rotates a WAL segment it lands in R2.
+    command: >
+      postgres
+        -c archive_mode=on
+        -c archive_command="/usr/local/bin/wal-g wal-push %p"
+        -c wal_level=replica
+        -c max_wal_senders=10
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U wwf -d wwf"]
       interval: 10s
