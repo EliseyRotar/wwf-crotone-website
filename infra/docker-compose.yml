@@ -75,7 +75,10 @@ services:
       AWS_REGION: ${AWS_REGION:-auto}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_S3_FORCE_PATH_STYLE: "true"
+      # R2 uses virtual-hosted bucket addressing — bucket name goes in the
+      # hostname (wwf-backups.<endpoint>), not in the path. wal-g's default
+      # AWS_S3_FORCE_PATH_STYLE=true breaks this; R2 returns 404.
+      AWS_S3_FORCE_PATH_STYLE: "false"
       WALG_COMPRESSION_METHOD: ${WALG_COMPRESSION_METHOD:-lz4}
       WALG_DELTA_MAX_STEPS: "5"
     volumes:
