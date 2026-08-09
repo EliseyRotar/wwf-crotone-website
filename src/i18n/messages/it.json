@@ -552,6 +552,20 @@
     "title": "Sostienici",
     "intro": "Aiutaci a proteggere le tartarughe marine e l'ambiente calabrese. Ogni contributo, grande o piccolo, fa la differenza."
   },
+  "Status": {
+    "title": "Stato del servizio",
+    "subtitle": "Verifica in tempo reale che il sito sia operativo. Per aggiornamenti dettagliati sugli incidenti e lo storico, consulta la pagina ufficiale.",
+    "liveStatus": "Stato in tempo reale",
+    "checking": "Verifica in corso…",
+    "jsRequired": "Abilita JavaScript per la verifica in tempo reale.",
+    "incidents": "Incidenti",
+    "noIncidents": "Nessun incidente attivo segnalato.",
+    "canonical": "Pagina canonica",
+    "canonicalDesc": "La pagina di stato canonica è ospitata su Instatus e include timeline degli incidenti, manutenzioni programmate e metriche di uptime.",
+    "operational": "Tutti i sistemi operativi",
+    "degraded": "Servizio degradato — il DB non risponde",
+    "unreachable": "Impossibile contattare il servizio"
+  },
   "MyRegistration": {
     "title": "La mia iscrizione",
     "intro": "Inserisci la tua email per vedere lo stato della tua iscrizione.",

@@ -552,6 +552,20 @@
     "title": "Support us",
     "intro": "Help us protect sea turtles and the Calabrian environment. Every contribution, big or small, makes a difference."
   },
+  "Status": {
+    "title": "Service status",
+    "subtitle": "Real-time check that the site is operational. For detailed incident updates and history, see the canonical status page.",
+    "liveStatus": "Live status",
+    "checking": "Checking…",
+    "jsRequired": "Enable JavaScript for real-time checks.",
+    "incidents": "Incidents",
+    "noIncidents": "No active incidents reported.",
+    "canonical": "Canonical status page",
+    "canonicalDesc": "The canonical status page is hosted on Instatus and includes incident timelines, scheduled maintenance, and uptime metrics.",
+    "operational": "All systems operational",
+    "degraded": "Service degraded — database not responding",
+    "unreachable": "Cannot reach service"
+  },
   "MyRegistration": {
     "title": "My registration",
     "intro": "Enter your email to check your registration status.",
