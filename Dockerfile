@@ -19,6 +19,7 @@ ENV PRISMA_CLIENT_ENGINE_TYPE=debian-openssl-3.0.x
 ENV PRISMA_CLI_ENGINE_TYPE=debian-openssl-3.0.x
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
 RUN npx prisma generate
 RUN npm run build
 
