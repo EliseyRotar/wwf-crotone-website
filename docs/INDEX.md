@@ -11,26 +11,35 @@ lives in [`README.md`](../README.md) and [`README.it.md`](../README.it.md).
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system architecture, the
   €200/yr stack, and the trade-offs behind each technology choice.
 - [`DPIA.md`](./DPIA.md) — GDPR Article 35 Data Protection Impact
-  Assessment (bilingual, 10k+ words). Required reading before changing
-  anything that handles personal data.
+  Assessment (bilingual, ~750 lines). Sanitized for the public repo:
+  org identity, codice fiscale, presidente details, and contact
+  information are replaced with `[redacted]` placeholders. Full
+  unredacted copy is on the org's internal storage only.
 
-## Operational runbooks (one-time or rare)
+## Service setup (references)
 
 - [`CLOUDFLARE_SETUP.md`](./CLOUDFLARE_SETUP.md) — programmatic
-  Cloudflare zone setup (DNS, Email Routing, page rules).
-- [`CLOUDFLARE_MANUAL_STEPS.md`](./CLOUDFLARE_MANUAL_STEPS.md) — the
-  UI clicks you still have to make by hand after the API script runs.
+  Cloudflare zone setup (DNS, Email Routing, page rules). Contact
+  details redacted.
 - [`BREVO_SETUP.md`](./BREVO_SETUP.md) — Brevo SMTP + sender domain
-  verification (DKIM, SPF, DMARC).
+  verification (DKIM, SPF, DMARC). Contact details redacted.
 - [`vps-provider-research-2026-08.md`](./vps-provider-research-2026-08.md)
   — why we chose Netcup over Scaleway, Hetzner, etc.
 
-## Working documents (not for public distribution)
+## Removed from public repo
 
-- [`AUDIT_REPORT-2026-07.txt`](./AUDIT_REPORT-2026-07.txt) — internal
-  audit from July 2026 with 150+ findings across security, bugs,
-  performance, SEO, accessibility. Most have been addressed; the
-  document is kept for traceability.
+These docs were moved to the org's local PC under
+`~/Documents/wwf-private/` because they contain one-time setup
+instructions or sensitive internal information that doesn't belong
+in a public repository:
+
+- `AUDIT_REPORT-2026-07.txt` — internal audit from July 2026 with
+  150+ findings across security, bugs, performance, SEO, accessibility.
+  Kept on local PC for traceability.
+- `CLOUDFLARE_MANUAL_STEPS.md` — the UI clicks required to set up
+  Cloudflare (already done). Single-use doc.
+- `ROBE_LEGALI/` — Italian Ministry of Labour grant-reporting templates
+  (see `~/Documents/wwf-private/ROBE_LEGALI/`).
 
 ## Screenshots
 
@@ -44,7 +53,9 @@ and for documentation purposes.
 
 - Files in **English** unless they're translations of legal / regulatory
   material (the DPIA is bilingual by design).
-- Markdown only (`.md`), except the audit report which is plain text
-  (`.txt`) to match its original format.
+- Markdown only (`.md`).
 - Folder names are **lowercase-kebab-case**.
 - Use [GitHub-flavored Markdown](https://github.github.com/gfm/).
+- Sensitive details (org identity, codice fiscale, contact info) are
+  redacted with `[redacted]` placeholders. Full versions stay on local
+  storage only.
