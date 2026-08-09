@@ -1,0 +1,55 @@
+Site content license — Creative Commons BY-NC-SA 4.0
+====================================================
+
+Copyright (c) 2026 WWF Provincia di Crotone-ETS
+
+The textual content published on https://wwfcrotone.it (FAQ items, blog
+posts, brochure copy, page descriptions, chatbot knowledge base, and
+other authored text in `src/messages/{it,en}.json`, `src/lib/chatbot-knowledge.ts`,
+`docs/*.md` where indicated, and any other human-authored prose) is
+licensed under the Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International License (CC BY-NC-SA 4.0).
+
+Photos credited to "WWF Crotone volunteers" are © WWF Provincia di
+Crotone-ETS and licensed under the same CC BY-NC-SA 4.0 terms, unless
+a different credit line appears next to the photo.
+
+Photos from Wikimedia Commons retain their original CC licenses and
+credits, which are preserved in `public/images/gallery/`.
+
+The WWF panda logo, the brand name "WWF", and any other WWF trademarks
+are © WWF International / WWF Italia and are NOT covered by this
+license. See [LICENSE.trademark](./LICENSE.trademark) for trademark
+usage terms.
+
+You are free to:
+
+  Share — copy and redistribute the material in any medium or format
+  Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+
+  Attribution — You must give appropriate credit, provide a link to the
+  license, and indicate if changes were made. You may do so in any
+  reasonable manner, but not in any way that suggests the licensor
+  endorses you or your use.
+
+  NonCommercial — You may not use the material for commercial purposes
+  without prior written permission from WWF Italia.
+
+  ShareAlike — If you remix, transform, or build upon the material, you
+  must distribute your contributions under the same license as the
+  original.
+
+  No additional restrictions — You may not apply legal terms or
+  technological measures that legally restrict others from doing
+  anything the license permits.
+
+Full license text:
+  • English: https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+  • Italian: https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.it
+  • SPDX:     https://spdx.org/licenses/CC-BY-NC-SA-4.0.html
+  • Human-readable summary: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+For commercial reuse of any WWF Crotone content, contact
+wwfcrotone26@gmail.com.
