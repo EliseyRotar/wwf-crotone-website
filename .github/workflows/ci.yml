@@ -87,6 +87,6 @@ jobs:
 
       - run: npm run build
         env:
-          DATABASE_URL: "file:./dev.db"
+          DATABASE_URL: "postgresql://build:build@localhost:5432/build"
           AUTH_SECRET: "ci-test-secret-not-used-in-production-xxxxxxxxxxxxxxxx"
           NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
