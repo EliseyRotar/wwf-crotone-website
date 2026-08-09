@@ -19,7 +19,7 @@ We picked **Brevo** because:
 
 ## Prerequisites
 
-- Brevo account at https://www.brevo.com (sign up with `wwfcrotone26@gmail.com`)
+- Brevo account at https://www.brevo.com (sign up with `[redacted]`)
 - Domain `wwfcrotone.it` already delegated to Cloudflare (so you can add DNS records)
 - VPS deployed (the .env.production file is where you put Brevo credentials)
 
@@ -66,7 +66,7 @@ If you don't, add it now in Cloudflare DNS. The `~all` is "soft fail" which is s
 1. Brevo dashboard → **Settings → Senders & Domains → Senders → Add a sender**
 2. Email: `noreply@wwfcrotone.it` (or `info@wwfcrotone.it`)
 3. Name: `WWF Crotone Volunteer Camps`
-4. Click the verification link Brevo emails to `wwfcrotone26@gmail.com`
+4. Click the verification link Brevo emails to `[redacted]`
 
 ## Step 5 — Configure the app
 
@@ -80,7 +80,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=your-brevo-email@example.com
 SMTP_PASS=xsmtpsib-xxx...
-ADMIN_NOTIFY_EMAIL=wwfcrotone26@gmail.com
+ADMIN_NOTIFY_EMAIL=[redacted]
 ```
 
 Then `docker compose restart app` to pick up the new env.
@@ -100,14 +100,14 @@ const t = nodemailer.createTransport({
 });
 t.sendMail({
   from: 'WWF Crotone <noreply@wwfcrotone.it>',
-  to: 'wwfcrotone26@gmail.com',
+  to: '[redacted]',
   subject: 'Brevo test',
   text: 'It works.'
 }).then(r => console.log('OK:', r.messageId)).catch(e => console.error('FAIL:', e));
 "
 ```
 
-Check `wwfcrotone26@gmail.com` — you should receive the test email within seconds. If it goes to spam, check the SPF record is `v=spf1 include:spf.brevo.com ~all` and DKIM is verified.
+Check `[redacted]` — you should receive the test email within seconds. If it goes to spam, check the SPF record is `v=spf1 include:spf.brevo.com ~all` and DKIM is verified.
 
 ## Step 7 — Switch from Gmail fallback (if you ever hit Brevo's 300/day cap)
 
@@ -118,7 +118,7 @@ USE_BREVO_EMAIL=false
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
 SMTP_SECURE=true
-SMTP_USER=wwfcrotone26@gmail.com
+SMTP_USER=[redacted]
 SMTP_PASS=...       # Gmail app password (not account password)
 ```
 

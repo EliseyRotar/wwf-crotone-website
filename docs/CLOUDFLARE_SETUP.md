@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- `wwfcrotone.it` registered with Aruba (order `MO21851180`, paid €4.87) — wait for the activation email before continuing
+- `wwfcrotone.it` registered with Aruba (order `[redacted]`, paid €4.87) — wait for the activation email before continuing
 - Cloudflare account at https://dash.cloudflare.com (free tier is enough)
 - Contabo VPS public IP — save it before starting (`<CONTABO_IP>` placeholder below)
 - A debit card on file with Cloudflare (free tier doesn't charge, but they require one for account verification)
@@ -61,7 +61,7 @@ In **Cloudflare dashboard → DNS → Records**, add:
 | Type | Name | Content |
 |---|---|---|
 | TXT | `@` | `v=spf1 include:spf.brevo.com ~all` |
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:wwfcrotone26@gmail.com` |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:[redacted]` |
 | TXT | `brevo-site-verification=...` | *(paste from Brevo dashboard, see Phase 5 below)* |
 
 ### Cloudflare auto-verification (auto-added when you first add the zone)
@@ -77,11 +77,11 @@ In **Cloudflare dashboard → DNS → Records**, add:
 2. Cloudflare auto-adds the MX records (already done in Step 4) ✓
 3. Cloudflare auto-adds the SPF record (replaces ours if needed — merge with Brevo's)
 4. **Routing rules**:
-   - Custom address: `info@wwfcrotone.it` → destination `wwfcrotone26@gmail.com` → action **Forward**
-   - Catch-all: `*@wwfcrotone.it` → `wwfcrotone26@gmail.com` → action **Forward**
-5. Verify the destination address (Cloudflare emails `wwfcrotone26@gmail.com` with a confirmation link)
+   - Custom address: `info@wwfcrotone.it` → destination `[redacted]` → action **Forward**
+   - Catch-all: `*@wwfcrotone.it` → `[redacted]` → action **Forward**
+5. Verify the destination address (Cloudflare emails `[redacted]` with a confirmation link)
 
-**Result:** Any email sent to `info@wwfcrotone.it` (or anything-else@wwfcrotone.it) lands in `wwfcrotone26@gmail.com`.
+**Result:** Any email sent to `info@wwfcrotone.it` (or anything-else@wwfcrotone.it) lands in `[redacted]`.
 
 ## Step 6 — Generate the Cloudflare Origin certificate
 
@@ -175,7 +175,7 @@ dig MX wwfcrotone.it +short
 
 # Email routing
 echo "Test from $(date)" | mail -s "Cloudflare test" info@wwfcrotone.it
-# Check wwfcrotone26@gmail.com inbox (Cloudflare forwards)
+# Check [redacted] inbox (Cloudflare forwards)
 
 # HTTPS
 curl -I https://wwfcrotone.it
@@ -193,7 +193,7 @@ curl -sI https://wwfcrotone.it | grep -i content-security-policy
 - [ ] NS delegation confirmed (Cloudflare email + `dig NS`)
 - [ ] A records point at Contabo VPS
 - [ ] MX records in place (route1/2/3.mx.cloudflare.net)
-- [ ] Cloudflare Email Routing → catch-all to `wwfcrotone26@gmail.com` works (send test email)
+- [ ] Cloudflare Email Routing → catch-all to `[redacted]` works (send test email)
 - [ ] Origin cert generated and uploaded to VPS
 - [ ] SSL/TLS mode = Full (strict)
 - [ ] WAF + Bot Fight Mode enabled
