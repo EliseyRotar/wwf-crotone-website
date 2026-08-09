@@ -37,7 +37,7 @@ docker exec \
   -e WALG_COMPRESSION_METHOD \
   -e WALG_DELTA_MAX_STEPS \
   -e PGHOST=/var/run/postgresql \
-  -e PGUSER=postgres \
+  -e PGUSER=wwf \
   infra-postgres-1 \
   wal-g backup-push /var/lib/postgresql/data/pgdata 2>>"$LOG"
 
