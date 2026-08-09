@@ -18,6 +18,8 @@ dist
 .env.development.local
 .env.test.local
 .env.production.local
+# Local secrets file (NOT in repo — kept on this dev machine only)
+wwf-secrets.env
 
 # Prisma
 # Ignore local SQLite dev DB only; migrations are committed.
@@ -51,5 +53,20 @@ INFRASTRUCTURE.txt
 
 # Test coverage
 coverage
-# Spreadsheet with personal data (PII - GDPR)CAMPI_2026.xlsx*.xlsxROBE_LEGALI/*ROBE_LEGALI
-# Personal backup docs (have sensitive data � keep on USB only)RESUME_PROMPT.mdCREDENTIALS.mdPROJECT_STATE_2026-08-04.mdBACKUP_CONTENTS.mdSESSION_HISTORY.mdARCHITECTURE_CHEATSHEET.mdREADME_START_HERE.md
+
+# Spreadsheet with personal data (PII — GDPR)
+CAMPI_2026.xlsx
+*.xlsx
+
+# Personal backup docs (have sensitive data — keep on USB only)
+RESUME_PROMPT.md
+CREDENTIALS.md
+PROJECT_STATE_*.md
+BACKUP_CONTENTS.md
+SESSION_HISTORY.md
+ARCHITECTURE_CHEATSHEET.md
+README_START_HERE.md
+
+# Legal docs (not for the public repo)
+ROBE_LEGALI/
+ROBE_LEGALI
