@@ -1,0 +1,39 @@
+Source code license — GNU Affero General Public License v3.0
+=============================================================
+
+Copyright (c) 2026 WWF Provincia di Crotone-ETS
+
+The source code in this repository (everything under `src/`, `prisma/`,
+`infra/`, `.github/`, and configuration files at the root) is licensed
+under the GNU Affero General Public License, version 3 or (at your
+option) any later version.
+
+See the full text in [`LICENSE.code`](./LICENSE.code) (AGPL-3.0).
+
+A short summary of your rights and obligations:
+
+  You may:
+    • Use the code for any purpose, including commercially
+    • Modify the code
+    • Redistribute the code
+    • Run the code as a network service
+
+  You must, when you distribute modifications or run a modified version
+  as a network service:
+    • Publish the complete corresponding source code under the same
+      AGPL-3.0 license
+    • Preserve the copyright notice and this license
+    • Indicate any changes you made
+
+  The full text of the license is available at:
+    • This repository: ./LICENSE.code
+    • SPDX: https://spdx.org/licenses/AGPL-3.0-or-later.html
+    • Free Software Foundation: https://www.gnu.org/licenses/agpl-3.0.html
+
+Why AGPL-3.0? This is the standard license for non-profit, public-interest
+software (used by Wikipedia's MediaWiki, Nextcloud, Element, etc.). The
+network copyleft clause ensures that any organisation running a modified
+version of this site must publish their improvements back to the community,
+which is consistent with WWF's non-profit mission. A weaker license (MIT,
+Apache-2.0) would allow commercial entities to take this code, modify it,
+and not contribute back.
