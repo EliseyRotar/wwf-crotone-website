@@ -38,11 +38,12 @@ function levenshtein1(a: string, b: string): boolean {
     return diffs === 1;
   }
   const [longer, shorter] = a.length > b.length ? [a, b] : [b, a];
-  for (let i = 0; i <= longer.length - shorter.length; i++) {
+  for (let i = 0; i < longer.length; i++) {
     if (longer.slice(0, i) + longer.slice(i + 1) === shorter) return true;
   }
   return false;
 }
+
 
 function fuzzyContains(haystack: string, needle: string): boolean {
   if (haystack.includes(needle)) return true;
