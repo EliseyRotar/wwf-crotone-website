@@ -71,6 +71,13 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
       # WAL-G → Cloudflare R2
       WALG_S3_PREFIX: ${WALG_S3_PREFIX:-s3://wwf-backups}
+      # R2 buckets are jurisdiction-specific. The bucket was created with
+      # no LocationHint (default = global jurisdiction), so it lives at
+      # <accountid>.r2.cloudflarestorage.com, NOT at the .eu. endpoint.
+      # Using the EU endpoint here returns NoSuchBucket even though
+      # listing via the CF API shows the bucket exists. The default
+      # below is the global endpoint; override only if you specifically
+      # created the bucket with LocationHint: EU.
       AWS_ENDPOINT: ${AWS_ENDPOINT:-https://CHANGE_ME.r2.cloudflarestorage.com}
       AWS_REGION: ${AWS_REGION:-auto}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
