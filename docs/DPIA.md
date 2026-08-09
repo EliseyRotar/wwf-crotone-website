@@ -10,10 +10,10 @@
 |---|---|
 | **Titolare del trattamento** | WWF Crotone — Sezione locale di WWF Italia ETS |
 | **Sede** | Provincia di Crotone, Calabria — Italia |
-| **Contatto del Titolare** | wwfcrotone26@gmail.com — +39 351 3945109 |
+| **Contatto del Titolare** | [redacted — see controller contact] |
 | **Responsabile della protezione dei dati (DPO)** | *(da designare — cfr. § 6.4)* |
 | **Rappresentante del Titolare (art. 27)** | Non applicabile (titolare stabilito nell'UE) |
-| **Referente interno per la DPIA** | Paolo Asteriti — Presidente WWF Crotone |
+| **Referente interno per la DPIA** | [redacted — internal] |
 | **Data di redazione** | 3 agosto 2026 |
 | **Versione** | 1.0 |
 | **Stato** | Definitivo, in attesa di designazione DPO |
@@ -395,9 +395,9 @@ L'interessato che ritenga che il trattamento che lo riguarda violi il GDPR ha il
 
 | Canale | Recapito |
 |---|---|
-| Email del Titolare | wwfcrotone26@gmail.com |
+| Email del Titolare | [redacted] |
 | Email del DPO (da designare) | *(da definire in sede di designazione)* |
-| Telefono | +39 351 3945109 |
+| Telefono | [redacted] |
 | Posta | WWF Crotone — c/o C.E.L.A., San Leonardo di Cutro (KR) |
 
 ### 6.4. Designazione del DPO
@@ -716,9 +716,9 @@ The data subject who considers that the processing concerning them infringes the
 
 | Channel | Contact |
 |---|---|
-| Controller email | wwfcrotone26@gmail.com |
+| Controller email | [redacted] |
 | DPO email (to be designated) | *(to be defined upon designation)* |
-| Phone | +39 351 3945109 |
+| Phone | [redacted] |
 | Postal address | WWF Crotone — c/o C.E.L.A., San Leonardo di Cutro (KR) |
 
 ### 6.4. DPO Designation
