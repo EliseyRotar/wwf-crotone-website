@@ -94,8 +94,12 @@ else
   exit 1
 fi
 
-# 4. Fix ownership so postgres can read it, and append required config
+# 4. Fix ownership so postgres can read it, append required config,
+#    and remove the backup_label so postgres treats this as a complete
+#    snapshot (no recovery needed). The base backup is consistent on
+#    its own — it was taken at a known-good WAL position.
 sudo chown -R 999:999 "${TMPDIR}/pgdata"
+rm -f "${TMPDIR}/pgdata/backup_label" "${TMPDIR}/pgdata/tablespace_map"
 echo "port = 5432" >> "${TMPDIR}/pgdata/postgresql.conf"
 echo "unix_socket_directories = '/var/run/postgresql'" >> "${TMPDIR}/pgdata/postgresql.conf"
 
