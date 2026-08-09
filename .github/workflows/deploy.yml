@@ -59,6 +59,7 @@ jobs:
       # in production errors are symbolicated. The release is associated
       # with the exact git SHA that's being deployed.
       - name: Create Sentry release
+        if: ${{ env.SENTRY_AUTH_TOKEN != '' }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
