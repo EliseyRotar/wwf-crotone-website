@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Count WAL files in R2 wal_005/ prefix using stdlib only."""
+"""Count WAL files in R2 wal_005/ prefix using stdlib only.
+
+Uses virtual-hosted bucket addressing (bucket in hostname) because R2
+rejects path-style LIST requests with SignatureDoesNotMatch on virtual-
+hosted-only buckets.
+"""
 import hmac
 import hashlib
 import datetime
@@ -7,9 +12,8 @@ import urllib.request
 import urllib.error
 import re
 import sys
-
-# Read env from env or argv
 import os
+
 access_key = os.environ.get("AWS_ACCESS_KEY_ID", "")
 secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 endpoint = os.environ.get("AWS_ENDPOINT", "")
@@ -17,9 +21,10 @@ if not (access_key and secret_key and endpoint):
     print("0")
     sys.exit(0)
 
-# Parse endpoint host
+# Endpoint like https://72bc...r2.cloudflarestorage.com → host = bucket.endpoint
 endpoint_host = endpoint.replace("https://", "").replace("http://", "")
 bucket = "wwf-backups"
+host = f"{bucket}.{endpoint_host}"  # virtual-hosted
 
 
 def sign(k, m):
@@ -27,20 +32,18 @@ def sign(k, m):
 
 
 def derive_key(date_stamp, region, service):
-    k1 = sign(("AWS4" + date_stamp).encode(), date_stamp)
-    k2 = sign(k1, region)
-    k3 = sign(k2, service)
-    return k3
+    return sign(sign(sign(("AWS4" + date_stamp).encode(), date_stamp), region), service)
 
 
 t = datetime.datetime.now(datetime.timezone.utc)
 amz_date = t.strftime("%Y%m%dT%H%M%SZ")
 date_stamp = t.strftime("%Y%m%d")
 
-canonical_uri = f"/{bucket}/wal_005/"
+# Virtual-hosted: bucket name is in the Host header, NOT in the URI path
+canonical_uri = "/wal_005/"
 canonical_querystring = "list-type=2"
 canonical_headers = (
-    f"host:{endpoint_host}\n"
+    f"host:{host}\n"
     f"x-amz-content-sha256:UNSIGNED-PAYLOAD\n"
     f"x-amz-date:{amz_date}\n"
 )
@@ -67,7 +70,7 @@ authorization_header = (
     f"SignedHeaders={signed_headers}, Signature={signature}"
 )
 
-url = f"https://{endpoint_host}{canonical_uri}?{canonical_querystring}"
+url = f"https://{host}{canonical_uri}?{canonical_querystring}"
 req = urllib.request.Request(url)
 req.add_header("Authorization", authorization_header)
 req.add_header("x-amz-date", amz_date)
@@ -76,14 +79,9 @@ req.add_header("x-amz-content-sha256", "UNSIGNED-PAYLOAD")
 try:
     response = urllib.request.urlopen(req, timeout=10)
     body = response.read().decode()
-    # Count <Key> entries (one per file)
     keys = re.findall(r"<Key>([^<]+)</Key>", body)
     print(len(keys))
 except urllib.error.HTTPError as e:
-    # 404 = no files yet, that's OK
-    if e.code == 404:
-        print("0")
-    else:
-        print(f"0")
+    print("0")
 except Exception as e:
-    print(f"0")
+    print("0")
