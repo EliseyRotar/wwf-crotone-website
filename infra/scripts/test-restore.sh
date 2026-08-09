@@ -65,9 +65,14 @@ if [ "$READY" != "true" ]; then
   exit 1
 fi
 
-# 2. Stop the throwaway postgres so we can wipe its data dir
+# 2. Stop the throwaway postgres so we can wipe its data dir.
+#    Alpine's `su` needs a TTY (or `-l`) for postgres user, which sudo
+#    docker exec doesn't allocate by default. Use `gosu` (already
+#    installed in postgres:16-alpine) or just run as the postgres UID
+#    directly via `docker exec -u`.
 echo "[$(ts)] test-restore.sh: stopping throwaway postgres to wipe data dir" >> "$LOG"
-sudo docker exec "$RESTORE_NAME" su postgres -c 'pg_ctl stop -D /var/lib/postgresql/data -m fast' 2>&1 | head -3
+sudo docker exec -u postgres "$RESTORE_NAME" \
+  pg_ctl stop -D /var/lib/postgresql/data -m fast 2>&1 | head -3 || true
 
 # 3. Run wal-g backup-fetch FROM THE HOST (we have /usr/local/bin/wal-g
 #    installed there, and the data dir is bind-mounted)
