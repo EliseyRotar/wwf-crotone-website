@@ -48,7 +48,7 @@ A public volunteer registration site for 12 weekly camps, per-volunteer accounts
                                                     │  (CF-Connecting-IP)
                                                     ▼
                           ┌─────────────────────────────────────────┐
-                          │  Contabo Cloud VPS 4 (€5.50/mo promo)   │
+                          │  Netcup VPS 500 G12 (€5.50/mo promo)   │
                           │  4 vCPU · 8 GB RAM · 100 GB SSD · EU    │
                           │  ──────────────────────────────────── │
                           │  Docker Compose stack:                  │
@@ -88,7 +88,7 @@ A public volunteer registration site for 12 weekly camps, per-volunteer accounts
                   ┌───────┴─────────────────────────┴───────┐  ┌─────────────┐
                   │  Outbound email: Brevo SMTP (free)      │  │  Instatus   │
                   │  300/day cap, Gmail SMTP fallback       │  │  (free)     │
-                   │  wwfcrotone26@gmail.com existing inbox  │  │ status.*    │
+                   │  [redacted-contact] existing inbox  │  │ status.*    │
                    └─────────────────────────────────────────┘  └─────────────┘
 ```
 
@@ -109,14 +109,14 @@ Cloudflare Registrar sells most TLDs at cost (no markup, ~€8/yr for a `.com`, 
 
 1. **Register at Aruba.it.** Go to `https://www.aruba.it` → "Domini" → "Registra dominio" → enter `wwfcrotone.it`. During checkout Aruba will:
    - Ask for the registrant's Codice Fiscale / P.IVA (use WWF Italia ETS's P.IVA — `02121111005` — and the legal address in Via Po 25/c, 00198 Roma).
-   - Ask for an admin-c and tech-c contact email. Use a role address that forwards to `wwfcrotone26@gmail.com` (e.g. `admin@wwfcrotone.it` once Email Routing is set up, or `wwfcrotone26@gmail.com` in the meantime).
+   - Ask for an admin-c and tech-c contact email. Use a role address that forwards to `[redacted-contact]` (e.g. `admin@wwfcrotone.it` once Email Routing is set up, or `[redacted-contact]` in the meantime).
    - Collect ~€8-10 + IVA via carta / PayPal / bonifico.
    - Send a confirmation email to the admin-c with a link to verify the registration within 7 days (NIC.it requirement). Click it.
 2. **Add the zone in Cloudflare.** Log into Cloudflare → "Add a site" → enter `wwfcrotone.it` → select the **Free plan**. Cloudflare will do a DNS scan and find no existing records (because nothing is using the domain yet). Click "Continue".
 3. **Change nameservers at Aruba.** Cloudflare shows you two nameserver hostnames, e.g. `isla.ns.cloudflare.com` and `sid.ns.cloudflare.com` (exact names vary per assignment). Copy them. In the Aruba control panel go to `Pannello Domini` → click on `wwfcrotone.it` → `Gestione DNS` / `Nameserver` → "Usa nameserver personalizzati" / "Usa nameserver esterni" → paste the two Cloudflare hostnames → confirm. Aruba will propagate the NS change to NIC.it (usually instant, can take up to 24h).
 4. **Wait for Cloudflare to detect the NS switch.** Back in Cloudflare, the status will change from "Pending" to "Active" once NIC.it confirms (typically 5-30 min after Aruba's change, but DNS TTL can extend this to a few hours). You will get an email from Cloudflare when it goes active.
 5. **Add the DNS records from §7 below.** All A, CNAME, MX, TXT, SPF, DMARC records are created inside Cloudflare's DNS panel. Aruba's DNS panel is now irrelevant — leave it untouched (or, if Aruba complains, set its records to garbage; Cloudflare will always win because it owns the NS).
-6. **Set up Email Routing in Cloudflare.** Once the zone is active: Cloudflare dashboard → `wwfcrotone.it` → `Email` → `Email Routing` → enable, verify the destination address (`wwfcrotone26@gmail.com`) by clicking the confirmation email Cloudflare sends to the existing inbox, then add the rules: `info@` → `wwfcrotone26@gmail.com` (forwarded), catch-all `*@` → `wwfcrotone26@gmail.com` (forwarded). The MX records shown in §7 are auto-created by Email Routing — do not edit them manually.
+6. **Set up Email Routing in Cloudflare.** Once the zone is active: Cloudflare dashboard → `wwfcrotone.it` → `Email` → `Email Routing` → enable, verify the destination address (`[redacted-contact]`) by clicking the confirmation email Cloudflare sends to the existing inbox, then add the rules: `info@` → `[redacted-contact]` (forwarded), catch-all `*@` → `[redacted-contact]` (forwarded). The MX records shown in §7 are auto-created by Email Routing — do not edit them manually.
 7. **Set up R2 bucket (if not done).** Cloudflare → R2 → Create bucket `wwf-backups` (EU region hint) → generate API token scoped to that bucket → paste into `infra/.env.production.example` (lines `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
 8. **Annual renewal.** Aruba will send a renewal email ~30 days before the `.it` expires (NIC.it does 1-year terms by default, multi-year is also an option). Pay it via Aruba's control panel. Cloudflare does not get involved in renewal because it does not own the domain.
 
@@ -134,7 +134,7 @@ Cloudflare Registrar sells most TLDs at cost (no markup, ~€8/yr for a `.com`, 
 | Styling | Tailwind 3 + CSS variables | Already in place. |
 | i18n | next-intl | Already in place. |
 
-### 4.2 Hosting — Contabo Cloud VPS 4
+### 4.2 Hosting — Netcup VPS 500 G12
 | | |
 |---|---|
 | **Tier** | Cloud VPS 4 (promo, 24-mo commit) |
@@ -163,8 +163,8 @@ Redis 7 in Docker, 128 MB cap, LRU eviction, no persistence (cache only). Sessio
 ### 4.7 Email
 | Address | Purpose | How |
 |---|---|---|
-| `wwfcrotone26@gmail.com` | Existing inbox, replies | Stays as-is |
-| `wwfcrotone@legalmail.it` | Italian PEC | Stays as-is (separate provider) |
+| `[redacted-contact]` | Existing inbox, replies | Stays as-is |
+| `[redacted-pec]` | Italian PEC | Stays as-is (separate provider) |
 | Outbound transactional | Confirmations, magic links, admin alerts | **Brevo SMTP** (free, 300/day) · fallback Gmail SMTP |
 | `info@…` | Public contact | CF Email Routing → Gmail |
 | `noreply@…` | (Future) System mail | CF Email Routing → black hole |
@@ -175,7 +175,7 @@ Redis 7 in Docker, 128 MB cap, LRU eviction, no persistence (cache only). Sessio
 `wa.me/393513945109` link on `/contact` and `/account`. No Business API (Meta onboarding is too heavy for a volunteer NGO).
 
 ### 4.9 Error tracking — Sentry Developer (free)
-5K errors/mo, 50K spans, 30d retention, 1 user. Mature Next.js integration, sourcemap support, beforeSend PII scrub already in `sentry.server.config.ts`. Only the admin gets alerts (via `wwfcrotone26@gmail.com`).
+5K errors/mo, 50K spans, 30d retention, 1 user. Mature Next.js integration, sourcemap support, beforeSend PII scrub already in `sentry.server.config.ts`. Only the admin gets alerts (via `[redacted-contact]`).
 
 ### 4.10 Monitoring — UptimeRobot + Instatus
 | Tool | What |
@@ -194,7 +194,7 @@ Redis 7 in Docker, 128 MB cap, LRU eviction, no persistence (cache only). Sessio
 - **Free-tier math:** R2 free = 10 GB storage, 1M Class A / 10M Class B ops/mo. Estimated usage: 2-3 GB, ~50K ops/mo. 5× headroom.
 
 ### 4.12 CI/CD — GitHub Actions
-`push to main` → `npm ci` → typecheck/lint/test → `npm run build` → `docker build` → `docker save` → `rsync` to VPS → `docker compose up -d`. Rollback = `git revert && git push`. No separate registry (image is ~500 MB, rsync is fast on Contabo internal network).
+`push to main` → `npm ci` → typecheck/lint/test → `npm run build` → `docker build` → `docker save` → `rsync` to VPS → `docker compose up -d`. Rollback = `git revert && git push`. No separate registry (image is ~500 MB, rsync is fast on the VPS provider internal network).
 
 ---
 
@@ -218,7 +218,7 @@ Redis 7 in Docker, 128 MB cap, LRU eviction, no persistence (cache only). Sessio
 
 These cost nothing extra to keep and are non-negotiable for an NGO handling personal data:
 
-- **GDPR** — EU residency (Contabo EU + R2 EU), privacy policy, cookie consent, self-service data export, deletion request, DPIA-ready
+- **GDPR** — EU residency (Netcup (DE) + R2 EU), privacy policy, cookie consent, self-service data export, deletion request, DPIA-ready
 - **TLS everywhere** — HSTS preload, TLS 1.2/1.3 only, CF Origin cert pinned in Nginx
 - **CSP strict** — no `unsafe-inline` in prod (in `next.config.js`)
 - **Magic-link auth** — jose-signed JWT, single-use tokens, 15-min expiry, bcrypt for any password fallback
@@ -247,10 +247,10 @@ All managed in Cloudflare. Orange-cloud = proxied (CDN + DDoS). Grey-cloud = dir
 | MX | `@` | `route2.mx.cloudflare.net` (prio 92) | n/a | CF Email Routing in backup |
 | MX | `@` | `route3.mx.cloudflare.net` (prio 92) | n/a | CF Email Routing in backup |
 | TXT | `@` | `v=spf1 include:_spf.brevo.com include:_spf.google.com ~all` | n/a | SPF (Brevo + Gmail) |
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:wwfcrotone26@gmail.com` | n/a | DMARC |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:[redacted-contact]` | n/a | DMARC |
 | TXT | `cf2024-1` | `<cloudflare-verification>` | n/a | CF domain verification (auto) |
 
-**CF Email Routing rules:** `info@…` → `wwfcrotone26@gmail.com`; catch-all `*@…` → `wwfcrotone26@gmail.com`.
+**CF Email Routing rules:** `info@…` → `[redacted-contact]`; catch-all `*@…` → `[redacted-contact]`.
 
 ---
 
@@ -358,7 +358,7 @@ SSH in as root: apt update, install Docker + Compose plugin, UFW (only 22/80/443
 | Item | Monthly | Yearly | Notes |
 |---|---|---|---|
 | Domain `wwfcrotone.it` (Aruba + NIC.it registry fee) | — | ~€10 | Italian VAT 22% included; €8-12/yr typical |
-| Contabo Cloud VPS 4 | €5.50 | €66 | 24-mo promo, EU |
+| Netcup VPS 500 G12 | €5.50 | €66 | 24-mo promo, EU |
 | Cloudflare Free (DNS/CDN/SSL/DDoS/WAF-managed/Email Routing) | €0 | €0 | — |
 | Cloudflare R2 free tier (10 GB) | €0 | €0 | Backups + ops |
 | Brevo free tier (300/day SMTP) | €0 | €0 | — |
@@ -427,7 +427,7 @@ Can handle **5-10× current load without scaling**. If exceeded, upgrade to Cont
 ## 13. Compliance checklist
 
 **GDPR (EU):**
-- EU data residency (Contabo EU + R2 EU)
+- EU data residency (Netcup (DE) + R2 EU)
 - Privacy policy (`/privacy` + `/cookie`)
 - Cookie consent banner
 - Self-service data export (`/account/profile`)
@@ -438,7 +438,7 @@ Can handle **5-10× current load without scaling**. If exceeded, upgrade to Cont
 - Audit log for every booking edit
 - DPIA — to be drafted before launch (contact DPO)
 
-**Italian PEC:** `wwfcrotone@legalmail.it` maintained separately (out of scope).
+**Italian PEC:** `[redacted-pec]` maintained separately (out of scope).
 
 **WCAG 2.1 AA:** keyboard nav, focus in chat widget, ARIA on icon buttons, skip-to-content, color contrast light+dark. ⏳ Manual screen reader test (NVDA + VoiceOver) before launch.
 
@@ -514,12 +514,12 @@ cd /srv/wwf && docker compose up -d --force-recreate app
 2. **Geo-restrict /admin** — Italian/EU IPs only? Without CF WAF custom rules, this has to be done at Nginx level (country codes from CF header).
 3. **Cookie banner analytics** — keep Plausible (privacy-first, no consent needed) or switch to GA4 (requires consent)?
 4. **DPIA** — do you have a DPO or need help drafting one?
-5. **WhatsApp number** — confirm `+39 351 3945109`?
+5. **WhatsApp number** — confirm `[redacted-phone]`?
 6. **Pre-launch comms** — maintenance page during cutover?
 7. **Backup retention** — 30d OK, or longer for compliance?
 8. **Staging domain** — `staging.wwfcrotone.it` (free CNAME) to test deploys before going live?
 9. **Instatus subdomain** — `status.wwfcrotone.it` (CNAME to `wwfcrotone.instatus.com`) or `wwfcrotone.instatus.com`?
-10. **Sentry alert recipient** — confirm `wwfcrotone26@gmail.com` is the single Sentry user?
+10. **Sentry alert recipient** — confirm `[redacted-contact]` is the single Sentry user?
 
 ---
 
