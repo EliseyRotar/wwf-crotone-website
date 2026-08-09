@@ -89,50 +89,18 @@ TOTAL_FILES=$(sudo find "${TMPDIR}" -type f | wc -l)
 echo "[$(ts)] test-restore.sh: backup total: $TOTAL_FILES files, $TOTAL_SIZE bytes" >> "$LOG"
 
 # 3. Verify R2 has WAL files (continuous archiving working).
-#    We can't rely on `aws` CLI being installed — use python with urllib
-#    + SigV4 signing (stdlib only) to count WAL files in R2.
+#    Use a small stdlib Python helper to count WAL files via signed
+#    S3 LIST (no awscli dependency).
 echo "[$(ts)] test-restore.sh: counting WAL files in R2" >> "$LOG"
 
-WAL_COUNT=$(python3 - <<'PYEOF'
-import hmac, hashlib, datetime, urllib.request, re, sys
-
-access_key = "${AWS_ACCESS_KEY_ID}"
-secret_key = "${AWS_SECRET_ACCESS_KEY}"
-endpoint_host = "${AWS_ENDPOINT}".replace("https://", "").replace("http://", "")
-bucket = "wwf-backups"
-
-def sign(k, m): return hmac.new(k, m.encode(), hashlib.sha256).digest()
-def sk(d, r, s):
-    return sign(sign(sign(("AWS4"+d).encode(), d), r), s)
-
-t = datetime.datetime.now(datetime.timezone.utc)
-amz, ds = t.strftime("%Y%m%dT%H%M%SZ"), t.strftime("%Y%m%d")
-
-cu, cq = f"/{bucket}/wal_005/", "list-type=2"
-ch = f"host:{endpoint_host}\nx-amz-content-sha256:UNSIGNED-PAYLOAD\nx-amz-date:{amz}\n"
-sh = "host;x-amz-content-sha256;x-amz-date"
-ph = "UNSIGNED-PAYLOAD"
-cr = f"GET\n{cu}\n{cq}\n{ch}\n{sh}\n{ph}"
-algo = "AWS4-HMAC-SHA256"
-cs = f"{ds}/auto/s3/aws4_request"
-sts = f"{algo}\n{amz}\n{cs}\n{hashlib.sha256(cr.encode()).hexdigest()}"
-sig = hmac.new(sk(ds, "auto", "s3"), sts.encode(), hashlib.sha256).hexdigest()
-ah = f'{algo} Credential={access_key}/{cs}, SignedHeaders={sh}, Signature={sig}'
-
-req = urllib.request.Request(f"https://{endpoint_host}{cu}?{cq}")
-req.add_header("Authorization", ah)
-req.add_header("x-amz-date", amz)
-req.add_header("x-amz-content-sha256", "UNSIGNED-PAYLOAD")
-try:
-    body = urllib.request.urlopen(req, timeout=10).read().decode()
-    print(len(re.findall(r"<Key>", body)))
-except Exception as e:
-    print(f"ERR:{e}", file=sys.stderr)
-    print("0")
-PYEOF
-)
+WAL_COUNT=$(AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+            AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+            AWS_ENDPOINT="${AWS_ENDPOINT}" \
+            python3 /srv/wwf/scripts/walg-count-wal.py 2>/dev/null || echo 0)
+WAL_COUNT=$(echo "$WAL_COUNT" | tr -d '[:space:]')
+WAL_COUNT=${WAL_COUNT:-0}
 echo "[$(ts)] test-restore.sh: R2 has $WAL_COUNT WAL files (continuous archive working)" >> "$LOG"
-if [ "$(echo "$WAL_COUNT" | head -1)" -lt 1 ] 2>/dev/null; then
+if [ "$WAL_COUNT" -lt 1 ] 2>/dev/null; then
   echo "[$(ts)] test-restore.sh: FAIL — no WAL files in R2, point-in-time recovery would fail" >> "$LOG"
   VERIFY_OK=false
 fi
