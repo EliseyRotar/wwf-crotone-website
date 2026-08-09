@@ -52,6 +52,14 @@ export async function generateMetadata({
       template: `%s · WWF Crotone`
     },
     description,
+    icons: {
+      icon: [
+        { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon.png", sizes: "800x800", type: "image/png" }
+      ],
+      shortcut: "/favicon.ico",
+      apple: "/apple-touch-icon.png"
+    },
     keywords: locale === "it"
       ? [
           "WWF Crotone",
