@@ -2,6 +2,7 @@ const withNextIntl = require("next-intl/plugin")("./src/i18n/config.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   reactStrictMode: true,
   images: {
     formats: ["image/avif", "image/webp"],
