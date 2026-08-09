@@ -33,7 +33,7 @@ docker exec \
   -e AWS_REGION \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
-  -e AWS_S3_FORCE_PATH_STYLE \
+  -e AWS_S3_FORCE_PATH_STYLE=false \
   -e WALG_COMPRESSION_METHOD \
   -e WALG_DELTA_MAX_STEPS \
   -e PGHOST=/var/run/postgresql \
