@@ -71,6 +71,8 @@ export function middleware(req: NextRequest) {
   // CSP + security headers still apply — they're attached to the
   // response below.
   const { pathname } = req.nextUrl;
+  const host = req.headers.get("host") ?? "";
+  const isStatusHost = host === "status.wwfcrotone.it" || host.startsWith("status.wwfcrotone.it:");
   const isAdminPath =
     pathname === "/admin" ||
     pathname.startsWith("/admin/");
@@ -87,6 +89,31 @@ export function middleware(req: NextRequest) {
     const lang = (req.headers.get("accept-language") ?? "it").split(",")[0] ?? "it";
     const locale = lang.toLowerCase().startsWith("en") ? "en" : "it";
     return NextResponse.redirect(new URL(`/${locale}/maintenance`, req.url), 302);
+  }
+
+  // status.wwfcrotone.it → rewrite every public path to /[locale]/status
+  // so the status page is the canonical page for this host. The visitor
+  // never sees the marketing landing page when they hit the status URL.
+  // /api/* still goes through normally (the status page itself fetches
+  // /api/status etc.).
+  if (isStatusHost && !isApiPath && !isAdminPath) {
+    // Pick the locale from Accept-Language (default "it", matches the
+    // apex site convention).
+    const lang = (req.headers.get("accept-language") ?? "it").split(",")[0] ?? "it";
+    const locale = lang.toLowerCase().startsWith("en") ? "en" : "it";
+
+    // Strip any leading /it or /en (defensive — handle direct visits).
+    let target = pathname;
+    if (target === "/" || target === "") {
+      target = "/status";
+    } else if (target === "/it" || target === "/en") {
+      target = "/status";
+    } else if (target.startsWith("/it/") || target.startsWith("/en/")) {
+      // e.g. /it/status → /status
+      target = "/" + target.slice(3);
+    }
+    const newUrl = new URL(`/${locale}${target}`, req.url);
+    return NextResponse.rewrite(newUrl, { request: { headers: requestHeaders } });
   }
 
   const skipI18n = isAdminPath || isApiPath;
