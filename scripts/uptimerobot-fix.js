@@ -231,10 +231,11 @@ async function main() {
     }
 
     // Type change: DELETE + recreate
-    console.log(`  ⟳ ${slug} (id=${monitor.id}): type change ${monitor.type} → ${targetType}`);
+    const oldId = monitor.id;
+    console.log(`  ⟳ ${slug} (id=${oldId}): type change ${monitor.type} → ${targetType}`);
     console.log(`     Step 1: delete old monitor`);
-    await api("DELETE", `/monitors/${monitor.id}`);
-    await new Promise((r) => setTimeout(r, 2000)); // rate limit
+    await api("DELETE", `/monitors/${oldId}`);
+    await new Promise((r) => setTimeout(r, 3000)); // rate limit
     const create = {
       friendlyName: newName,
       url: fix.url,
@@ -255,8 +256,10 @@ async function main() {
     const created = await api("POST", "/monitors", create);
     const newId = created.id ?? created.data?.id;
     console.log(`     ✓ new monitor id=${newId}`);
-    renames.push({ slug, oldId: monitor.id, newId });
-    await new Promise((r) => setTimeout(r, 2000)); // rate limit
+    // Update the OTHER slug's matching in case it picks the deleted ID
+    remapId(oldId, newId);
+    renames.push({ slug, oldId, newId });
+    await new Promise((r) => setTimeout(r, 3000)); // rate limit
   }
 
   if (renames.length) {
