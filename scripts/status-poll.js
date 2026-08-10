@@ -49,6 +49,18 @@ const SELF_PROBES = [
 ];
 
 function urStatusToOurs(s) {
+  // UptimeRobot v3 returns status as a string: "UP", "DOWN", "PAUSED",
+  // "UNCHECKED", "SEEMS_DOWN". Older docs used numeric codes (0/2/8/9).
+  if (typeof s === "string") {
+    switch (s.toUpperCase()) {
+      case "UP": return "up";
+      case "SEEMS_DOWN": return "degraded";
+      case "DOWN": return "down";
+      case "PAUSED":
+      case "UNCHECKED":
+      default: return "unknown";
+    }
+  }
   switch (s) {
     case 2: return "up";
     case 8: return "degraded";
