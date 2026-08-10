@@ -317,6 +317,7 @@ const services: ServiceSeed[] = [
     category: "external",
     display_order: 39,
     source: "statuspage",
+    source_id: "status.uptimerobot.com", // matches STATUSPAGE_FEEDS key in status-poll.js
     ur_name_pattern: /NEVER_MATCHES/,
     url: "https://status.uptimerobot.com",
     description_it: "Piattaforma di monitoraggio (free tier, 50 monitor).",
