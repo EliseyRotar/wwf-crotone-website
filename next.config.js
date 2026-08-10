@@ -1,4 +1,8 @@
 const withNextIntl = require("next-intl/plugin")("./src/i18n/config.ts");
+const { withSentryConfig } = require("@sentry/nextjs");
+
+const SENTRY_ORG = process.env.SENTRY_ORG || "wwf-provincia-di-crotone-ets";
+const SENTRY_PROJECT = process.env.SENTRY_PROJECT || "javascript-nextjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -53,4 +57,27 @@ const nextConfig = {
   }
 };
 
-module.exports = withNextIntl(nextConfig);
+// withSentryConfig is the LAST wrapper so source-map upload + the
+// Sentry middleware run after everything else. `silent: !process.env.CI`
+// keeps dev/local builds quiet; CI builds print upload progress.
+//
+// `widenClientFileUpload: true` is the recommended setting for
+// readable stack traces in the browser. `authToken` is read from
+// SENTRY_AUTH_TOKEN — only set in CI / on the deploy machine, never
+// committed.
+//
+// When SENTRY_DSN is unset (typical for dev), the SDK is a no-op so
+// the wrapper costs essentially nothing.
+module.exports = withSentryConfig(
+  withNextIntl(nextConfig),
+  {
+    org: SENTRY_ORG,
+    project: SENTRY_PROJECT,
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    // Don't auto-upload a release unless SENTRY_RELEASE is set, so
+    // local builds don't ship artifacts to Sentry.
+    uploadSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
+  }
+);
