@@ -154,6 +154,34 @@ services:
       timeout: 5s
       retries: 3
 
+  # Status page cron worker. Polls UptimeRobot + 8 public Atlassian-
+  # Statuspage feeds + self-probes every 60s and writes StatusSnapshot /
+  # StatusPeriod / Incident rows. Uses the same image as the app
+  # (so we get the same Prisma client) but only runs scripts/status-poll.js.
+  # No public port — talks to the database and the public internet only.
+  cron:
+    image: wwf-app:latest
+    build:
+      context: ./repo
+      dockerfile: ../Dockerfile
+    restart: unless-stopped
+    command: ["sh", "-c", "npx prisma generate && node scripts/status-poll.js"]
+    env_file:
+      - ./.env.production
+    environment:
+      DATABASE_URL: postgresql://wwf:${POSTGRES_PASSWORD}@postgres:5432/wwf
+      SELF_HEALTH_URL: http://app:3000/api/health
+      UPTIMEROBOT_API_KEY: ${UPTIMEROBOT_API_KEY:-}
+    depends_on:
+      app: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+    networks: [appnet]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 256M
+
 networks:
   appnet:
     driver: bridge

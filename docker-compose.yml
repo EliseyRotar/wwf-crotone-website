@@ -13,6 +13,14 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U wwf"]
       interval: 10s
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
   app:
     build: .
     ports:
@@ -20,7 +28,29 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://wwf:wwf_dev_password@postgres:5432/wwf_crotone
+      REDIS_URL: redis://redis:6379
+  # Status page cron worker. Polls UptimeRobot + 8 public Atlassian-
+  # Statuspage feeds + self-probes every 60s and writes StatusSnapshot /
+  # StatusPeriod / Incident rows. Uses the same image as the app (so we
+  # get the same Prisma client) but only runs scripts/status-poll.js.
+  # No public port — talks to the database and the public internet only.
+  cron:
+    build: .
+    depends_on:
+      app:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://wwf:wwf_dev_password@postgres:5432/wwf_crotone
+      SELF_HEALTH_URL: http://app:3000/api/health
+      UPTIMEROBOT_API_KEY: ${UPTIMEROBOT_API_KEY:-}
+    # Re-run the generator at startup so the prisma client matches the
+    # schema on the volume even if the image was built against an
+    # earlier schema. Then run the script.
+    command: ["sh", "-c", "npx prisma generate && node scripts/status-poll.js"]
+    restart: unless-stopped
 volumes:
   postgres_data:

@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed-status": "tsx prisma/seed-status.ts",
     "db:studio": "prisma studio",
     "db:backup": "node scripts/backup-db.cjs",
     "test": "vitest run",
