@@ -33,8 +33,8 @@ type ServiceSeed = {
   name_en: string;
   category: "user-facing" | "infrastructure" | "external";
   display_order: number;
-  source: "uptimerobot" | "statuspage" | "self-probe" | "instatus";
-  ur_name_pattern: RegExp; // match by name in UptimeRobot
+  source: "uptimerobot" | "statuspage" | "self-probe" | "instatus" | "manual";
+  source_id?: string;
   url: string | null;
   description_it?: string;
   description_en?: string;
