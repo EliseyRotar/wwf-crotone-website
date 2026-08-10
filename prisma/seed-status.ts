@@ -18,9 +18,13 @@ const prisma = new PrismaClient();
 
 type Monitor = {
   id: number;
-  name: string;
+  // UptimeRobot v3 returns the monitor name as `friendlyName`. The
+  // `name` field is kept for back-compat with any older API consumer.
+  friendlyName?: string;
+  name?: string;
   type: string;
   url: string;
+  status: number;
 };
 
 type ServiceSeed = {
