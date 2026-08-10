@@ -5,7 +5,8 @@ tracing. The setup is **optional** — the SDK is a no-op when `SENTRY_DSN`
 is empty, so the app runs fine without it.
 
 The Sentry project is `javascript-nextjs` under the org
-`wwf-provincia-di-crotone-ets` (created 2025-08).
+`wwf-provincia-di-crotone-ets` (created 2026-08). The org is in the
+**EU region** (`de.sentry.io`); the DSN reflects that in the hostname.
 
 ## Architecture
 
@@ -24,6 +25,7 @@ Five files together wire the SDK:
 | `sentry.server.config.ts` | Node.js runtime init. 10% trace sample rate in prod, 100% in dev. PII off by default. |
 | `sentry.edge.config.ts` | Edge runtime init (used by `src/middleware.ts`). |
 | `src/app/global-error.tsx` | App Router error boundary — captures anything that escapes the root layout. |
+| `src/app/sentry-example-page/` | Smoke-test page with a "Break the world" button (only renders when Sentry is configured). |
 
 ## Environment
 
@@ -75,7 +77,7 @@ Actions deploy workflow). The build step will then upload source maps
 for both server and client bundles, so stack traces are readable.
 
 The token needs scope `project:releases`. Create one at
-<https://sentry.io/settings/auth-tokens/>.
+<https://wwf-provincia-di-crotone-ets.sentry.io/settings/auth-tokens/>.
 
 ## Production checklist
 

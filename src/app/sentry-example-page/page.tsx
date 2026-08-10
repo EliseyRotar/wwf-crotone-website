@@ -53,7 +53,14 @@ export default function SentryExamplePage() {
         </button>
       )}
       <p style={{ marginTop: "1rem", fontSize: "0.85rem", opacity: 0.6 }}>
-        DSN: {dsn ? `${dsn.slice(0, 30)}…` : "(empty)"}
+        DSN: {dsn ? `${dsn.slice(0, 30)}…` : "(empty)"}{" "}
+        {dsn.includes("de.sentry.io") && "(EU region)"}
+      </p>
+      <p style={{ marginTop: "0.5rem", fontSize: "0.85rem", opacity: 0.6 }}>
+        Dashboard:{" "}
+        <a href="https://wwf-provincia-di-crotone-ets.sentry.io" style={{ color: "#a5d961" }}>
+          wwf-provincia-di-crotone-ets.sentry.io
+        </a>
       </p>
     </main>
   );
