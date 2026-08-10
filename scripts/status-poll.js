@@ -12,109 +12,80 @@
  *  4. For each service, computes the new StatusPeriod event if status changed
  *  5. Prunes StatusSnapshot to last 7 days
  *
- * Run(`docker compose up cron`) so it can
+ * Run as a separate Docker container (`docker compose up cron`) so it can
  * survive app container restarts. Single-instance only — no locking needed
  * because Postgres serializes the writes.
  *
- * Env, UPTIMEROBOT_API_KEY, SELF_HEALTH_URL (optional,
- * default http://app/api/health)
+ * Env: DATABASE_URL, UPTIMEROBOT_API_KEY, SELF_HEALTH_URL (optional,
+ * default http://app:3000/api/health)
  *
- * Logging. Container logs are tailed by Docker.
+ * Logging: stdout. Container logs are tailed by Docker.
  */
 
 import { PrismaClient } from "@prisma/client";
-import { setTimeout} from "node/promises";
+import { setTimeout as wait } from "node:timers/promises";
+import net from "node:net";
 
 const prisma = new PrismaClient();
 
 const UPTIMEROBOT_KEY = process.env.UPTIMEROBOT_API_KEY ?? "";
-const SELF_HEALTH_URL = process.env.SELF_HEALTH_URL ?? "http://app/api/health";
+const SELF_HEALTH_URL = process.env.SELF_HEALTH_URL ?? "http://app:3000/api/health";
 const POLL_INTERVAL_MS = 60_000;
 const SNAPSHOT_TTL_DAYS = 7;
 
-// Public Atlassian-Statuspage feeds (provider slug -> URL)
 const STATUSPAGE_FEEDS = {
   "status.uptimerobot.com": {
     url: "https://status.uptimerobot.com/api/v2/summary.json",
     name_it: "UptimeRobot (piattaforma)",
     name_en: "UptimeRobot (platform)",
     category: "external",
-    display_order: 0,
+    display_order: 90,
   },
 };
 
-// Self-probes that need to be tested from inside the Docker network
-// (the cron container can reach the postgres / redis containers by service name)
 const SELF_PROBES = [
-  { slug: "postgres", host: "postgres", port },
-  { slug: "redis", host: "redis", port },
+  { slug: "postgres", host: "postgres", port: 5432 },
+  { slug: "redis", host: "redis", port: 6379 },
 ];
 
-
-  id;
-  friendlyName;
-  url;
-  type; // 1=HTTP, 2=keyword, 3=ping, 4=port
-  status; // 0=paused, 1=not-checked-yet, 2=up, 8=seems-down, 9=down
-  average_response_time | null;
-  last_checked_at | null; // unix ms
-};
-
-
-  page;
-  components?: { id; name; status }[];
-  incidents?: {
-    id;
-    name;
-    status;
-    impact;
-    shortlink;
-    created_at;
-    resolved_at;
-  }[];
-  scheduled_maintenances?: { id; name; status; scheduled_for}[];
-  status?: { indicator; description };
-};
-
-function urStatusToOurs(s): "up" | "down" | "degraded" | "unknown" {
+function urStatusToOurs(s) {
   switch (s) {
-    case 2 "up";
-    case 8 "degraded";
-    case 9 "down";
-    case 0 "unknown";
-    default "unknown";
+    case 2: return "up";
+    case 8: return "degraded";
+    case 9: return "down";
+    case 0: return "unknown";
+    default: return "unknown";
   }
 }
 
-function statuspageIndicatorToOurs(indicator): "up" | "down" | "degraded" | "unknown" {
+function statuspageIndicatorToOurs(indicator) {
   switch (indicator) {
     case "none": return "up";
     case "minor": return "degraded";
     case "major":
     case "critical": return "down";
-    default "unknown";
+    default: return "unknown";
   }
 }
 
-async function pollUptimeRobot(): Promise<{ matched; snapshots; errors }> {
-  if (!UPTIMEROBOT_KEY) return { matched, snapshots, errors };
+async function pollUptimeRobot() {
+  if (!UPTIMEROBOT_KEY) return { matched: 0, snapshots: 0, errors: 0 };
 
   let monitors = [];
-  let errors = 0;
   try {
     const resp = await fetch("https://api.uptimerobot.com/v3/monitors", {
-      headers` },
+      headers: { Authorization: `Bearer ${UPTIMEROBOT_KEY}` },
     });
     if (!resp.ok) throw new Error(`UR fetch failed: ${resp.status}`);
-    const data = (await resp.json()) as { data };
-    monitors = data.data;
+    const data = await resp.json();
+    monitors = data.data || [];
   } catch (e) {
-    console.error(`[pollUptimeRobot] error:`, (e).message);
-    return { matched, snapshots, errors };
+    console.error(`[pollUptimeRobot] error:`, e.message);
+    return { matched: 0, snapshots: 0, errors: 1 };
   }
 
   const services = await prisma.statusService.findMany({
-    where,
+    where: { source: "uptimerobot", active: true },
   });
 
   let snapshots = 0;
@@ -129,103 +100,114 @@ async function pollUptimeRobot(): Promise<{ matched; snapshots; errors }> {
     const responseMs = m.average_response_time ? Number(m.average_response_time) : null;
     try {
       await prisma.statusSnapshot.create({
-        data,
+        data: {
+          service_id: svc.id,
+          status,
+          response_ms: responseMs,
+        },
       });
       snapshots++;
       await maybeUpdatePeriod(svc.id, status);
     } catch (e) {
-      console.error(`[pollUptimeRobot] snapshot error for ${svc.slug}:`, (e).message);
-      errors++;
+      console.error(`[pollUptimeRobot] snapshot error for ${svc.slug}:`, e.message);
     }
   }
 
-  return { matched, snapshots, errors };
+  return { matched, snapshots, errors: 0 };
 }
 
-async function pollStatuspageFeeds(): Promise<{ feeds; snapshots; incidents; errors }> {
+async function pollStatuspageFeeds() {
   let totalSnaps = 0;
   let totalIncs = 0;
   let totalErrors = 0;
 
-  // For each registered statuspage feed
   for (const [host, def] of Object.entries(STATUSPAGE_FEEDS)) {
     const service = await prisma.statusService.findFirst({
-      where,
+      where: { source: "statuspage", source_id: host, active: true },
     });
     if (!service) continue;
 
     try {
-      const resp = await fetch(def.url, { signal.timeout(10_000) });
+      const resp = await fetch(def.url, { signal: AbortSignal.timeout(10_000) });
       if (!resp.ok) throw new Error(`statuspage fetch failed: ${resp.status}`);
-      const data = (await resp.json());
+      const data = await resp.json();
 
       const overall = data.status?.indicator ?? (data.page?.status ?? "none");
       const status = statuspageIndicatorToOurs(overall);
 
       await prisma.statusSnapshot.create({
-        data,
+        data: { service_id: service.id, status, response_ms: null },
       });
       totalSnaps++;
       await maybeUpdatePeriod(service.id, status);
 
-      // Upsert active incidents
       for (const inc of data.incidents ?? []) {
         if (inc.status === "resolved") continue;
         const externalId = `${host}:${inc.id}`;
         await prisma.incident.upsert({
-          where },
-          create: ${inc.name}`,
+          where: { source_external_id: { source: "statuspage-feed", external_id: externalId } },
+          create: {
+            source: "statuspage-feed",
+            external_id: externalId,
+            service_id: service.id,
+            severity: inc.impact === "critical" || inc.impact === "major" ? "major" : "minor",
+            status: inc.status === "investigating" ? "investigating" : inc.status === "identified" ? "identified" : "monitoring",
+            title_it: inc.name,
+            title_en: inc.name,
+            body_it: `Aggiornamento da ${data.page.name}: ${inc.name}`,
             body_en: `Update from ${data.page.name}: ${inc.name}`,
-            started_at Date(inc.created_at),
-            resolved_at,
+            started_at: new Date(inc.created_at),
+            resolved_at: null,
           },
-          update,
+          update: {
+            status: inc.status === "investigating" ? "investigating" : inc.status === "identified" ? "identified" : "monitoring",
+            updatedAt: new Date(),
+          },
         });
         totalIncs++;
       }
     } catch (e) {
-      console.error(`[pollStatuspage] ${host} error:`, (e).message);
+      console.error(`[pollStatuspage] ${host} error:`, e.message);
       totalErrors++;
     }
   }
 
-  return { feeds.keys(STATUSPAGE_FEEDS).length, snapshots, incidents, errors };
+  return { feeds: Object.keys(STATUSPAGE_FEEDS).length, snapshots: totalSnaps, incidents: totalIncs, errors: totalErrors };
 }
 
-async function pollSelfProbes(): Promise<{ snapshots; errors }> {
+async function pollSelfProbes() {
   let snapshots = 0;
   let errors = 0;
-  const t0 = Date.now();
 
   // /api/health
-  const appSvc = await prisma.statusService.findUnique({ where });
+  const appSvc = await prisma.statusService.findUnique({ where: { slug: "api-health" } });
   if (appSvc) {
+    const t0 = Date.now();
     try {
       const resp = await fetch(SELF_HEALTH_URL, {
-        signal.timeout(8_000),
+        signal: AbortSignal.timeout(8_000),
       });
       const body = await resp.json().catch(() => null);
       const dbOk = body?.db === "ok" && body?.ok === true;
       const status = resp.status === 200 && dbOk ? "up" : resp.status === 200 ? "degraded" : "down";
       await prisma.statusSnapshot.create({
-        data,
+        data: { service_id: appSvc.id, status, response_ms: Date.now() - t0 },
       });
       snapshots++;
       await maybeUpdatePeriod(appSvc.id, status);
     } catch (e) {
-      console.error(`[self-probe /api/health] error:`, (e).message);
+      console.error(`[self-probe /api/health] error:`, e.message);
       errors++;
     }
   }
 
   // TCP probes (postgres, redis)
   for (const probe of SELF_PROBES) {
-    const svc = await prisma.statusService.findUnique({ where });
+    const svc = await prisma.statusService.findUnique({ where: { slug: probe.slug } });
     if (!svc) continue;
     const t1 = Date.now();
     try {
       const connected = await new Promise((resolve) => {
-        const net = await import("node");
         const sock = new net.Socket();
         const timer = setTimeout(() => { sock.destroy(); resolve(false); }, 5_000);
         sock.once("connect", () => { clearTimeout(timer); sock.destroy(); resolve(true); });
@@ -234,12 +216,12 @@ async function pollSelfProbes(): Promise<{ snapshots; errors }> {
       });
       const status = connected ? "up" : "down";
       await prisma.statusSnapshot.create({
-        data,
+        data: { service_id: svc.id, status, response_ms: Date.now() - t1 },
       });
       snapshots++;
       await maybeUpdatePeriod(svc.id, status);
     } catch (e) {
-      console.error(`[self-probe ${probe.slug}] error:`, (e).message);
+      console.error(`[self-probe ${probe.slug}] error:`, e.message);
       errors++;
     }
   }
@@ -247,32 +229,28 @@ async function pollSelfProbes(): Promise<{ snapshots; errors }> {
   return { snapshots, errors };
 }
 
-/**
- * If the latest snapshot status differs from the latest open StatusPeriod,
- * close the current period and start a new one.
- */
 async function maybeUpdatePeriod(serviceId, newStatus) {
   const open = await prisma.statusPeriod.findFirst({
-    where,
-    orderBy,
+    where: { service_id: serviceId, ended_at: null },
+    orderBy: { started_at: "desc" },
   });
 
-  if (open && open.status === newStatus) return; // no change
+  if (open && open.status === newStatus) return;
   if (open) {
     await prisma.statusPeriod.update({
-      where,
-      data,
+      where: { id: open.id },
+      data: { ended_at: new Date() },
     });
   }
   await prisma.statusPeriod.create({
-    data,
+    data: { service_id: serviceId, status: newStatus, started_at: new Date() },
   });
 }
 
 async function pruneOldSnapshots() {
   const cutoff = new Date(Date.now() - SNAPSHOT_TTL_DAYS * 24 * 60 * 60 * 1000);
   const result = await prisma.statusSnapshot.deleteMany({
-    where },
+    where: { taken_at: { lt: cutoff } },
   });
   if (result.count > 0) console.log(`[prune] deleted ${result.count} old snapshots`);
 }
@@ -304,12 +282,11 @@ async function main() {
   console.log(`  snapshot TTL: ${SNAPSHOT_TTL_DAYS} days`);
   console.log(`  self health URL: ${SELF_HEALTH_URL}`);
 
-  // Run immediately, then on interval
   while (true) {
     try {
       await tick();
     } catch (e) {
-      console.error("[main] tick failed:", (e).message);
+      console.error("[main] tick failed:", e.message);
     }
     await wait(POLL_INTERVAL_MS);
   }
