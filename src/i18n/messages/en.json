@@ -347,78 +347,249 @@
     "collapseAll": "Collapse all",
     "groupedItems": {
       "generale": [
-        { "q": "What is WWF Crotone?", "a": "We are the local branch of WWF Italia ETS, active in the province of Crotone. We protect Caretta caretta sea turtles, run the CRTM rescue centre in Capo Rizzuto, lead environmental education and support wildlife recovery together with the CRAS in Catanzaro." },
-        { "q": "Why is the camp called \"Legality, Environment and Biodiversity\"?", "a": "Because it was born from the need to protect the Crotone province — home to the Capo Rizzuto Marine Protected Area (the second largest in Europe), the Vergari Nature Reserve and the San Leonardo di Cutro SCI — and because it takes place at the C.E.L.A., an asset confiscated from organised crime and given back to the community." },
-        { "q": "What's the difference between a WWF member and a non-member?", "a": "The fee is €400 for WWF members and €430 for non-members. The WWF membership card is included in the fee and supports the association. If you're not a member yet, you receive the card when you arrive at camp." },
-        { "q": "Can I join with no prior experience?", "a": "Absolutely — no experience needed. When you arrive you'll take a short training course on sea turtles and monitoring techniques. We guide you step by step: 80% of the volunteers we host every summer are first-timers." },
-        { "q": "Is the camp suitable for high-school students?", "a": "Yes, it is. The camp is accredited as a PCTO activity (formerly Alternanza Scuola-Lavoro) with 40 to 80 certified hours per week. Minors need a signed parent or guardian consent form." },
-        { "q": "Is the camp suitable for university students?", "a": "Definitely. We have active agreements with Unical, Magna Graecia di Catanzaro, Bologna, La Sapienza, Padova and Politecnico di Torino. The camp is recognised as a curricular or extracurricular internship with CFU credits." },
-        { "q": "Can I join the camp if I'm retired?", "a": "Yes, the camp is open to all ages as long as you are in good health and able to follow the activities. We've hosted volunteers from 16 to 80. Just complete the health section of the booking form." },
-        { "q": "Can I come with my family?", "a": "Yes, the camp is open to families too. Groups of at least 5 people get a dedicated discount: write to wwfcrotone26@gmail.com for a tailored quote." }
+        {
+          "q": "What is WWF Crotone?",
+          "a": "We are the local branch of WWF Italia ETS, active in the province of Crotone. We protect Caretta caretta sea turtles, run the CRTM rescue centre in Capo Rizzuto, lead environmental education and support wildlife recovery together with the CRAS in Catanzaro."
+        },
+        {
+          "q": "Why is the camp called \"Legality, Environment and Biodiversity\"?",
+          "a": "Because it was born from the need to protect the Crotone province — home to the Capo Rizzuto Marine Protected Area (the second largest in Europe), the Vergari Nature Reserve and the San Leonardo di Cutro SCI — and because it takes place at the C.E.L.A., an asset confiscated from organised crime and given back to the community."
+        },
+        {
+          "q": "What's the difference between a WWF member and a non-member?",
+          "a": "The fee is €400 for WWF members and €430 for non-members. The WWF membership card is included in the fee and supports the association. If you're not a member yet, you receive the card when you arrive at camp."
+        },
+        {
+          "q": "Can I join with no prior experience?",
+          "a": "Absolutely — no experience needed. When you arrive you'll take a short training course on sea turtles and monitoring techniques. We guide you step by step: 80% of the volunteers we host every summer are first-timers."
+        },
+        {
+          "q": "Is the camp suitable for high-school students?",
+          "a": "Yes, it is. The camp is accredited as a PCTO activity (formerly Alternanza Scuola-Lavoro) with 40 to 80 certified hours per week. Minors need a signed parent or guardian consent form."
+        },
+        {
+          "q": "Is the camp suitable for university students?",
+          "a": "Definitely. We have active agreements with Unical, Magna Graecia di Catanzaro, Bologna, La Sapienza, Padova and Politecnico di Torino. The camp is recognised as a curricular or extracurricular internship with CFU credits."
+        },
+        {
+          "q": "Can I join the camp if I'm retired?",
+          "a": "Yes, the camp is open to all ages as long as you are in good health and able to follow the activities. We've hosted volunteers from 16 to 80. Just complete the health section of the booking form."
+        },
+        {
+          "q": "Can I come with my family?",
+          "a": "Yes, the camp is open to families too. Groups of at least 5 people get a dedicated discount: write to wwfcrotone26@gmail.com for a tailored quote."
+        }
       ],
       "iscrizione": [
-        { "q": "How does the waitlist work?", "a": "When a turn is full you can ask to be added to the waitlist. We email you as soon as a spot opens up or a new turn is confirmed. To join, write to wwfcrotone26@gmail.com with the turn number and your contact details." },
-        { "q": "Can I cancel my registration? Until when?", "a": "Yes, you can cancel at any time by emailing wwfcrotone26@gmail.com. If you cancel at least 14 days before the start of the camp we refund the full €100 deposit (minus any bank fees). After that we evaluate case by case." },
-        { "q": "What happens if I don't pay on time?", "a": "If we don't receive the balance within 7 days of the turn starting, the spot is released to the waitlist. If you're having trouble, please contact us before the deadline — we're flexible when you let us know in time." },
-        { "q": "Can I switch to a different turn after signing up?", "a": "Yes, you can move to another turn if there's availability. Email us at least 15 days before the original start date and we move you across at no extra cost." },
-        { "q": "Can I gift the camp to someone?", "a": "Yes — it's a gift we love to arrange. Fill in the booking form in the name of the recipient and note in the contact details that it's a gift. We'll send you a dedicated confirmation with payment instructions." }
+        {
+          "q": "How does the waitlist work?",
+          "a": "When a turn is full you can ask to be added to the waitlist. We email you as soon as a spot opens up or a new turn is confirmed. To join, write to wwfcrotone26@gmail.com with the turn number and your contact details."
+        },
+        {
+          "q": "Can I cancel my registration? Until when?",
+          "a": "Yes, you can cancel at any time by emailing wwfcrotone26@gmail.com. If you cancel at least 14 days before the start of the camp we refund the full €100 deposit (minus any bank fees). After that we evaluate case by case."
+        },
+        {
+          "q": "What happens if I don't pay on time?",
+          "a": "If we don't receive the balance within 7 days of the turn starting, the spot is released to the waitlist. If you're having trouble, please contact us before the deadline — we're flexible when you let us know in time."
+        },
+        {
+          "q": "Can I switch to a different turn after signing up?",
+          "a": "Yes, you can move to another turn if there's availability. Email us at least 15 days before the original start date and we move you across at no extra cost."
+        },
+        {
+          "q": "Can I gift the camp to someone?",
+          "a": "Yes — it's a gift we love to arrange. Fill in the booking form in the name of the recipient and note in the contact details that it's a gift. We'll send you a dedicated confirmation with payment instructions."
+        }
       ],
       "logistica": [
-        { "q": "Where do I sleep?", "a": "At the C.E.L.A. (Centre for Education in Lawfulness and the Environment), an asset confiscated from the mafia in San Leonardo di Cutro. Shared rooms with bunk beds, en-suite bathroom, hot water and air conditioning. Rooms sleep up to 8 people, with separate rooms for men and women." },
-        { "q": "Is there parking at the camp?", "a": "Yes, the C.E.L.A. has a free internal courtyard for volunteers' cars. The area is fenced and under video surveillance, but as in any shared space we recommend not leaving valuables in sight." },
-        { "q": "Can I bring my car?", "a": "Of course — we actually recommend it if you can: it gives you more flexibility for moving around. Select \"Own car\" as your arrival method in the form so we know you're self-sufficient." },
-        { "q": "Is there a laundry service?", "a": "We don't have a self-service laundry on site, but a hand-wash service for essential items is available. For special needs the coordinators can arrange an external laundry at modest prices." },
-        { "q": "How does the transfer service work?", "a": "For arrivals by plane at Lamezia Terme, by train or by bus, we arrange transfers with our own vehicles at €10 per leg. From Crotone-Sant'Anna airport and Crotone station the service is free if you let us know your schedule at least 7 days in advance." },
-        { "q": "Is there a welcome kit?", "a": "Yes, when you arrive you receive the official camp T-shirt, the WWF membership card and an info pack with a map of the area, useful numbers and the weekly programme." },
-        { "q": "Is there Wi-Fi?", "a": "Yes, the C.E.L.A. is covered by free Wi-Fi for volunteers. The signal is strong in the common areas and a bit weaker in the rooms farthest from the router." }
+        {
+          "q": "Where do I sleep?",
+          "a": "At the C.E.L.A. (Centre for Education in Lawfulness and the Environment), an asset confiscated from the mafia in San Leonardo di Cutro. Shared rooms with bunk beds, en-suite bathroom, hot water and air conditioning. Rooms sleep up to 8 people, with separate rooms for men and women."
+        },
+        {
+          "q": "Is there parking at the camp?",
+          "a": "Yes, the C.E.L.A. has a free internal courtyard for volunteers' cars. The area is fenced and under video surveillance, but as in any shared space we recommend not leaving valuables in sight."
+        },
+        {
+          "q": "Can I bring my car?",
+          "a": "Of course — we actually recommend it if you can: it gives you more flexibility for moving around. Select \"Own car\" as your arrival method in the form so we know you're self-sufficient."
+        },
+        {
+          "q": "Is there a laundry service?",
+          "a": "We don't have a self-service laundry on site, but a hand-wash service for essential items is available. For special needs the coordinators can arrange an external laundry at modest prices."
+        },
+        {
+          "q": "How does the transfer service work?",
+          "a": "For arrivals by plane at Lamezia Terme, by train or by bus, we arrange transfers with our own vehicles at €10 per leg. From Crotone-Sant'Anna airport and Crotone station the service is free if you let us know your schedule at least 7 days in advance."
+        },
+        {
+          "q": "Is there a welcome kit?",
+          "a": "Yes, when you arrive you receive the official camp T-shirt, the WWF membership card and an info pack with a map of the area, useful numbers and the weekly programme."
+        },
+        {
+          "q": "Is there Wi-Fi?",
+          "a": "Yes, the C.E.L.A. is covered by free Wi-Fi for volunteers. The signal is strong in the common areas and a bit weaker in the rooms farthest from the router."
+        }
       ],
       "salute": [
-        { "q": "What should I bring?", "a": "Sleeping bag or sheets, towels, swimsuit, comfortable trekking shoes, sandals, hat, SPF 50+ sunscreen, a 1+ litre water bottle, head torch for night shifts, mosquito repellent and a light jacket for the evening. Check the full list on the \"What to bring\" page of the site." },
-        { "q": "I have a chronic condition — can I take part?", "a": "In most cases, yes. It's important to list any conditions and ongoing therapies in the health section of the booking form. For significant conditions we ask for a short medical certificate. If in doubt, write to us before signing up." },
-        { "q": "I have allergies — what should I do?", "a": "List every allergy (food, contact, insect sting) in the booking form. The kitchen is set up to handle allergies and intolerances, and a first-aid referent is always on site." },
-        { "q": "Do I need a tetanus shot before coming?", "a": "It's not mandatory but strongly recommended. During the week you may handle equipment, nets or animals. If you don't know your status, check with your local health authority and, if needed, get a booster at least two weeks before the camp." },
-        { "q": "What if I get sick during the camp?", "a": "A first-aid trained operator is always present on site. For situations requiring medical care, the Crotone hospital is about 20 minutes away. Every volunteer is covered by accident and liability insurance." }
+        {
+          "q": "What should I bring?",
+          "a": "Sleeping bag or sheets, towels, swimsuit, comfortable trekking shoes, sandals, hat, SPF 50+ sunscreen, a 1+ litre water bottle, head torch for night shifts, mosquito repellent and a light jacket for the evening. Check the full list on the \"What to bring\" page of the site."
+        },
+        {
+          "q": "I have a chronic condition — can I take part?",
+          "a": "In most cases, yes. It's important to list any conditions and ongoing therapies in the health section of the booking form. For significant conditions we ask for a short medical certificate. If in doubt, write to us before signing up."
+        },
+        {
+          "q": "I have allergies — what should I do?",
+          "a": "List every allergy (food, contact, insect sting) in the booking form. The kitchen is set up to handle allergies and intolerances, and a first-aid referent is always on site."
+        },
+        {
+          "q": "Do I need a tetanus shot before coming?",
+          "a": "It's not mandatory but strongly recommended. During the week you may handle equipment, nets or animals. If you don't know your status, check with your local health authority and, if needed, get a booster at least two weeks before the camp."
+        },
+        {
+          "q": "What if I get sick during the camp?",
+          "a": "A first-aid trained operator is always present on site. For situations requiring medical care, the Crotone hospital is about 20 minutes away. Every volunteer is covered by accident and liability insurance."
+        }
       ],
       "pagamento": [
-        { "q": "How do I pay?", "a": "By bank transfer to WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. The €100 deposit secures your spot; the balance is due one week before the camp starts. Use the reference \"name, surname, turn number\"." },
-        { "q": "Can I pay in instalments?", "a": "Yes, instalments can be arranged for amounts over €600 (basically two or more turns). Write to wwfcrotone26@gmail.com and we'll agree on a plan before you sign up." },
-        { "q": "Is there a student discount?", "a": "The WWF member rate (€400 instead of €430) is already a meaningful reduction. We don't apply extra student discounts, but the camp is PCTO- and internship-eligible, so it's often refundable through school or university funds." },
-        { "q": "Is there a group discount?", "a": "Yes, groups of at least 5 people — families or friends — get a dedicated discount. Email wwfcrotone26@gmail.com for a tailored quote." },
-        { "q": "How do the multi-week discounts work?", "a": "If you sign up for multiple consecutive weeks we apply a progressive discount: 15% off the second week, 25% off the third and beyond. For example, 3 full-price weeks cost €1,290; with discounts, €1,118 — you save €172." },
-        { "q": "Is the fee tax-deductible?", "a": "WWF Italia ETS is a Third Sector organisation: donations and membership contributions are deductible or detraibile under current Italian tax rules. Keep the payment receipt and ask your accountant when filing." }
+        {
+          "q": "How do I pay?",
+          "a": "By bank transfer to WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. The €100 deposit secures your spot; the balance is due one week before the camp starts. Use the reference \"name, surname, turn number\"."
+        },
+        {
+          "q": "Can I pay in instalments?",
+          "a": "Yes, instalments can be arranged for amounts over €600 (basically two or more turns). Write to wwfcrotone26@gmail.com and we'll agree on a plan before you sign up."
+        },
+        {
+          "q": "Is there a student discount?",
+          "a": "The WWF member rate (€400 instead of €430) is already a meaningful reduction. We don't apply extra student discounts, but the camp is PCTO- and internship-eligible, so it's often refundable through school or university funds."
+        },
+        {
+          "q": "Is there a group discount?",
+          "a": "Yes, groups of at least 5 people — families or friends — get a dedicated discount. Email wwfcrotone26@gmail.com for a tailored quote."
+        },
+        {
+          "q": "How do the multi-week discounts work?",
+          "a": "If you sign up for multiple consecutive weeks we apply a progressive discount: 15% off the second week, 25% off the third and beyond. For example, 3 full-price weeks cost €1,290; with discounts, €1,118 — you save €172."
+        },
+        {
+          "q": "Is the fee tax-deductible?",
+          "a": "WWF Italia ETS is a Third Sector organisation: donations and membership contributions are deductible or detraibile under current Italian tax rules. Keep the payment receipt and ask your accountant when filing."
+        }
       ],
       "attivita": [
-        { "q": "What do you do at camp?", "a": "The main activities are monitoring Caretta caretta nests on the beaches of the Capo Rizzuto Marine Protected Area, running the CRTM (Sea Turtle Rescue Centre) and the CEAM Aquarium, beach clean-ups, and first aid for wild animals with the CRAS in Catanzaro." },
-        { "q": "What is the TARTAMar project?", "a": "It's the WWF Italia regional project for monitoring and protecting Caretta caretta nests in Calabria — the second Italian region for number of nests after Sicily. It involves continuous beach monitoring, tracking nesting traces, securing nests and collecting data, also with drones and \"Totò\", the trained turtle-detection dog." },
-        { "q": "Why is the beach monitoring done at dawn?", "a": "Two reasons: to avoid the midday heat and, more importantly, to spot nesting tracks before beachgoers walk over them and erase the signs. Nests found are then monitored over time until hatching, with possible night-watch shifts to keep them safe." },
-        { "q": "Which excursions are included in the fee?", "a": "The excursion to the Vergari Regional Nature Reserve (Mesoraca) is included. The visit to the Capocolonna Archaeological Park and Museum and the entrance to the Aragonese Castle of Le Castella are part of the programme but require a small contribution for tickets, communicated on arrival." },
-        { "q": "What activities run when it rains?", "a": "When the weather is bad the beach work is replaced with indoor activities: maintenance of the Aquarium and CRTM tanks, training sessions, environmental education workshops, and cultural outings to the Capocolonna Museum or Le Castella." },
-        { "q": "Can I take part in all the excursions?", "a": "Yes, the excursions (Vergari Reserve, Capocolonna, Le Castella) are included in the fee. A few require booking and a small contribution for entrance fees; full details are shared when you arrive." },
-        { "q": "Is there a programme for children?", "a": "We don't have a dedicated programme for children, but families with kids from about 12 upward can join comfortably. For younger children consider their stamina: days start at dawn and are quite full-on." },
-        { "q": "Can I go snorkelling?", "a": "Yes, when the sea allows we organise snorkelling sessions in the Capo Rizzuto marine reserve. We provide the basic kit (mask and snorkel), but bring your own mask for hygiene reasons." },
-        { "q": "Can I bring my own diving gear?", "a": "Of course, as long as it's certified and in good condition. For scuba dives you need a valid certification and a competitive medical certificate. We don't organise scuba dives at camp, but if you're certified we can involve you in monitoring activities." }
+        {
+          "q": "What do you do at camp?",
+          "a": "The main activities are monitoring Caretta caretta nests on the beaches of the Capo Rizzuto Marine Protected Area, running the CRTM (Sea Turtle Rescue Centre) and the CEAM Aquarium, beach clean-ups, and first aid for wild animals with the CRAS in Catanzaro."
+        },
+        {
+          "q": "What is the TARTAMar project?",
+          "a": "It's the WWF Italia regional project for monitoring and protecting Caretta caretta nests in Calabria — the second Italian region for number of nests after Sicily. It involves continuous beach monitoring, tracking nesting traces, securing nests and collecting data, also with drones and \"Totò\", the trained turtle-detection dog."
+        },
+        {
+          "q": "Why is the beach monitoring done at dawn?",
+          "a": "Two reasons: to avoid the midday heat and, more importantly, to spot nesting tracks before beachgoers walk over them and erase the signs. Nests found are then monitored over time until hatching, with possible night-watch shifts to keep them safe."
+        },
+        {
+          "q": "Which excursions are included in the fee?",
+          "a": "The excursion to the Vergari Regional Nature Reserve (Mesoraca) is included. The visit to the Capocolonna Archaeological Park and Museum and the entrance to the Aragonese Castle of Le Castella are part of the programme but require a small contribution for tickets, communicated on arrival."
+        },
+        {
+          "q": "What activities run when it rains?",
+          "a": "When the weather is bad the beach work is replaced with indoor activities: maintenance of the Aquarium and CRTM tanks, training sessions, environmental education workshops, and cultural outings to the Capocolonna Museum or Le Castella."
+        },
+        {
+          "q": "Can I take part in all the excursions?",
+          "a": "Yes, the excursions (Vergari Reserve, Capocolonna, Le Castella) are included in the fee. A few require booking and a small contribution for entrance fees; full details are shared when you arrive."
+        },
+        {
+          "q": "Is there a programme for children?",
+          "a": "We don't have a dedicated programme for children, but families with kids from about 12 upward can join comfortably. For younger children consider their stamina: days start at dawn and are quite full-on."
+        },
+        {
+          "q": "Can I go snorkelling?",
+          "a": "Yes, when the sea allows we organise snorkelling sessions in the Capo Rizzuto marine reserve. We provide the basic kit (mask and snorkel), but bring your own mask for hygiene reasons."
+        },
+        {
+          "q": "Can I bring my own diving gear?",
+          "a": "Of course, as long as it's certified and in good condition. For scuba dives you need a valid certification and a competitive medical certificate. We don't organise scuba dives at camp, but if you're certified we can involve you in monitoring activities."
+        }
       ],
       "dopo": [
-        { "q": "Do I get a certificate?", "a": "Yes, at the end of the camp we issue a certificate of participation valid as PCTO for high schools and as a curricular or extracurricular internship for our partner universities. We suggest contacting your school or internship office in advance to activate the procedure." },
-        { "q": "Can I come back the following year?", "a": "Yes — and we love it when you do. Many volunteers return for several summers and become a stable part of our community. Returning volunteers get priority on turn selection and can apply as operators." },
-        { "q": "Can I become a WWF volunteer after the camp?", "a": "Yes, the camp is often the first step into active WWF volunteering. After the experience you can continue with the local activities of WWF Crotone, take part in our national events, or apply as an operator for the following seasons." },
-        { "q": "Is there an alumni community?", "a": "Yes, all former volunteers join the WhatsApp group and the \"Alumni WWF Crotone\" mailing list: we organise meet-ups and events, and keep you updated on initiatives, training opportunities and new camps." },
-        { "q": "Can I do the camp as a PCTO activity?", "a": "Yes, the camp is partnered with many high schools across Italy as a PCTO activity (formerly Alternanza Scuola-Lavoro). The certified hours range from 40 to 80 per week. Get in touch to activate the agreement with your school." }
+        {
+          "q": "Do I get a certificate?",
+          "a": "Yes, at the end of the camp we issue a certificate of participation valid as PCTO for high schools and as a curricular or extracurricular internship for our partner universities. We suggest contacting your school or internship office in advance to activate the procedure."
+        },
+        {
+          "q": "Can I come back the following year?",
+          "a": "Yes — and we love it when you do. Many volunteers return for several summers and become a stable part of our community. Returning volunteers get priority on turn selection and can apply as operators."
+        },
+        {
+          "q": "Can I become a WWF volunteer after the camp?",
+          "a": "Yes, the camp is often the first step into active WWF volunteering. After the experience you can continue with the local activities of WWF Crotone, take part in our national events, or apply as an operator for the following seasons."
+        },
+        {
+          "q": "Is there an alumni community?",
+          "a": "Yes, all former volunteers join the WhatsApp group and the \"Alumni WWF Crotone\" mailing list: we organise meet-ups and events, and keep you updated on initiatives, training opportunities and new camps."
+        },
+        {
+          "q": "Can I do the camp as a PCTO activity?",
+          "a": "Yes, the camp is partnered with many high schools across Italy as a PCTO activity (formerly Alternanza Scuola-Lavoro). The certified hours range from 40 to 80 per week. Get in touch to activate the agreement with your school."
+        }
       ]
     },
     "items": [
-      { "q": "Can I join if I'm not a WWF member?", "a": "Yes. The fee is €430 for non-members, €400 for WWF members. The WWF membership card is included in the participation fee." },
-      { "q": "Can I join if I'm a minor?", "a": "Yes, minors can join with the consent of a parent or guardian and with a €20 surcharge for insurance. The consent form must be signed by the parent/guardian." },
-      { "q": "What should I bring?", "a": "Sleeping bag or sheets, towels, swimsuit, comfortable shoes, hat, sunscreen, water bottle, torch for night shifts, repellent and comfortable clothes. A light jacket for the evening." },
-      { "q": "Where do I sleep?", "a": "At the C.E.L.A. in shared rooms of up to 8 people with bunk beds and shared bathroom, air conditioning and hot water." },
-      { "q": "Are meals included?", "a": "Yes: breakfast, lunch and dinner. Volunteers self-manage the kitchen with the help of the coordinators. Menus are available for vegetarians, vegans and celiacs." },
-      { "q": "What happens if it rains?", "a": "Core activities are adapted to the weather. In case of bad weather, indoor training and Aquarium/CRTM maintenance activities are carried out." },
-      { "q": "How do I get to Crotone?", "a": "By plane: Crotone-Sant'Anna airport or Lamezia Terme. By train: Crotone or Botricello stations. By bus: Crotone bus station or Piazzale Nettuno. WWF Crotone offers a transfer service to/from the camp (€10 surcharge per leg from Lamezia). Arrivals and departures in the middle of the day are recommended." },
-      { "q": "Is there Wi-Fi?", "a": "Yes, the C.E.L.A. has Wi-Fi available for volunteers." },
-      { "q": "Can I come with my family?", "a": "Yes, the camp is open to families. Groups of at least 5 people get a discount." },
-      { "q": "Do I get a certificate?", "a": "Yes, at the end of the camp a certificate of participation is issued, valid as university training credits or as PCTO for secondary schools. We recommend contacting universities and schools for agreements or protocols." },
-      { "q": "How do I pay?", "a": "By bank transfer to WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. The €100 registration fee secures your spot; the balance is due one week before the camp starts." },
-      { "q": "Is there a cap on spots per turn?", "a": "Yes, each turn has a maximum capacity of 20 volunteers. We recommend booking early to secure your spot." }
+      {
+        "q": "Can I join if I'm not a WWF member?",
+        "a": "Yes. The fee is €430 for non-members, €400 for WWF members. The WWF membership card is included in the participation fee."
+      },
+      {
+        "q": "Can I join if I'm a minor?",
+        "a": "Yes, minors can join with the consent of a parent or guardian and with a €20 surcharge for insurance. The consent form must be signed by the parent/guardian."
+      },
+      {
+        "q": "What should I bring?",
+        "a": "Sleeping bag or sheets, towels, swimsuit, comfortable shoes, hat, sunscreen, water bottle, torch for night shifts, repellent and comfortable clothes. A light jacket for the evening."
+      },
+      {
+        "q": "Where do I sleep?",
+        "a": "At the C.E.L.A. in shared rooms of up to 8 people with bunk beds and shared bathroom, air conditioning and hot water."
+      },
+      {
+        "q": "Are meals included?",
+        "a": "Yes: breakfast, lunch and dinner. Volunteers self-manage the kitchen with the help of the coordinators. Menus are available for vegetarians, vegans and celiacs."
+      },
+      {
+        "q": "What happens if it rains?",
+        "a": "Core activities are adapted to the weather. In case of bad weather, indoor training and Aquarium/CRTM maintenance activities are carried out."
+      },
+      {
+        "q": "How do I get to Crotone?",
+        "a": "By plane: Crotone-Sant'Anna airport or Lamezia Terme. By train: Crotone or Botricello stations. By bus: Crotone bus station or Piazzale Nettuno. WWF Crotone offers a transfer service to/from the camp (€10 surcharge per leg from Lamezia). Arrivals and departures in the middle of the day are recommended."
+      },
+      {
+        "q": "Is there Wi-Fi?",
+        "a": "Yes, the C.E.L.A. has Wi-Fi available for volunteers."
+      },
+      {
+        "q": "Can I come with my family?",
+        "a": "Yes, the camp is open to families. Groups of at least 5 people get a discount."
+      },
+      {
+        "q": "Do I get a certificate?",
+        "a": "Yes, at the end of the camp a certificate of participation is issued, valid as university training credits or as PCTO for secondary schools. We recommend contacting universities and schools for agreements or protocols."
+      },
+      {
+        "q": "How do I pay?",
+        "a": "By bank transfer to WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. The €100 registration fee secures your spot; the balance is due one week before the camp starts."
+      },
+      {
+        "q": "Is there a cap on spots per turn?",
+        "a": "Yes, each turn has a maximum capacity of 20 volunteers. We recommend booking early to secure your spot."
+      }
     ]
   },
   "Contact": {
@@ -519,23 +690,68 @@
     "necessary": "Strictly necessary technical cookies",
     "necessaryBody": "These cookies are essential for the operation of the site and do not require consent (Art. 122 of Italian Legislative Decree 196/2003).",
     "necessaryTable": [
-      { "name": "wwf_admin_session", "type": "Technical session", "duration": "24 hours", "purpose": "Maintains the authenticated session of the admin area. httpOnly, Secure, SameSite Strict." },
-      { "name": "admin-lang", "type": "Technical preference", "duration": "1 year", "purpose": "Remembers the language chosen for the admin interface (IT/EN)." },
-      { "name": "NEXT_LOCALE", "type": "Technical session", "duration": "Session", "purpose": "Manages the public interface language (IT/EN)." },
-      { "name": "theme (localStorage)", "type": "Technical preference", "duration": "Persistent", "purpose": "Remembers the light/dark theme preference. Not a cookie but a localStorage entry." },
-      { "name": "cookie-consent (localStorage)", "type": "Technical preference", "duration": "Persistent", "purpose": "Records your cookie preferences. Not a cookie but a localStorage entry." }
+      {
+        "name": "wwf_admin_session",
+        "type": "Technical session",
+        "duration": "24 hours",
+        "purpose": "Maintains the authenticated session of the admin area. httpOnly, Secure, SameSite Strict."
+      },
+      {
+        "name": "admin-lang",
+        "type": "Technical preference",
+        "duration": "1 year",
+        "purpose": "Remembers the language chosen for the admin interface (IT/EN)."
+      },
+      {
+        "name": "NEXT_LOCALE",
+        "type": "Technical session",
+        "duration": "Session",
+        "purpose": "Manages the public interface language (IT/EN)."
+      },
+      {
+        "name": "theme (localStorage)",
+        "type": "Technical preference",
+        "duration": "Persistent",
+        "purpose": "Remembers the light/dark theme preference. Not a cookie but a localStorage entry."
+      },
+      {
+        "name": "cookie-consent (localStorage)",
+        "type": "Technical preference",
+        "duration": "Persistent",
+        "purpose": "Records your cookie preferences. Not a cookie but a localStorage entry."
+      }
     ],
     "analytics": "Analytics cookies (Plausible Analytics)",
     "analyticsBody": "With your consent, we use Plausible Analytics, a privacy-first web analytics service hosted in the European Union. Plausible does NOT use profiling cookies, does NOT collect personal data, does NOT track users across different sites and does NOT create persistent profiles. The data collected is aggregated and anonymised. You can review Plausible's privacy policy at https://plausible.io/privacy.",
     "analyticsTable": [
-      { "name": "Plausible Analytics", "type": "Analytics script", "duration": "No persistent cookies", "purpose": "Anonymous statistics on pages visited (URL, referrer, device, country). No personal data." }
+      {
+        "name": "Plausible Analytics",
+        "type": "Analytics script",
+        "duration": "No persistent cookies",
+        "purpose": "Anonymous statistics on pages visited (URL, referrer, device, country). No personal data."
+      }
     ],
     "thirdParty": "Embedded third-party content",
     "thirdPartyBody": "The site may embed content from external platforms. These services may set their own cookies only when you interact with them:",
     "thirdPartyTable": [
-      { "name": "YouTube (nocookie)", "type": "Video embed", "duration": "Only on interaction", "purpose": "Videos are embedded in youtube-nocookie.com mode which does not set cookies until the user starts playback." },
-      { "name": "OpenStreetMap", "type": "Map embed", "duration": "No cookies", "purpose": "The map on the contact page is embedded from OpenStreetMap, which does not use tracking cookies." },
-      { "name": "Open-Meteo", "type": "Weather API", "duration": "No cookies", "purpose": "The weather widget queries the free Open-Meteo API without sending personal data." }
+      {
+        "name": "YouTube (nocookie)",
+        "type": "Video embed",
+        "duration": "Only on interaction",
+        "purpose": "Videos are embedded in youtube-nocookie.com mode which does not set cookies until the user starts playback."
+      },
+      {
+        "name": "OpenStreetMap",
+        "type": "Map embed",
+        "duration": "No cookies",
+        "purpose": "The map on the contact page is embedded from OpenStreetMap, which does not use tracking cookies."
+      },
+      {
+        "name": "Open-Meteo",
+        "type": "Weather API",
+        "duration": "No cookies",
+        "purpose": "The weather widget queries the free Open-Meteo API without sending personal data."
+      }
     ],
     "manage": "How to manage cookies",
     "manageBody": "You can manage your cookie preferences at any time:\n\n• From the cookie banner at the bottom of the page (on first access or after clearing browsing data)\n• From your browser settings (Chrome, Firefox, Safari, Edge) to block or delete all cookies\n• By visiting https://www.youronlinechoices.com/ to disable third-party profiling cookies\n\nDisabling technical cookies may compromise the site's functionality (e.g. inability to maintain the admin session or language preference).",
@@ -554,17 +770,57 @@
   },
   "Status": {
     "title": "Service status",
-    "subtitle": "Real-time check that the site is operational. For detailed incident updates and history, see the canonical status page.",
+    "subtitle": "All our services, monitored 24/7. Updated every 60 seconds.",
     "liveStatus": "Live status",
     "checking": "Checking…",
     "jsRequired": "Enable JavaScript for real-time checks.",
     "incidents": "Incidents",
-    "noIncidents": "No active incidents reported.",
+    "noIncidents": "No active incidents. All good.",
     "canonical": "Canonical status page",
     "canonicalDesc": "The canonical status page is hosted on Instatus and includes incident timelines, scheduled maintenance, and uptime metrics.",
     "operational": "All systems operational",
-    "degraded": "Service degraded — database not responding",
-    "unreachable": "Cannot reach service"
+    "degraded": "Degraded performance",
+    "unreachable": "Cannot reach service",
+    "footer": "Full history and email notifications available on request.",
+    "lastUpdated": "Last updated",
+    "ago": "ago",
+    "partialOutage": "Partial outage",
+    "majorOutage": "Major outage",
+    "maintenance": "Scheduled maintenance",
+    "unknown": "Unknown status",
+    "categories": {
+      "user-facing": "User-facing services",
+      "infrastructure": "Infrastructure",
+      "external": "External services"
+    },
+    "uptime": "Uptime",
+    "responseMs": "Response time",
+    "ms": "ms",
+    "historyHours": "24h history",
+    "activeIncidents": "Active incidents",
+    "recentIncidents": "Recent incidents (last 7 days)",
+    "noRecentIncidents": "No recent incidents.",
+    "severity": {
+      "minor": "Minor",
+      "major": "Major",
+      "critical": "Critical"
+    },
+    "status": {
+      "investigating": "Investigating",
+      "identified": "Identified",
+      "monitoring": "Monitoring",
+      "resolved": "Resolved"
+    },
+    "sinceUpdate": "Started",
+    "resolvedAt": "Resolved",
+    "timelineOn": "Update timeline",
+    "subscribeByEmail": "Subscribe by email",
+    "subscribeDesc": "Get a notification when a service degrades or recovers. No spam, anonymous data.",
+    "poweredBy": "Data collected every 60s from UptimeRobot and 8 public statuspages.",
+    "refresh": "Refresh",
+    "autoRefresh": "Auto-refresh every 30s",
+    "downSince": "Down since",
+    "upSince": "Up since"
   },
   "MyRegistration": {
     "title": "My registration",
@@ -591,11 +847,54 @@
       "optional": "Optional but useful"
     },
     "items": {
-      "essentials": ["Sleeping bag or sheets", "Towels (2-3)", "Swimsuit", "Comfortable hiking shoes", "Sandals / flip-flops", "Hat or bandana", "Sunscreen SPF 50+", "Water bottle 1L+", "Headlamp (for night shifts)", "Mosquito repellent"],
-      "clothing": ["Technical t-shirts (5-6)", "Shorts", "Light long pants", "Light sweater or hoodie (for evenings)", "Windbreaker jacket", "Underwear (7 sets)", "Socks (7 pairs)", "Evening outfit (optional for events)"],
-      "hygiene": ["Toothbrush and toothpaste", "Body wash and shampoo", "Deodorant", "Hairbrush/comb", "Tissues", "Dust mask", "Toiletry bag"],
-      "documents": ["ID card or passport", "Health insurance card", "Bank transfer receipt (if paid)", "Medical prescriptions if any", "Medical certificate (if required)"],
-      "optional": ["Underwater camera", "Binoculars (for sightings)", "Earplugs", "Sleep mask (daytime sleep)", "Power bank", "Power adapter", "Favorite snacks", "Music/books"]
+      "essentials": [
+        "Sleeping bag or sheets",
+        "Towels (2-3)",
+        "Swimsuit",
+        "Comfortable hiking shoes",
+        "Sandals / flip-flops",
+        "Hat or bandana",
+        "Sunscreen SPF 50+",
+        "Water bottle 1L+",
+        "Headlamp (for night shifts)",
+        "Mosquito repellent"
+      ],
+      "clothing": [
+        "Technical t-shirts (5-6)",
+        "Shorts",
+        "Light long pants",
+        "Light sweater or hoodie (for evenings)",
+        "Windbreaker jacket",
+        "Underwear (7 sets)",
+        "Socks (7 pairs)",
+        "Evening outfit (optional for events)"
+      ],
+      "hygiene": [
+        "Toothbrush and toothpaste",
+        "Body wash and shampoo",
+        "Deodorant",
+        "Hairbrush/comb",
+        "Tissues",
+        "Dust mask",
+        "Toiletry bag"
+      ],
+      "documents": [
+        "ID card or passport",
+        "Health insurance card",
+        "Bank transfer receipt (if paid)",
+        "Medical prescriptions if any",
+        "Medical certificate (if required)"
+      ],
+      "optional": [
+        "Underwater camera",
+        "Binoculars (for sightings)",
+        "Earplugs",
+        "Sleep mask (daytime sleep)",
+        "Power bank",
+        "Power adapter",
+        "Favorite snacks",
+        "Music/books"
+      ]
     }
   },
   "Admin": {
@@ -1029,6 +1328,84 @@
       "networkError": "Network error",
       "uploaded": "File uploaded",
       "addedToGallery": "Added to gallery"
+    },
+    "status": {
+      "nav": {
+        "status": "Status"
+      },
+      "page": {
+        "title": "Service status",
+        "subtitle": "Manage the 24 monitored services and on-going incidents.",
+        "tabServices": "Services",
+        "tabIncidents": "Incidents",
+        "tabHistory": "History"
+      },
+      "services": {
+        "table": {
+          "name": "Name",
+          "category": "Category",
+          "source": "Source",
+          "sourceId": "Source ID",
+          "url": "URL",
+          "status": "Status",
+          "uptime": "7d uptime",
+          "uptime30d": "30d uptime",
+          "active": "Active",
+          "actions": "Actions"
+        },
+        "new": "New service",
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate",
+        "noServices": "No services configured. Run `npm run db:seed-status`.",
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirmDeactivate": "Deactivate this service? It will stop appearing on the public page but historical data is preserved.",
+        "confirmReactivate": "Reactivate this service?"
+      },
+      "incidents": {
+        "new": "New incident",
+        "active": "Active incidents",
+        "recent": "Recently resolved",
+        "noActive": "No active incidents.",
+        "noRecent": "No recently resolved incidents.",
+        "fields": {
+          "service": "Service",
+          "severity": "Severity",
+          "status": "Status",
+          "title_it": "Title (IT)",
+          "title_en": "Title (EN)",
+          "body_it": "Description (IT)",
+          "body_en": "Description (EN)",
+          "started_at": "Started",
+          "resolved_at": "Resolved at"
+        },
+        "updates": {
+          "title": "Update timeline",
+          "new": "Add update",
+          "message_it": "Message (IT)",
+          "message_en": "Message (EN)",
+          "status": "Status",
+          "submit": "Publish"
+        },
+        "resolve": "Resolve",
+        "reopen": "Reopen",
+        "delete": "Delete",
+        "confirmResolve": "Mark this incident as resolved?",
+        "confirmDelete": "Delete this incident? This cannot be undone."
+      },
+      "sources": {
+        "uptimerobot": "UptimeRobot",
+        "statuspage": "Statuspage",
+        "self-probe": "Self-probe",
+        "instatus": "Instatus",
+        "manual": "Manual"
+      },
+      "categories": {
+        "user-facing": "User-facing",
+        "infrastructure": "Infrastructure",
+        "external": "External services"
+      }
     }
   },
   "Account": {

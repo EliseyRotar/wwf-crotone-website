@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Users, CalendarDays, Image as ImageIcon, LogOut, UserCog, ClipboardList, Menu, X, FileText, Settings, History } from "lucide-react";
+import { LayoutDashboard, Users, CalendarDays, Image as ImageIcon, LogOut, UserCog, ClipboardList, Menu, X, FileText, Settings, History, Activity } from "lucide-react";
 import type { SessionUser } from "@/lib/auth";
 import AdminThemeToggle from "@/components/admin/AdminThemeToggle";
 
@@ -29,6 +29,7 @@ export default function AdminNav({ session }: { session: SessionUser }) {
     { href: "/admin/camp-settings", label: t("settings"), icon: Settings }
   ];
   if (isSuper) {
+    links.push({ href: "/admin/status", label: t("status"), icon: Activity });
     links.push({ href: "/admin/utenti", label: t("users"), icon: UserCog });
     links.push({ href: "/admin/audit", label: t("audit"), icon: History });
   }

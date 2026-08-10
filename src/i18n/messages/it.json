@@ -347,78 +347,249 @@
     "collapseAll": "Chiudi tutte",
     "groupedItems": {
       "generale": [
-        { "q": "Cos'è il WWF Crotone?", "a": "Siamo la sezione locale di WWF Italia ETS attiva nella provincia di Crotone. Ci occupiamo di tutela delle tartarughe marine Caretta caretta, gestione del CRTM di Capo Rizzuto, educazione ambientale e recupero della fauna selvatica insieme al CRAS di Catanzaro." },
-        { "q": "Perché il campo si chiama \"Legalità, Ambiente e Tutela della Biodiversità\"?", "a": "Perché il campo WWF nasce dalla voglia di tutelare la provincia di Crotone — che ospita l'AMP Capo Rizzuto, seconda area marina protetta più grande d'Europa, la Riserva del Vergari e il SIC di San Leonardo di Cutro — e si svolge proprio al C.E.L.A., un bene confiscato alla mafia e restituito alla collettività." },
-        { "q": "Qual è la differenza tra socio WWF e non socio?", "a": "La quota per i soci WWF è di € 400, per i non soci di € 430. La tessera socio WWF è inclusa nella quota e ti permette di sostenere le attività dell'associazione. Se non sei ancora socio, la ricevi al tuo arrivo al campo." },
-        { "q": "Posso fare il campo anche se non ho esperienza pregressa?", "a": "Certo, non serve alcuna esperienza. Al tuo arrivo segui un corso di formazione sulle tartarughe marine e sulle attività di monitoraggio. Ti affianchiamo passo passo: l'80% dei volontari che accogliamo ogni estate è alla prima esperienza." },
-        { "q": "Il campo è adatto a studenti delle superiori?", "a": "Sì, è pensato anche per loro. Il campo è convenzionato come attività PCTO (ex Alternanza Scuola-Lavoro) con un monte ore certificabile da 40 a 80 ore settimanali. Per i minorenni serve il consenso firmato di un genitore o tutore." },
-        { "q": "Il campo è adatto a universitari?", "a": "Assolutamente sì. Abbiamo convenzioni attive con Unical, Magna Graecia di Catanzaro, Bologna, La Sapienza, Padova e Politecnico di Torino. Il campo è riconosciuto come tirocinio curriculare ed extracurriculare, con rilascio di CFU." },
-        { "q": "Posso fare il campo se sono pensionato/a?", "a": "Sì, il campo è aperto a tutte le età purché tu sia in buona salute e in grado di seguire le attività. Abbiamo ospitato volontari dai 16 agli 80 anni. Ci basta che tu compili la scheda salute in fase di iscrizione." },
-        { "q": "Posso venire in famiglia?", "a": "Sì, il campo è aperto anche alle famiglie. Per i gruppi di almeno 5 persone è previsto uno sconto dedicato: scrivici a wwfcrotone26@gmail.com per un preventivo personalizzato." }
+        {
+          "q": "Cos'è il WWF Crotone?",
+          "a": "Siamo la sezione locale di WWF Italia ETS attiva nella provincia di Crotone. Ci occupiamo di tutela delle tartarughe marine Caretta caretta, gestione del CRTM di Capo Rizzuto, educazione ambientale e recupero della fauna selvatica insieme al CRAS di Catanzaro."
+        },
+        {
+          "q": "Perché il campo si chiama \"Legalità, Ambiente e Tutela della Biodiversità\"?",
+          "a": "Perché il campo WWF nasce dalla voglia di tutelare la provincia di Crotone — che ospita l'AMP Capo Rizzuto, seconda area marina protetta più grande d'Europa, la Riserva del Vergari e il SIC di San Leonardo di Cutro — e si svolge proprio al C.E.L.A., un bene confiscato alla mafia e restituito alla collettività."
+        },
+        {
+          "q": "Qual è la differenza tra socio WWF e non socio?",
+          "a": "La quota per i soci WWF è di € 400, per i non soci di € 430. La tessera socio WWF è inclusa nella quota e ti permette di sostenere le attività dell'associazione. Se non sei ancora socio, la ricevi al tuo arrivo al campo."
+        },
+        {
+          "q": "Posso fare il campo anche se non ho esperienza pregressa?",
+          "a": "Certo, non serve alcuna esperienza. Al tuo arrivo segui un corso di formazione sulle tartarughe marine e sulle attività di monitoraggio. Ti affianchiamo passo passo: l'80% dei volontari che accogliamo ogni estate è alla prima esperienza."
+        },
+        {
+          "q": "Il campo è adatto a studenti delle superiori?",
+          "a": "Sì, è pensato anche per loro. Il campo è convenzionato come attività PCTO (ex Alternanza Scuola-Lavoro) con un monte ore certificabile da 40 a 80 ore settimanali. Per i minorenni serve il consenso firmato di un genitore o tutore."
+        },
+        {
+          "q": "Il campo è adatto a universitari?",
+          "a": "Assolutamente sì. Abbiamo convenzioni attive con Unical, Magna Graecia di Catanzaro, Bologna, La Sapienza, Padova e Politecnico di Torino. Il campo è riconosciuto come tirocinio curriculare ed extracurriculare, con rilascio di CFU."
+        },
+        {
+          "q": "Posso fare il campo se sono pensionato/a?",
+          "a": "Sì, il campo è aperto a tutte le età purché tu sia in buona salute e in grado di seguire le attività. Abbiamo ospitato volontari dai 16 agli 80 anni. Ci basta che tu compili la scheda salute in fase di iscrizione."
+        },
+        {
+          "q": "Posso venire in famiglia?",
+          "a": "Sì, il campo è aperto anche alle famiglie. Per i gruppi di almeno 5 persone è previsto uno sconto dedicato: scrivici a wwfcrotone26@gmail.com per un preventivo personalizzato."
+        }
       ],
       "iscrizione": [
-        { "q": "Come funziona la lista d'attesa?", "a": "Quando un turno è completo puoi richiedere di essere inserito in lista d'attesa. Ti contattiamo via email non appena si libera un posto o si apre un nuovo turno. Per iscriverti alla lista scrivi a wwfcrotone26@gmail.com indicando il turno e i tuoi contatti." },
-        { "q": "Posso cancellare la mia iscrizione? Entro quando?", "a": "Sì, puoi cancellarti in qualsiasi momento contattandoci a wwfcrotone26@gmail.com. Se disdici entro 14 giorni dall'inizio del campo, ti rimborsiamo l'intera quota di iscrizione di € 100 (salvo costi di bonifico). Dopo tale termine valutiamo caso per caso." },
-        { "q": "Cosa succede se non pago entro i termini?", "a": "Se non riceviamo il saldo entro 7 giorni dall'inizio del turno, il posto viene liberato e offerto a chi è in lista d'attesa. Per ogni difficoltà contattaci prima della scadenza: siamo flessibili se ci avvisi in tempo." },
-        { "q": "Posso cambiare turno dopo l'iscrizione?", "a": "Sì, è possibile spostarsi su un altro turno se ci sono posti disponibili. Scrivici almeno 15 giorni prima della data di inizio e provvediamo al cambio senza costi aggiuntivi." },
-        { "q": "Posso regalare il campo a qualcuno?", "a": "Sì, è un'idea che ci piace molto. Compila il modulo di iscrizione a nome della persona che riceve il regalo e indica nei contatti che è un regalo. Ti invieremo una conferma dedicata con le istruzioni per il pagamento." }
+        {
+          "q": "Come funziona la lista d'attesa?",
+          "a": "Quando un turno è completo puoi richiedere di essere inserito in lista d'attesa. Ti contattiamo via email non appena si libera un posto o si apre un nuovo turno. Per iscriverti alla lista scrivi a wwfcrotone26@gmail.com indicando il turno e i tuoi contatti."
+        },
+        {
+          "q": "Posso cancellare la mia iscrizione? Entro quando?",
+          "a": "Sì, puoi cancellarti in qualsiasi momento contattandoci a wwfcrotone26@gmail.com. Se disdici entro 14 giorni dall'inizio del campo, ti rimborsiamo l'intera quota di iscrizione di € 100 (salvo costi di bonifico). Dopo tale termine valutiamo caso per caso."
+        },
+        {
+          "q": "Cosa succede se non pago entro i termini?",
+          "a": "Se non riceviamo il saldo entro 7 giorni dall'inizio del turno, il posto viene liberato e offerto a chi è in lista d'attesa. Per ogni difficoltà contattaci prima della scadenza: siamo flessibili se ci avvisi in tempo."
+        },
+        {
+          "q": "Posso cambiare turno dopo l'iscrizione?",
+          "a": "Sì, è possibile spostarsi su un altro turno se ci sono posti disponibili. Scrivici almeno 15 giorni prima della data di inizio e provvediamo al cambio senza costi aggiuntivi."
+        },
+        {
+          "q": "Posso regalare il campo a qualcuno?",
+          "a": "Sì, è un'idea che ci piace molto. Compila il modulo di iscrizione a nome della persona che riceve il regalo e indica nei contatti che è un regalo. Ti invieremo una conferma dedicata con le istruzioni per il pagamento."
+        }
       ],
       "logistica": [
-        { "q": "Dove dormo?", "a": "Al C.E.L.A. (Centro di Educazione alla Legalità e all'Ambiente), un bene confiscato alla mafia a San Leonardo di Cutro. Camere condivise con letti a castello, bagno in camera, acqua calda e aria condizionata. Le camerate ospitano fino a 8 persone, uomini e donne in stanze separate." },
-        { "q": "C'è un parcheggio al campo?", "a": "Sì, il C.E.L.A. dispone di un piazzale interno gratuito per le auto dei volontari. L'area è recintata e videosorvegliata, ma come per ogni luogo condiviso raccomandiamo di non lasciare oggetti di valore in vista." },
-        { "q": "Posso portare la mia auto?", "a": "Certo, anzi ti consigliamo di portarla se puoi: ti dà maggiore flessibilità per gli spostamenti. In fase di iscrizione seleziona \"Auto propria\" come modalità di arrivo, così sappiamo che sei autonomo." },
-        { "q": "C'è un servizio di lavanderia?", "a": "Non abbiamo una lavanderia self-service al campo, ma è disponibile un servizio di lavaggio a mano degli indumenti essenziali. Per esigenze particolari puoi concordare una lavanderia esterna con i responsabili a prezzi contenuti." },
-        { "q": "Come funziona il servizio di accompagnamento?", "a": "Per chi arriva in aereo a Lamezia Terme, in treno o in autobus, organizziamo il trasferimento con i nostri mezzi al costo di € 10 a tratta. Per Crotone-Sant'Anna e la stazione di Crotone il servizio è gratuito se ci comunichi l'orario almeno 7 giorni prima." },
-        { "q": "C'è un kit di benvenuto?", "a": "Sì, al tuo arrivo ricevi la T-shirt ufficiale del campo, la tessera socio WWF e il materiale informativo con la mappa dei luoghi, i numeri utili e il programma della settimana." },
-        { "q": "C'è il Wi-Fi?", "a": "Sì, il C.E.L.A. è coperto da rete Wi-Fi gratuita per i volontari. Il segnale è buono nelle aree comuni, un po' più debole nelle camere più lontane dal router." }
+        {
+          "q": "Dove dormo?",
+          "a": "Al C.E.L.A. (Centro di Educazione alla Legalità e all'Ambiente), un bene confiscato alla mafia a San Leonardo di Cutro. Camere condivise con letti a castello, bagno in camera, acqua calda e aria condizionata. Le camerate ospitano fino a 8 persone, uomini e donne in stanze separate."
+        },
+        {
+          "q": "C'è un parcheggio al campo?",
+          "a": "Sì, il C.E.L.A. dispone di un piazzale interno gratuito per le auto dei volontari. L'area è recintata e videosorvegliata, ma come per ogni luogo condiviso raccomandiamo di non lasciare oggetti di valore in vista."
+        },
+        {
+          "q": "Posso portare la mia auto?",
+          "a": "Certo, anzi ti consigliamo di portarla se puoi: ti dà maggiore flessibilità per gli spostamenti. In fase di iscrizione seleziona \"Auto propria\" come modalità di arrivo, così sappiamo che sei autonomo."
+        },
+        {
+          "q": "C'è un servizio di lavanderia?",
+          "a": "Non abbiamo una lavanderia self-service al campo, ma è disponibile un servizio di lavaggio a mano degli indumenti essenziali. Per esigenze particolari puoi concordare una lavanderia esterna con i responsabili a prezzi contenuti."
+        },
+        {
+          "q": "Come funziona il servizio di accompagnamento?",
+          "a": "Per chi arriva in aereo a Lamezia Terme, in treno o in autobus, organizziamo il trasferimento con i nostri mezzi al costo di € 10 a tratta. Per Crotone-Sant'Anna e la stazione di Crotone il servizio è gratuito se ci comunichi l'orario almeno 7 giorni prima."
+        },
+        {
+          "q": "C'è un kit di benvenuto?",
+          "a": "Sì, al tuo arrivo ricevi la T-shirt ufficiale del campo, la tessera socio WWF e il materiale informativo con la mappa dei luoghi, i numeri utili e il programma della settimana."
+        },
+        {
+          "q": "C'è il Wi-Fi?",
+          "a": "Sì, il C.E.L.A. è coperto da rete Wi-Fi gratuita per i volontari. Il segnale è buono nelle aree comuni, un po' più debole nelle camere più lontane dal router."
+        }
       ],
       "salute": [
-        { "q": "Cosa devo portare?", "a": "Sacchetto a pelo o lenzuola, asciugamani, costume, scarpe comode da trekking, sandali, cappello, crema solare SPF 50+, borraccia da almeno 1 litro, torcia frontale per i turni notturni, repellente per zanzare e una giacca leggera per la sera. Consulta la lista completa nella pagina \"Cosa portare\" del sito." },
-        { "q": "Ho una patologia cronica, posso partecipare?", "a": "Nella maggior parte dei casi sì. È importante indicare patologie e terapie in corso nella scheda salute del modulo di iscrizione. Per patologie importanti ti chiediamo un breve certificato medico. In caso di dubbi scrivici prima di iscriverti." },
-        { "q": "Sono allergico/a, cosa devo fare?", "a": "Indica ogni allergia (alimentare, da contatto, da puntura di insetto) nel modulo di iscrizione. La cucina è organizzata per gestire allergie e intolleranze e al campo è sempre presente un referente primo soccorso." },
-        { "q": "Devo fare la vaccinazione antitetanica prima di venire?", "a": "Non è obbligatoria ma è fortemente raccomandata. In settimana potresti maneggiare attrezzature, reti o animali. Se non sai di essere vaccinato/a, verifica con la tua ASL e, se necessario, fai un richiamo almeno due settimane prima del campo." },
-        { "q": "Cosa succede se mi ammalo durante il campo?", "a": "C'è sempre un operatore formato al primo soccorso presente al campo. Per situazioni che richiedono cure mediche, il presidio ospedaliero di Crotone dista circa 20 minuti. Tutti i volontari sono coperti da assicurazione infortuni e RCT." }
+        {
+          "q": "Cosa devo portare?",
+          "a": "Sacchetto a pelo o lenzuola, asciugamani, costume, scarpe comode da trekking, sandali, cappello, crema solare SPF 50+, borraccia da almeno 1 litro, torcia frontale per i turni notturni, repellente per zanzare e una giacca leggera per la sera. Consulta la lista completa nella pagina \"Cosa portare\" del sito."
+        },
+        {
+          "q": "Ho una patologia cronica, posso partecipare?",
+          "a": "Nella maggior parte dei casi sì. È importante indicare patologie e terapie in corso nella scheda salute del modulo di iscrizione. Per patologie importanti ti chiediamo un breve certificato medico. In caso di dubbi scrivici prima di iscriverti."
+        },
+        {
+          "q": "Sono allergico/a, cosa devo fare?",
+          "a": "Indica ogni allergia (alimentare, da contatto, da puntura di insetto) nel modulo di iscrizione. La cucina è organizzata per gestire allergie e intolleranze e al campo è sempre presente un referente primo soccorso."
+        },
+        {
+          "q": "Devo fare la vaccinazione antitetanica prima di venire?",
+          "a": "Non è obbligatoria ma è fortemente raccomandata. In settimana potresti maneggiare attrezzature, reti o animali. Se non sai di essere vaccinato/a, verifica con la tua ASL e, se necessario, fai un richiamo almeno due settimane prima del campo."
+        },
+        {
+          "q": "Cosa succede se mi ammalo durante il campo?",
+          "a": "C'è sempre un operatore formato al primo soccorso presente al campo. Per situazioni che richiedono cure mediche, il presidio ospedaliero di Crotone dista circa 20 minuti. Tutti i volontari sono coperti da assicurazione infortuni e RCT."
+        }
       ],
       "pagamento": [
-        { "q": "Come pago?", "a": "Tramite bonifico bancario intestato a WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. La quota di iscrizione di € 100 va versata per confermare il posto; il saldo entro una settimana prima dell'inizio del campo. Indica nella causale nome, cognome e numero del turno." },
-        { "q": "Posso pagare a rate?", "a": "Sì, è possibile concordare un pagamento rateale per importi superiori a € 600 (sostanzialmente due o più turni). Scrivici a wwfcrotone26@gmail.com e definiamo insieme un piano prima dell'iscrizione." },
-        { "q": "C'è uno sconto per studenti?", "a": "La tessera socio WWF (€ 400 anziché € 430) è di per sé una riduzione significativa. Non applichiamo ulteriori sconti studenti, ma il campo è certificabile come PCTO e tirocinio, quindi spesso è rimborsabile attraverso i fondi scolastici e universitari." },
-        { "q": "C'è uno sconto per gruppi?", "a": "Sì, per gruppi di almeno 5 persone della stessa famiglia o comitiva applichiamo uno sconto dedicato. Scrivici a wwfcrotone26@gmail.com per un preventivo personalizzato." },
-        { "q": "Come funzionano gli sconti multi-settimana?", "a": "Se ti iscrivi a più settimane consecutive applichiamo uno sconto progressivo: 15% sulla seconda settimana, 25% dalla terza in poi. Ad esempio, 3 settimane a tariffa piena costano € 1.290; con gli sconti € 1.118 — risparmi € 172." },
-        { "q": "La quota è deducibile dalle tasse?", "a": "WWF Italia ETS è un Ente del Terzo Settore: le donazioni e i contributi associativi sono detraibili o deducibili secondo le normative vigenti. Conserva la ricevuta di pagamento e consulta il tuo commercialista per la dichiarazione dei redditi." }
+        {
+          "q": "Come pago?",
+          "a": "Tramite bonifico bancario intestato a WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. La quota di iscrizione di € 100 va versata per confermare il posto; il saldo entro una settimana prima dell'inizio del campo. Indica nella causale nome, cognome e numero del turno."
+        },
+        {
+          "q": "Posso pagare a rate?",
+          "a": "Sì, è possibile concordare un pagamento rateale per importi superiori a € 600 (sostanzialmente due o più turni). Scrivici a wwfcrotone26@gmail.com e definiamo insieme un piano prima dell'iscrizione."
+        },
+        {
+          "q": "C'è uno sconto per studenti?",
+          "a": "La tessera socio WWF (€ 400 anziché € 430) è di per sé una riduzione significativa. Non applichiamo ulteriori sconti studenti, ma il campo è certificabile come PCTO e tirocinio, quindi spesso è rimborsabile attraverso i fondi scolastici e universitari."
+        },
+        {
+          "q": "C'è uno sconto per gruppi?",
+          "a": "Sì, per gruppi di almeno 5 persone della stessa famiglia o comitiva applichiamo uno sconto dedicato. Scrivici a wwfcrotone26@gmail.com per un preventivo personalizzato."
+        },
+        {
+          "q": "Come funzionano gli sconti multi-settimana?",
+          "a": "Se ti iscrivi a più settimane consecutive applichiamo uno sconto progressivo: 15% sulla seconda settimana, 25% dalla terza in poi. Ad esempio, 3 settimane a tariffa piena costano € 1.290; con gli sconti € 1.118 — risparmi € 172."
+        },
+        {
+          "q": "La quota è deducibile dalle tasse?",
+          "a": "WWF Italia ETS è un Ente del Terzo Settore: le donazioni e i contributi associativi sono detraibili o deducibili secondo le normative vigenti. Conserva la ricevuta di pagamento e consulta il tuo commercialista per la dichiarazione dei redditi."
+        }
       ],
       "attivita": [
-        { "q": "Cosa si fa durante il campo?", "a": "Le attività principali sono il monitoraggio dei nidi di Caretta caretta sulle spiagge dell'AMP di Capo Rizzuto, la gestione del CRTM (Centro Recupero Tartarughe Marine) e dell'Aquarium CEAM, la pulizia delle spiagge e il primo soccorso di animali selvatici con il CRAS di Catanzaro." },
-        { "q": "Cos'è il progetto TARTAMar?", "a": "È il progetto regionale di WWF Italia per il monitoraggio e la tutela dei nidi di Caretta caretta in Calabria — seconda regione italiana per numero di nidi dopo la Sicilia. Prevede monitoraggio costante delle spiagge, ricerca delle tracce di nidificazione, messa in sicurezza dei nidi e raccolta dati, anche con l'aiuto di droni e di \"Totò\", l'unità cinofila addestrata per trovare i nidi." },
-        { "q": "Perché il monitoraggio si fa all'alba?", "a": "Per due motivi: evitare il caldo delle ore centrali e, soprattutto, intercettare le tracce di nidificazione prima che i bagnanti cancellino i segni sulla sabbia calpestandola. I nidi individuati vengono poi seguiti nel tempo fino alla schiusa, con possibili turni di sorveglianza notturna." },
-        { "q": "Quali escursioni sono incluse nella quota?", "a": "L'escursione nella Riserva Naturale Regionale del Vergari (Mesoraca) è inclusa. La visita al Parco Archeologico e Museo di Capocolonna e l'ingresso al Castello Aragonese di Le Castella sono previsti nel programma ma richiedono un piccolo contributo per i biglietti d'ingresso, comunicato all'arrivo." },
-        { "q": "Quali attività si svolgono durante la pioggia?", "a": "In caso di maltempo le attività di spiaggia vengono sostituite da lavoro al coperto: manutenzione delle vasche dell'Aquarium e del CRTM, lezioni formative, laboratori di educazione ambientale, escursioni culturali al Museo di Capocolonna o a Le Castella." },
-        { "q": "Posso partecipare a tutte le escursioni?", "a": "Sì, le escursioni (Riserva del Vergari, Capocolonna, Le Castella) sono incluse nella quota. Alcune richiedono la prenotazione e un piccolo contributo per gli ingressi: i dettagli ti vengono comunicati al tuo arrivo." },
-        { "q": "C'è un programma per i bambini?", "a": "Non abbiamo un programma specifico per bambini, ma le famiglie con ragazzi dai 12 anni in su possono partecipare serenamente. Per i più piccoli consigliamo di valutare la loro autonomia: le giornate sono intense e prevedono anche uscite all'alba." },
-        { "q": "Posso fare snorkeling?", "a": "Sì, quando le condizioni del mare lo permettono organizziamo uscite di snorkeling nella riserva marina di Capo Rizzuto. L'attrezzatura di base (maschera e boccaglio) è fornita da noi, ti consigliamo di portare la tua maschera per questioni di igiene." },
-        { "q": "Posso portare la mia attrezzatura subacquea?", "a": "Certo, purché sia omologata e in buone condizioni. Per le immersioni con autorespiratore è necessario il brevetto in corso di validità e il certificato medico agonistivo. Al campo non organizziamo immersioni subacquee, ma se sei brevettato possiamo coinvolgerti nelle attività di monitoraggio." }
+        {
+          "q": "Cosa si fa durante il campo?",
+          "a": "Le attività principali sono il monitoraggio dei nidi di Caretta caretta sulle spiagge dell'AMP di Capo Rizzuto, la gestione del CRTM (Centro Recupero Tartarughe Marine) e dell'Aquarium CEAM, la pulizia delle spiagge e il primo soccorso di animali selvatici con il CRAS di Catanzaro."
+        },
+        {
+          "q": "Cos'è il progetto TARTAMar?",
+          "a": "È il progetto regionale di WWF Italia per il monitoraggio e la tutela dei nidi di Caretta caretta in Calabria — seconda regione italiana per numero di nidi dopo la Sicilia. Prevede monitoraggio costante delle spiagge, ricerca delle tracce di nidificazione, messa in sicurezza dei nidi e raccolta dati, anche con l'aiuto di droni e di \"Totò\", l'unità cinofila addestrata per trovare i nidi."
+        },
+        {
+          "q": "Perché il monitoraggio si fa all'alba?",
+          "a": "Per due motivi: evitare il caldo delle ore centrali e, soprattutto, intercettare le tracce di nidificazione prima che i bagnanti cancellino i segni sulla sabbia calpestandola. I nidi individuati vengono poi seguiti nel tempo fino alla schiusa, con possibili turni di sorveglianza notturna."
+        },
+        {
+          "q": "Quali escursioni sono incluse nella quota?",
+          "a": "L'escursione nella Riserva Naturale Regionale del Vergari (Mesoraca) è inclusa. La visita al Parco Archeologico e Museo di Capocolonna e l'ingresso al Castello Aragonese di Le Castella sono previsti nel programma ma richiedono un piccolo contributo per i biglietti d'ingresso, comunicato all'arrivo."
+        },
+        {
+          "q": "Quali attività si svolgono durante la pioggia?",
+          "a": "In caso di maltempo le attività di spiaggia vengono sostituite da lavoro al coperto: manutenzione delle vasche dell'Aquarium e del CRTM, lezioni formative, laboratori di educazione ambientale, escursioni culturali al Museo di Capocolonna o a Le Castella."
+        },
+        {
+          "q": "Posso partecipare a tutte le escursioni?",
+          "a": "Sì, le escursioni (Riserva del Vergari, Capocolonna, Le Castella) sono incluse nella quota. Alcune richiedono la prenotazione e un piccolo contributo per gli ingressi: i dettagli ti vengono comunicati al tuo arrivo."
+        },
+        {
+          "q": "C'è un programma per i bambini?",
+          "a": "Non abbiamo un programma specifico per bambini, ma le famiglie con ragazzi dai 12 anni in su possono partecipare serenamente. Per i più piccoli consigliamo di valutare la loro autonomia: le giornate sono intense e prevedono anche uscite all'alba."
+        },
+        {
+          "q": "Posso fare snorkeling?",
+          "a": "Sì, quando le condizioni del mare lo permettono organizziamo uscite di snorkeling nella riserva marina di Capo Rizzuto. L'attrezzatura di base (maschera e boccaglio) è fornita da noi, ti consigliamo di portare la tua maschera per questioni di igiene."
+        },
+        {
+          "q": "Posso portare la mia attrezzatura subacquea?",
+          "a": "Certo, purché sia omologata e in buone condizioni. Per le immersioni con autorespiratore è necessario il brevetto in corso di validità e il certificato medico agonistivo. Al campo non organizziamo immersioni subacquee, ma se sei brevettato possiamo coinvolgerti nelle attività di monitoraggio."
+        }
       ],
       "dopo": [
-        { "q": "Ricevo un attestato?", "a": "Sì, al termine del campo rilasciamo un attestato di partecipazione valido come PCTO per le scuole superiori e come tirocinio curriculare o extracurriculare per le università convenzionate. Ti consigliamo di contattare il tuo istituto o ufficio stage per attivare la procedura." },
-        { "q": "Posso tornare l'anno successivo?", "a": "Anzi, ci fa piacere! Molti volontari tornano per più estati e diventano parte stabile della nostra comunità. I veterani accedono di diritto alla lista prioritaria per la scelta dei turni e possono candidarsi come operatori." },
-        { "q": "Posso diventare volontario WWF dopo il campo?", "a": "Sì, il campo è spesso il primo passo per diventare volontario WWF attivo. Dopo l'esperienza puoi proseguire con le attività locali del WWF Crotone, partecipare ai nostri eventi nazionali o candidarti come operatore per le stagioni successive." },
-        { "q": "C'è una community post-campo?", "a": "Sì, tutti gli ex volontari entrano nel gruppo WhatsApp e nella mailing list \"Alumni WWF Crotone\": organizziamo incontri, eventi e ti teniamo aggiornato su iniziative, formazioni e nuovi campi." },
-        { "q": "Posso fare il campo come attività PCTO?", "a": "Sì, il campo è convenzionato con numerosi istituti superiori di tutta Italia come PCTO (ex Alternanza Scuola-Lavoro). Il monte ore certificabile va da 40 a 80 ore a settimana. Contattaci per attivare la convenzione con la tua scuola." }
+        {
+          "q": "Ricevo un attestato?",
+          "a": "Sì, al termine del campo rilasciamo un attestato di partecipazione valido come PCTO per le scuole superiori e come tirocinio curriculare o extracurriculare per le università convenzionate. Ti consigliamo di contattare il tuo istituto o ufficio stage per attivare la procedura."
+        },
+        {
+          "q": "Posso tornare l'anno successivo?",
+          "a": "Anzi, ci fa piacere! Molti volontari tornano per più estati e diventano parte stabile della nostra comunità. I veterani accedono di diritto alla lista prioritaria per la scelta dei turni e possono candidarsi come operatori."
+        },
+        {
+          "q": "Posso diventare volontario WWF dopo il campo?",
+          "a": "Sì, il campo è spesso il primo passo per diventare volontario WWF attivo. Dopo l'esperienza puoi proseguire con le attività locali del WWF Crotone, partecipare ai nostri eventi nazionali o candidarti come operatore per le stagioni successive."
+        },
+        {
+          "q": "C'è una community post-campo?",
+          "a": "Sì, tutti gli ex volontari entrano nel gruppo WhatsApp e nella mailing list \"Alumni WWF Crotone\": organizziamo incontri, eventi e ti teniamo aggiornato su iniziative, formazioni e nuovi campi."
+        },
+        {
+          "q": "Posso fare il campo come attività PCTO?",
+          "a": "Sì, il campo è convenzionato con numerosi istituti superiori di tutta Italia come PCTO (ex Alternanza Scuola-Lavoro). Il monte ore certificabile va da 40 a 80 ore a settimana. Contattaci per attivare la convenzione con la tua scuola."
+        }
       ]
     },
     "items": [
-      { "q": "Posso partecipare se non sono socio WWF?", "a": "Sì. La quota per i non soci è di € 430, per i soci WWF di € 400. La tessera socio WWF è inclusa nella quota di partecipazione." },
-      { "q": "Posso partecipare se sono minorenne?", "a": "Sì, i minorenni possono partecipare con il consenso di un genitore o tutore e con un supplemento di € 20 per l'assicurazione. Il modulo di consenso va firmato dal genitore/tutore." },
-      { "q": "Cosa devo portare?", "a": "Sacchetto a pelo o lenzuola, asciugamani, costume, scarpe comode, cappello, crema solare, borraccia, torcia per i turni notturni, repellente e abiti comodi. Una giacca leggera per la sera." },
-      { "q": "Dove dormo?", "a": "Al C.E.L.A. in camere condivise da massimo 8 persone con letti a castello e bagno condiviso, aria condizionata e acqua calda." },
-      { "q": "Il vitto è incluso?", "a": "Sì: colazione, pranzo e cena. I volontari si organizzano autonomamente per la gestione della cucina, aiutati dai responsabili. Sono disponibili menù per vegetariani, vegani e celiaci." },
-      { "q": "Cosa succede se piove?", "a": "Le attività principali vengono adattate alle condizioni meteo. In caso di maltempo si svolgono attività formative al coperto e attività di manutenzione dell'Aquarium e del CRTM." },
-      { "q": "Come arrivo a Crotone?", "a": "In aereo: aeroporto di Crotone-Sant'Anna o Lamezia Terme. In treno: stazioni di Crotone o Botricello. In autobus: autostazione di Crotone o Piazziale Nettuno. Il WWF Crotone offre un servizio di accompagnamento da/per il campo (costo extra di € 10 a tratta da Lamezia). Si consigliano arrivi e partenze nelle ore centrali della giornata." },
-      { "q": "C'è il Wi-Fi?", "a": "Sì, il C.E.L.A. è dotato di connessione Wi-Fi per i volontari." },
-      { "q": "Posso venire in famiglia?", "a": "Sì, il campo è aperto alle famiglie. Per i gruppi di almeno 5 persone è previsto uno sconto." },
-      { "q": "Ricevo un attestato?", "a": "Sì, al termine del campo viene rilasciato un attestato di partecipazione, valido come crediti formativi universitari o come PCTO per le scuole secondarie. Consigliamo di prendere contatti con università e scuole per eventuali convenzioni o protocolli." },
-      { "q": "Come pago?", "a": "Tramite bonifico bancario intestato a WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. La quota di iscrizione di € 100 va versata per confermare il posto; il saldo entro una settimana prima dell'inizio del campo." },
-      { "q": "C'è un limite di posti per turno?", "a": "Sì, ogni turno ha una capacità massima di 20 volontari. Ti consigliamo di prenotare con anticipo per assicurarti il posto." }
+      {
+        "q": "Posso partecipare se non sono socio WWF?",
+        "a": "Sì. La quota per i non soci è di € 430, per i soci WWF di € 400. La tessera socio WWF è inclusa nella quota di partecipazione."
+      },
+      {
+        "q": "Posso partecipare se sono minorenne?",
+        "a": "Sì, i minorenni possono partecipare con il consenso di un genitore o tutore e con un supplemento di € 20 per l'assicurazione. Il modulo di consenso va firmato dal genitore/tutore."
+      },
+      {
+        "q": "Cosa devo portare?",
+        "a": "Sacchetto a pelo o lenzuola, asciugamani, costume, scarpe comode, cappello, crema solare, borraccia, torcia per i turni notturni, repellente e abiti comodi. Una giacca leggera per la sera."
+      },
+      {
+        "q": "Dove dormo?",
+        "a": "Al C.E.L.A. in camere condivise da massimo 8 persone con letti a castello e bagno condiviso, aria condizionata e acqua calda."
+      },
+      {
+        "q": "Il vitto è incluso?",
+        "a": "Sì: colazione, pranzo e cena. I volontari si organizzano autonomamente per la gestione della cucina, aiutati dai responsabili. Sono disponibili menù per vegetariani, vegani e celiaci."
+      },
+      {
+        "q": "Cosa succede se piove?",
+        "a": "Le attività principali vengono adattate alle condizioni meteo. In caso di maltempo si svolgono attività formative al coperto e attività di manutenzione dell'Aquarium e del CRTM."
+      },
+      {
+        "q": "Come arrivo a Crotone?",
+        "a": "In aereo: aeroporto di Crotone-Sant'Anna o Lamezia Terme. In treno: stazioni di Crotone o Botricello. In autobus: autostazione di Crotone o Piazziale Nettuno. Il WWF Crotone offre un servizio di accompagnamento da/per il campo (costo extra di € 10 a tratta da Lamezia). Si consigliano arrivi e partenze nelle ore centrali della giornata."
+      },
+      {
+        "q": "C'è il Wi-Fi?",
+        "a": "Sì, il C.E.L.A. è dotato di connessione Wi-Fi per i volontari."
+      },
+      {
+        "q": "Posso venire in famiglia?",
+        "a": "Sì, il campo è aperto alle famiglie. Per i gruppi di almeno 5 persone è previsto uno sconto."
+      },
+      {
+        "q": "Ricevo un attestato?",
+        "a": "Sì, al termine del campo viene rilasciato un attestato di partecipazione, valido come crediti formativi universitari o come PCTO per le scuole secondarie. Consigliamo di prendere contatti con università e scuole per eventuali convenzioni o protocolli."
+      },
+      {
+        "q": "Come pago?",
+        "a": "Tramite bonifico bancario intestato a WWF Provincia di Crotone, IBAN IT30V0306909606100000107334. La quota di iscrizione di € 100 va versata per confermare il posto; il saldo entro una settimana prima dell'inizio del campo."
+      },
+      {
+        "q": "C'è un limite di posti per turno?",
+        "a": "Sì, ogni turno ha una capacità massima di 20 volontari. Ti consigliamo di prenotare con anticipo per assicurarti il posto."
+      }
     ]
   },
   "Contact": {
@@ -519,23 +690,68 @@
     "necessary": "Cookie tecnici strettamente necessari",
     "necessaryBody": "Questi cookie sono indispensabili per il funzionamento del sito e non richiedono consenso (Art. 122 D.Lgs. 196/2003).",
     "necessaryTable": [
-      { "name": "wwf_admin_session", "type": "Tecnico di sessione", "duration": "24 ore", "purpose": "Mantiene la sessione autenticata dell'area amministrativa. httpOnly, Secure, SameSite Strict." },
-      { "name": "admin-lang", "type": "Tecnico di preferenza", "duration": "1 anno", "purpose": "Ricorda la lingua scelta per l'interfaccia amministrativa (IT/EN)." },
-      { "name": "NEXT_LOCALE", "type": "Tecnico di sessione", "duration": "Sessione", "purpose": "Gestisce la lingua dell'interfaccia pubblica (IT/EN)." },
-      { "name": "theme (localStorage)", "type": "Tecnico di preferenza", "duration": "Persistente", "purpose": "Ricorda la preferenza tema chiaro/scuro. Non è un cookie ma una voce in localStorage." },
-      { "name": "cookie-consent (localStorage)", "type": "Tecnico di preferenza", "duration": "Persistente", "purpose": "Registra le tue preferenze sui cookie. Non è un cookie ma una voce in localStorage." }
+      {
+        "name": "wwf_admin_session",
+        "type": "Tecnico di sessione",
+        "duration": "24 ore",
+        "purpose": "Mantiene la sessione autenticata dell'area amministrativa. httpOnly, Secure, SameSite Strict."
+      },
+      {
+        "name": "admin-lang",
+        "type": "Tecnico di preferenza",
+        "duration": "1 anno",
+        "purpose": "Ricorda la lingua scelta per l'interfaccia amministrativa (IT/EN)."
+      },
+      {
+        "name": "NEXT_LOCALE",
+        "type": "Tecnico di sessione",
+        "duration": "Sessione",
+        "purpose": "Gestisce la lingua dell'interfaccia pubblica (IT/EN)."
+      },
+      {
+        "name": "theme (localStorage)",
+        "type": "Tecnico di preferenza",
+        "duration": "Persistente",
+        "purpose": "Ricorda la preferenza tema chiaro/scuro. Non è un cookie ma una voce in localStorage."
+      },
+      {
+        "name": "cookie-consent (localStorage)",
+        "type": "Tecnico di preferenza",
+        "duration": "Persistente",
+        "purpose": "Registra le tue preferenze sui cookie. Non è un cookie ma una voce in localStorage."
+      }
     ],
     "analytics": "Cookie analitici (Plausible Analytics)",
     "analyticsBody": "Previo tuo consenso, utilizziamo Plausible Analytics, un servizio di analisi web privacy-first ospitato nell'Unione Europea. Plausible NON utilizza cookie di profilazione, NON raccoglie dati personali, NON traccia gli utenti tra siti diversi e NON crea profili persistenti. I dati raccolti sono aggregati e anonimizzati. Puoi verificare la privacy policy di Plausible su https://plausible.io/privacy.",
     "analyticsTable": [
-      { "name": "Plausible Analytics", "type": "Script analitico", "duration": "Nessun cookie persistente", "purpose": "Statistiche anonime sulle pagine visitate (URL, referrer, dispositivo, paese). Nessun dato personale." }
+      {
+        "name": "Plausible Analytics",
+        "type": "Script analitico",
+        "duration": "Nessun cookie persistente",
+        "purpose": "Statistiche anonime sulle pagine visitate (URL, referrer, dispositivo, paese). Nessun dato personale."
+      }
     ],
     "thirdParty": "Contenuti incorporati di terze parti",
     "thirdPartyBody": "Il sito può incorporare contenuti da piattaforme esterne. Questi servizi potrebbero impostare cookie propri solo quando interagisci con essi:",
     "thirdPartyTable": [
-      { "name": "YouTube (nocookie)", "type": "Video embed", "duration": "Solo all'interazione", "purpose": "I video sono incorporati in modalità youtube-nocookie.com che non imposta cookie fino a quando l'utente non avvia la riproduzione." },
-      { "name": "OpenStreetMap", "type": "Mappa embed", "duration": "Nessun cookie", "purpose": "La mappa nella pagina contatti è incorporata da OpenStreetMap, che non utilizza cookie di tracciamento." },
-      { "name": "Open-Meteo", "type": "API meteo", "duration": "Nessun cookie", "purpose": "Il widget meteo interroga l'API gratuita di Open-Meteo senza inviare dati personali." }
+      {
+        "name": "YouTube (nocookie)",
+        "type": "Video embed",
+        "duration": "Solo all'interazione",
+        "purpose": "I video sono incorporati in modalità youtube-nocookie.com che non imposta cookie fino a quando l'utente non avvia la riproduzione."
+      },
+      {
+        "name": "OpenStreetMap",
+        "type": "Mappa embed",
+        "duration": "Nessun cookie",
+        "purpose": "La mappa nella pagina contatti è incorporata da OpenStreetMap, che non utilizza cookie di tracciamento."
+      },
+      {
+        "name": "Open-Meteo",
+        "type": "API meteo",
+        "duration": "Nessun cookie",
+        "purpose": "Il widget meteo interroga l'API gratuita di Open-Meteo senza inviare dati personali."
+      }
     ],
     "manage": "Come gestire i cookie",
     "manageBody": "Puoi gestire le tue preferenze sui cookie in qualsiasi momento:\n\n• Dal banner cookie in fondo alla pagina (al primo accesso o cancellando i dati di navigazione)\n• Dalle impostazioni del tuo browser (Chrome, Firefox, Safari, Edge) per bloccare o cancellare tutti i cookie\n• Visitando https://www.youronlinechoices.com/it/ per disattivare i cookie di profilazione di terze parti\n\nLa disattivazione dei cookie tecnici potrebbe compromettere la funzionalità del sito (es. impossibilità di mantenere la sessione amministrativa o la preferenza lingua).",
@@ -554,17 +770,57 @@
   },
   "Status": {
     "title": "Stato del servizio",
-    "subtitle": "Verifica in tempo reale che il sito sia operativo. Per aggiornamenti dettagliati sugli incidenti e lo storico, consulta la pagina ufficiale.",
+    "subtitle": "Tutti i nostri servizi, monitorati 24/7. Aggiornamento ogni 60 secondi.",
     "liveStatus": "Stato in tempo reale",
     "checking": "Verifica in corso…",
     "jsRequired": "Abilita JavaScript per la verifica in tempo reale.",
     "incidents": "Incidenti",
-    "noIncidents": "Nessun incidente attivo segnalato.",
+    "noIncidents": "Nessun incidente attivo. Tutto OK.",
     "canonical": "Pagina canonica",
     "canonicalDesc": "La pagina di stato canonica è ospitata su Instatus e include timeline degli incidenti, manutenzioni programmate e metriche di uptime.",
     "operational": "Tutti i sistemi operativi",
-    "degraded": "Servizio degradato — il DB non risponde",
-    "unreachable": "Impossibile contattare il servizio"
+    "degraded": "Servizio degradato",
+    "unreachable": "Impossibile contattare il servizio",
+    "footer": "Storico completo e notifiche via email disponibili su richiesta.",
+    "lastUpdated": "Ultimo aggiornamento",
+    "ago": "fa",
+    "partialOutage": "Interruzione parziale",
+    "majorOutage": "Interruzione totale",
+    "maintenance": "Manutenzione programmata",
+    "unknown": "Stato sconosciuto",
+    "categories": {
+      "user-facing": "Servizi rivolti all'utente",
+      "infrastructure": "Infrastruttura",
+      "external": "Servizi esterni"
+    },
+    "uptime": "Uptime",
+    "responseMs": "Tempo di risposta",
+    "ms": "ms",
+    "historyHours": "Storico 24h",
+    "activeIncidents": "Incidenti attivi",
+    "recentIncidents": "Incidenti recenti (ultimi 7 giorni)",
+    "noRecentIncidents": "Nessun incidente recente.",
+    "severity": {
+      "minor": "Minore",
+      "major": "Maggiore",
+      "critical": "Critico"
+    },
+    "status": {
+      "investigating": "In analisi",
+      "identified": "Causa identificata",
+      "monitoring": "In monitoraggio",
+      "resolved": "Risolto"
+    },
+    "sinceUpdate": "Inizio",
+    "resolvedAt": "Risolto",
+    "timelineOn": "Cronologia aggiornamenti",
+    "subscribeByEmail": "Iscriviti per email",
+    "subscribeDesc": "Ricevi una notifica quando un servizio degrada o si ripristina. Nessuno spam, dato anonimo.",
+    "poweredBy": "Dati raccolti ogni 60s da UptimeRobot e 8 statuspage pubblici.",
+    "refresh": "Aggiorna",
+    "autoRefresh": "Aggiornamento automatico ogni 30s",
+    "downSince": "Non disponibile da",
+    "upSince": "Operativo da"
   },
   "MyRegistration": {
     "title": "La mia iscrizione",
@@ -591,11 +847,54 @@
       "optional": "Opzionale ma utile"
     },
     "items": {
-      "essentials": ["Sacchetto a pelo o lenzuola", "Asciugamani (2-3)", "Costume da bagno", "Scarpe comode da trekking", "Sandali/ciabatte", "Cappello o bandana", "Crema solare SPF 50+", "Borraccia 1L+", "Torcia frontale (per turni notturni)", "Repellente zanzare"],
-      "clothing": ["T-shirt tecniche (5-6)", "Pantaloni corti", "Pantaloni lunghi leggeri", "Felpa o maglione leggero (per la sera)", "Giacca antivento", "Intimo (7 set)", "Calzini (7 paia)", "Vestito da sera (opzionale per eventi)"],
-      "hygiene": ["Spazzolino e dentifrico", "Bagnoschiuma e shampoo", "Deodorante", "Spazzola/brush", "Fazzoletti", "Mascherina (per polvere)", "Borsa da toilette"],
-      "documents": ["Carta d'identità o passaporto", "Tessera sanitaria", "Ricevuta bonifico (se già pagato)", "Eventuali prescrizioni mediche", "Certificato medico (se richiesto)"],
-      "optional": ["Macchina fotografica subacquea", "Binocolo (per avvistamenti)", "Tappi per le orecchie", "Benda per gli occhi (sonno diurno)", "Power bank", "Adattatore di corrente", "Snack preferiti", "Musica/libri"]
+      "essentials": [
+        "Sacchetto a pelo o lenzuola",
+        "Asciugamani (2-3)",
+        "Costume da bagno",
+        "Scarpe comode da trekking",
+        "Sandali/ciabatte",
+        "Cappello o bandana",
+        "Crema solare SPF 50+",
+        "Borraccia 1L+",
+        "Torcia frontale (per turni notturni)",
+        "Repellente zanzare"
+      ],
+      "clothing": [
+        "T-shirt tecniche (5-6)",
+        "Pantaloni corti",
+        "Pantaloni lunghi leggeri",
+        "Felpa o maglione leggero (per la sera)",
+        "Giacca antivento",
+        "Intimo (7 set)",
+        "Calzini (7 paia)",
+        "Vestito da sera (opzionale per eventi)"
+      ],
+      "hygiene": [
+        "Spazzolino e dentifrico",
+        "Bagnoschiuma e shampoo",
+        "Deodorante",
+        "Spazzola/brush",
+        "Fazzoletti",
+        "Mascherina (per polvere)",
+        "Borsa da toilette"
+      ],
+      "documents": [
+        "Carta d'identità o passaporto",
+        "Tessera sanitaria",
+        "Ricevuta bonifico (se già pagato)",
+        "Eventuali prescrizioni mediche",
+        "Certificato medico (se richiesto)"
+      ],
+      "optional": [
+        "Macchina fotografica subacquea",
+        "Binocolo (per avvistamenti)",
+        "Tappi per le orecchie",
+        "Benda per gli occhi (sonno diurno)",
+        "Power bank",
+        "Adattatore di corrente",
+        "Snack preferiti",
+        "Musica/libri"
+      ]
     }
   },
   "Admin": {
@@ -933,7 +1232,8 @@
       "title": "Impostazioni campo",
       "subtitle": "Configura l'anno, le date, il numero di turni e i costi per il campo.",
       "year": "Anno",
-      "numCampi": "Numero di campi", "numCampiOld": "Numero di campi",
+      "numCampi": "Numero di campi",
+      "numCampiOld": "Numero di campi",
       "startDate": "Data inizio (primo campo)",
       "endDate": "Data fine (ultimo campo)",
       "campoDuration": "Durata campo (giorni)",
@@ -1029,6 +1329,84 @@
       "networkError": "Errore di rete",
       "uploaded": "File caricato",
       "addedToGallery": "Aggiunto alla galleria"
+    },
+    "status": {
+      "nav": {
+        "status": "Stato"
+      },
+      "page": {
+        "title": "Stato del servizio",
+        "subtitle": "Gestisci i 24 servizi monitorati e gli incidenti in corso.",
+        "tabServices": "Servizi",
+        "tabIncidents": "Incidenti",
+        "tabHistory": "Storico"
+      },
+      "services": {
+        "table": {
+          "name": "Nome",
+          "category": "Categoria",
+          "source": "Fonte",
+          "sourceId": "ID fonte",
+          "url": "URL",
+          "status": "Stato",
+          "uptime": "Uptime 7g",
+          "uptime30d": "Uptime 30g",
+          "active": "Attivo",
+          "actions": "Azioni"
+        },
+        "new": "Nuovo servizio",
+        "edit": "Modifica",
+        "deactivate": "Disattiva",
+        "reactivate": "Riattiva",
+        "noServices": "Nessun servizio configurato. Esegui `npm run db:seed-status`.",
+        "save": "Salva",
+        "cancel": "Annulla",
+        "confirmDeactivate": "Disattivare questo servizio? Smette di apparire sulla pagina pubblica ma i dati storici restano.",
+        "confirmReactivate": "Riattivare questo servizio?"
+      },
+      "incidents": {
+        "new": "Nuovo incidente",
+        "active": "Incidenti attivi",
+        "recent": "Risolti di recente",
+        "noActive": "Nessun incidente attivo.",
+        "noRecent": "Nessun incidente risolto di recente.",
+        "fields": {
+          "service": "Servizio",
+          "severity": "Gravità",
+          "status": "Stato",
+          "title_it": "Titolo (IT)",
+          "title_en": "Titolo (EN)",
+          "body_it": "Descrizione (IT)",
+          "body_en": "Descrizione (EN)",
+          "started_at": "Inizio",
+          "resolved_at": "Risolto il"
+        },
+        "updates": {
+          "title": "Cronologia aggiornamenti",
+          "new": "Aggiungi aggiornamento",
+          "message_it": "Messaggio (IT)",
+          "message_en": "Messaggio (EN)",
+          "status": "Stato",
+          "submit": "Pubblica"
+        },
+        "resolve": "Risolvi",
+        "reopen": "Riapri",
+        "delete": "Elimina",
+        "confirmResolve": "Segnare questo incidente come risolto?",
+        "confirmDelete": "Eliminare questo incidente? Operazione irreversibile."
+      },
+      "sources": {
+        "uptimerobot": "UptimeRobot",
+        "statuspage": "Statuspage",
+        "self-probe": "Self-probe",
+        "instatus": "Instatus",
+        "manual": "Manuale"
+      },
+      "categories": {
+        "user-facing": "Visibili all'utente",
+        "infrastructure": "Infrastruttura",
+        "external": "Servizi esterni"
+      }
     }
   },
   "Account": {
