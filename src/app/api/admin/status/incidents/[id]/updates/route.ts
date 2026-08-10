@@ -31,9 +31,9 @@ export async function POST(
   if (!inc) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
 
   const body = await req.json();
-  const message_it = String(body.message_it ?? "").slice(0, 2000);
-  const message_en = String(body.message_en ?? message_it ?? "").slice(0, 2000);
-  if (!message_it.trim()) {
+  const body_it = String(body.message_it ?? body.body_it ?? "").slice(0, 2000);
+  const body_en = String(body.message_en ?? body.body_en ?? body_it ?? "").slice(0, 2000);
+  if (!body_it.trim()) {
     return NextResponse.json({ ok: false, error: "message_it required" }, { status: 400 });
   }
 
@@ -42,7 +42,7 @@ export async function POST(
     : "investigating";
 
   const update = await prisma.incidentUpdate.create({
-    data: { incident_id: id, status, message_it, message_en },
+    data: { incident_id: id, status, body_it, body_en },
   });
 
   // Sync the parent incident's status field with the latest update

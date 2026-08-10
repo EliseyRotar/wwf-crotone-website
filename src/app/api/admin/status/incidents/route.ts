@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     orderBy: [{ started_at: "desc" }],
     take: limit,
     include: {
-      updates: { orderBy: { created_at: "desc" } },
+      updates: { orderBy: { createdAt: "desc" } },
     },
   });
   return NextResponse.json({ ok: true, incidents });

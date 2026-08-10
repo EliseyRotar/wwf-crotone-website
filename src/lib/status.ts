@@ -118,7 +118,7 @@ export async function getStatusOverview(
   // Active incidents
   const activeIncidents = await prisma.incident.findMany({
     where: { resolved_at: null },
-    include: { updates: { orderBy: { created_at: "desc" } } },
+    include: { updates: { orderBy: { createdAt: "desc" } } },
     orderBy: { started_at: "desc" },
   });
   // Recently resolved incidents (last 7 days)
@@ -126,7 +126,7 @@ export async function getStatusOverview(
     where: {
       resolved_at: { not: null, gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
     },
-    include: { updates: { orderBy: { created_at: "desc" } } },
+    include: { updates: { orderBy: { createdAt: "desc" } } },
     orderBy: { resolved_at: "desc" },
     take: 10,
   });
@@ -170,9 +170,9 @@ export async function getStatusOverview(
     return {
       slug: s.slug,
       name: pickLocalized(s.name_it, s.name_en, locale),
-      category: s.category,
+      category: s.category as ServiceCard["category"],
       url: s.url,
-      status: latest?.status ?? "unknown",
+      status: (latest?.status ?? "unknown") as StatusLevel,
       description: pickLocalized(s.description_it, s.description_en, locale),
       uptime_24h: counts ? pct(counts.up, counts.total) : null,
       response_ms: latest?.response_ms ?? null,
@@ -219,14 +219,14 @@ export async function getStatusOverview(
 function toIncidentPublic(
   i: {
     id: string;
-    service_id: string;
+    service_id: string | null;
     severity: string;
     status: string;
     title_it: string;
     title_en: string;
     started_at: Date;
     resolved_at: Date | null;
-    updates: { id: string; status: string; message_it: string; message_en: string; created_at: Date }[];
+    updates: { id: string; status: string; body_it: string; body_en: string; createdAt: Date }[];
   },
   services: { id: string; slug: string }[],
   locale: string
@@ -244,9 +244,9 @@ function toIncidentPublic(
     updates: i.updates.map((u) => ({
       id: u.id,
       status: (u.status ?? "investigating") as IncidentUpdatePublic["status"],
-      message_it: u.message_it,
-      message_en: u.message_en,
-      created_at: u.created_at.toISOString(),
+      message_it: u.body_it,
+      message_en: u.body_en,
+      created_at: u.createdAt.toISOString(),
     })),
   };
 }
