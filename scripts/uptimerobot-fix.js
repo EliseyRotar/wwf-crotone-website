@@ -2,19 +2,17 @@
  * scripts/uptimerobot-fix.js — One-shot script to fix all UptimeRobot
  * monitors for the WWF Crotone status page.
  *
- * What it does:
- *  1. Lists all monitors
- *  2. Updates each problem monitor with:
- *     - A URL that actually returns 2xx (or 4xx for "reachable but needs auth")
- *     - `successHttpResponseCodes` set to ["2xx", "3xx", "4xx"] (so a 401
- *       from an API is still "up")
- *     - Switches TCP port probes to HTTP probes against our own
- *       /api/health/* endpoints
+ * The strategy:
+ *  1. GET /monitors to see what's there
+ *  2. For monitors that need a URL change OR successHttpResponseCodes change:
+ *     PATCH the existing monitor
+ *  3. For monitors that need a TYPE change (e.g. PORT → HTTP):
+ *     - We can't PATCH the type, so we DELETE + recreate
+ *     - First, record the new monitor ID so we can update the seed later
+ *  4. After the fix, regenerate the seed-status.ts so the source_id
+ *     columns match the new UR monitor IDs
  *
  * Usage:  UPTIMEROBOT_API_KEY=... node scripts/uptimerobot-fix.js
- *
- * Idempotent — re-running it just no-ops if the monitor is already
- * correct.
  */
 
 const API_KEY = process.env.UPTIMEROBOT_API_KEY;
@@ -25,40 +23,39 @@ if (!API_KEY) {
 
 const BASE = "https://api.uptimerobot.com/v3";
 
-/**
- * Mapping from our StatusService slug → fix the UR monitor should have.
- * Each entry says:
- *   url: the URL to monitor (HTTP)
- *   success_codes: which HTTP codes count as "up"
- *   type: 'HTTP' (most monitors) or 'KEYWORD' (for /api/health)
- *   keyword: optional string to search for in the body (KEYWORD only)
- */
+const TYPE_MAP = { HTTP: 1, KEYWORD: 2, PING: 3, PORT: 4 };
+
+// slug → plan for the UR monitor
 const FIXES = {
   "main-site": {
     url: "https://wwfcrotone.it/it",
     success_codes: ["2xx", "3xx"],
+    type: "HTTP",
   },
   "admin": {
     url: "https://admin.wwfcrotone.it/admin/login",
-    success_codes: ["2xx", "3xx"],
+    success_codes: ["2xx", "3xx", "4xx"],
+    type: "HTTP",
   },
   "api-health": {
     url: "https://wwfcrotone.it/api/health",
     success_codes: ["2xx"],
-    type: "KEYWORD",
-    keyword: "ok",
+    type: "HTTP",
   },
   "email-routing": {
     url: "https://wwfcrotone.it",
     success_codes: ["2xx", "3xx"],
+    type: "HTTP",
   },
   "whatsapp": {
     url: "https://wa.me/393513945109",
     success_codes: ["2xx", "3xx"],
+    type: "HTTP",
   },
   "openstreetmap": {
     url: "https://www.openstreetmap.org/export/embed.html",
     success_codes: ["2xx", "3xx"],
+    type: "HTTP",
   },
   "vps-ping": {
     url: "159.195.42.18",
@@ -109,7 +106,6 @@ const FIXES = {
     type: "HTTP",
   },
   "sentry": {
-    // sentry.io root returns 302 → still reachable from CF
     url: "https://sentry.io/api/0/",
     success_codes: ["2xx", "3xx"],
     type: "HTTP",
@@ -144,29 +140,19 @@ const FIXES = {
     success_codes: ["2xx", "3xx"],
     type: "HTTP",
   },
-  "uptimerobot": {
-    // This is the "is UptimeRobot itself up" check — pull from
-    // status.uptimerobot.com's public statuspage.
-    url: "https://status.uptimerobot.com/api/v2/summary.json",
-    success_codes: ["2xx"],
-    type: "HTTP",
-  },
 };
 
-const TYPE_MAP = { HTTP: 1, KEYWORD: 2, PING: 3, PORT: 4 };
-
-// Slug → friendly-name substring match (the friendly name is what UR shows
-// in the dashboard, so we match against that)
+// slug → substring in the friendly name (the existing UR monitor name)
 const SLUG_TO_NAME = {
   "main-site": "main site",
   "admin": "admin panel",
-  "api-health": "api health endpoint",
+  "api-health": "api health",
   "email-routing": "email routing",
   "whatsapp": "whatsapp",
   "openstreetmap": "openstreetmap",
   "vps-ping": "vps host ping",
-  "postgres": "postgresql tcp",
-  "redis": "redis tcp",
+  "postgres": "postgresql",
+  "redis": "redis",
   "https-port": "https port",
   "ssh-port": "ssh port",
   "cloudflare": "cloudflare root",
@@ -174,14 +160,13 @@ const SLUG_TO_NAME = {
   "aruba": "aruba",
   "github": "github api",
   "github-repo": "github repo",
-  "sentry": "sentry ingest",
+  "sentry": "sentry",
   "brevo-smtp": "brevo smtp",
-  "brevo-api": "brevo api root",
-  "groq": "groq api",
-  "upstash": "upstash redis",
+  "brevo-api": "brevo api",
+  "groq": "groq",
+  "upstash": "upstash",
   "plausible": "plausible",
   "instatus": "instatus",
-  "uptimerobot": "uptimerobot platform", // we don't actually have a UR monitor for this; skip
 };
 
 async function api(method, path, body) {
@@ -206,7 +191,8 @@ async function main() {
   const monitors = all.data;
   console.log(`Found ${monitors.length} monitors`);
 
-  // Match by friendly-name substring
+  // Match each fix to an existing monitor (by friendly name substring)
+  const renames = [];
   for (const [slug, fix] of Object.entries(FIXES)) {
     const nameMatch = SLUG_TO_NAME[slug] ?? slug;
     const monitor = monitors.find((m) => m.friendlyName.toLowerCase().includes(nameMatch));
@@ -215,64 +201,73 @@ async function main() {
       continue;
     }
 
-    const changes = {};
-    const typeChanged = fix.type && TYPE_MAP[fix.type] !== monitor.type;
-    if (monitor.url !== fix.url) changes.url = fix.url;
-    if (typeChanged) {
-      // UR doesn't allow type changes — we have to delete + recreate
-      console.log(`  → ${slug} (id=${monitor.id}): type change required (${monitor.type} → ${TYPE_MAP[fix.type]})`);
-      console.log(`     Step 1: delete old monitor`);
-      await api("DELETE", `/monitors/${monitor.id}`);
-      console.log(`     Step 2: create new monitor (type=${fix.type})`);
-      const create = {
-        friendlyName: monitor.friendlyName,
-        url: fix.url,
-        type: TYPE_MAP[fix.type],
-        interval: 300,
-        timeout: 30,
-      };
-      if (fix.success_codes) create.successHttpResponseCodes = fix.success_codes;
-      if (fix.type === "KEYWORD" && fix.keyword) {
-        create.keywordValue = fix.keyword;
-        create.keywordType = 1;
-      }
-      if (fix.type === "PORT") {
-        // PORT type needs port as a separate field, parsed from URL.
-        const port = parseInt(fix.url.split(":").pop() ?? "0", 10);
-        if (!port) {
-          console.warn(`     ⚠ can't parse port from ${fix.url}, skipping`);
-          continue;
-        }
-        create.port = port;
-      }
-      const created = await api("POST", "/monitors", create);
-      // UR's POST response is the object directly (not wrapped in {data}),
-      // unlike GET which returns {data: [...]}.
-      const newId = created.id ?? created.data?.id;
-      console.log(`     ✓ new monitor id=${newId}`);
-      continue;
-    }
-    if (fix.success_codes) {
-      const existing = (monitor.successHttpResponseCodes || []).join(",");
-      const wanted = fix.success_codes.join(",");
-      if (existing !== wanted) changes.successHttpResponseCodes = fix.success_codes;
-    }
-    if (fix.type === "KEYWORD" && fix.keyword && monitor.keywordValue !== fix.keyword) {
-      changes.keywordValue = fix.keyword;
-      changes.keywordType = 1; // 1 = contains
-    }
+    const targetType = TYPE_MAP[fix.type];
+    const typeChanged = targetType !== monitor.type;
+    const urlChanged = monitor.url !== fix.url;
+    const codesChanged = fix.success_codes &&
+      JSON.stringify([...monitor.successHttpResponseCodes].sort()) !==
+      JSON.stringify([...fix.success_codes].sort());
 
-    if (Object.keys(changes).length === 0) {
-      console.log(`  ✓ ${slug}: already correct`);
+    const newName = fix.type === "HTTP" && fix.url.includes("wwfcrotone.it/api/health")
+      ? `${slug.replace(/-/g, " ")} (HTTP probe)`
+      : monitor.friendlyName;
+    const nameChanged = newName !== monitor.friendlyName;
+
+    if (!typeChanged && !urlChanged && !codesChanged && !nameChanged) {
+      console.log(`  ✓ ${slug}: already correct (id=${monitor.id})`);
       continue;
     }
 
-    console.log(`  → ${slug} (id=${monitor.id}): ${JSON.stringify(changes)}`);
-    await api("PATCH", `/monitors/${monitor.id}`, changes);
-    console.log(`     OK`);
+    // If only url/codes/name need to change, PATCH works.
+    if (!typeChanged) {
+      const patch = {};
+      if (urlChanged) patch.url = fix.url;
+      if (codesChanged) patch.successHttpResponseCodes = fix.success_codes;
+      if (nameChanged) patch.friendlyName = newName;
+      console.log(`  → ${slug} (id=${monitor.id}): PATCH ${JSON.stringify(patch)}`);
+      await api("PATCH", `/monitors/${monitor.id}`, patch);
+      console.log(`     OK`);
+      continue;
+    }
+
+    // Type change: DELETE + recreate
+    console.log(`  ⟳ ${slug} (id=${monitor.id}): type change ${monitor.type} → ${targetType}`);
+    console.log(`     Step 1: delete old monitor`);
+    await api("DELETE", `/monitors/${monitor.id}`);
+    await new Promise((r) => setTimeout(r, 2000)); // rate limit
+    const create = {
+      friendlyName: newName,
+      url: fix.url,
+      type: targetType,
+      interval: 300,
+      timeout: 30,
+    };
+    if (fix.success_codes) create.successHttpResponseCodes = fix.success_codes;
+    if (fix.type === "PORT") {
+      const port = parseInt(fix.url.split(":").pop() ?? "0", 10);
+      if (!port) {
+        console.warn(`     ⚠ can't parse port from ${fix.url}, skipping`);
+        continue;
+      }
+      create.port = port;
+    }
+    console.log(`     Step 2: create new monitor type=${fix.type}`);
+    const created = await api("POST", "/monitors", create);
+    const newId = created.id ?? created.data?.id;
+    console.log(`     ✓ new monitor id=${newId}`);
+    renames.push({ slug, oldId: monitor.id, newId });
+    await new Promise((r) => setTimeout(r, 2000)); // rate limit
   }
 
-  console.log("Done.");
+  if (renames.length) {
+    console.log("\n=== Monitor ID changes ===");
+    for (const r of renames) {
+      console.log(`  ${r.slug}: ${r.oldId} → ${r.newId}`);
+    }
+    console.log("\nUpdate src/lib/status.ts or seed-status.ts with the new IDs.");
+  }
+
+  console.log("\nDone.");
 }
 
 main().catch((e) => {
