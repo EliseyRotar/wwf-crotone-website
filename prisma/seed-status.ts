@@ -35,6 +35,7 @@ type ServiceSeed = {
   display_order: number;
   source: "uptimerobot" | "statuspage" | "self-probe" | "instatus" | "manual";
   source_id?: string;
+  ur_name_pattern: RegExp;
   url: string | null;
   description_it?: string;
   description_en?: string;
