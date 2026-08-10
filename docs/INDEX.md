@@ -15,6 +15,9 @@ lives in [`README.md`](../README.md) and [`README.it.md`](../README.it.md).
   org identity, codice fiscale, presidente details, and contact
   information are replaced with `[redacted]` placeholders. Full
   unredacted copy is on the org's internal storage only.
+- [`SENTRY_SETUP.md`](./SENTRY_SETUP.md) — Sentry SDK wiring (errors
+  + tracing), what we capture / don't capture, PII policy, and the
+  production verification checklist.
 
 ## Service setup (references)
 
