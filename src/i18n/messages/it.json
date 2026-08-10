@@ -1406,6 +1406,11 @@
         "user-facing": "Visibili all'utente",
         "infrastructure": "Infrastruttura",
         "external": "Servizi esterni"
+      },
+      "severity": {
+        "minor": "Minore",
+        "major": "Maggiore",
+        "critical": "Critico"
       }
     }
   },

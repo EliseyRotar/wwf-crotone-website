@@ -1405,6 +1405,11 @@
         "user-facing": "User-facing",
         "infrastructure": "Infrastructure",
         "external": "External services"
+      },
+      "severity": {
+        "minor": "Minor",
+        "major": "Major",
+        "critical": "Critical"
       }
     }
   },
