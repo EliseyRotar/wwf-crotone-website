@@ -331,7 +331,8 @@ async function main() {
   if (!urResp.ok) throw new Error(`UR fetch failed: ${urResp.status}`);
   const urData = (await urResp.json()) as { data: Monitor[] };
   const urById = new Map<number, Monitor>(urData.data.map((m) => [m.id, m]));
-  const urByName = new Map<string, Monitor>(urData.data.map((m) => [m.name, m]));
+  // UptimeRobot v3 returns the monitor name as `friendlyName`, not `name`.
+  const urByName = new Map<string, Monitor>(urData.data.map((m) => [m.friendlyName ?? m.name ?? "", m]));
 
   let created = 0;
   let updated = 0;
