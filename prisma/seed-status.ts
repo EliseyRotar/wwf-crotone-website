@@ -370,7 +370,7 @@ async function main() {
           category: s.category,
           display_order: s.display_order,
           source: s.source,
-          source_id: urId,
+          source_id: urId ?? s.source_id ?? null,
           url: s.url,
           description_it: s.description_it ?? null,
           description_en: s.description_en ?? null,
