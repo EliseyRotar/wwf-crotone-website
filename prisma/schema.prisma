@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
@@ -48,70 +48,70 @@ model Turno {
 // A registration. status is managed from admin panel.
 // isMinor triggers the parent/guardian consent block.
 model Iscrizione {
-  id                   String            @id @default(cuid())
+  id                       String            @id @default(cuid())
   // Personal
-  firstName            String
-  lastName             String
-  birthDate            DateTime? // null when only age is known (imported from Excel)
-  age                  Int? // used when birthDate is unknown; admin can add birthDate later
-  email                String
-  phone                String
-  isMinor              Boolean
+  firstName                String
+  lastName                 String
+  birthDate                DateTime? // null when only age is known (imported from Excel)
+  age                      Int? // used when birthDate is unknown; admin can add birthDate later
+  email                    String
+  phone                    String
+  isMinor                  Boolean
   // If minor
-  guardianName         String?
-  guardianEmail        String?
-  guardianPhone        String?
-  guardianConsent      Boolean           @default(false)
+  guardianName             String?
+  guardianEmail            String?
+  guardianPhone            String?
+  guardianConsent          Boolean           @default(false)
   // Turn — primary turn; multi-week registrations use the IscrizioneTurno junction
-  turnoId              String
-  turno                Turno             @relation(fields: [turnoId], references: [id])
-  iscrizioneTurni      IscrizioneTurno[] // M5: junction for multi-week registrations
+  turnoId                  String
+  turno                    Turno             @relation(fields: [turnoId], references: [id])
+  iscrizioneTurni          IscrizioneTurno[] // M5: junction for multi-week registrations
   // Health & diet
-  allergies            String?
-  medications          String?
-  swimmingAbility      String? // "none" | "basic" | "confident"
-  tetanusStatus        String? // "unknown" | "vaccinated" | "not_vaccinated"
-  fitnessSelf          String?
-  dietaryNeeds         String? // "none" | "vegetarian" | "vegan" | "celiac" | "other"
-  dietaryNotes         String?
-  tshirtSize           String? // "S" | "M" | "L" | "XL" | "XXL"
+  allergies                String?
+  medications              String?
+  swimmingAbility          String? // "none" | "basic" | "confident"
+  tetanusStatus            String? // "unknown" | "vaccinated" | "not_vaccinated"
+  fitnessSelf              String?
+  dietaryNeeds             String? // "none" | "vegetarian" | "vegan" | "celiac" | "other"
+  dietaryNotes             String?
+  tshirtSize               String? // "S" | "M" | "L" | "XL" | "XXL"
   // Logistics
-  arrivalMode          String? // "own_car" | "train" | "bus" | "plane_crotone" | "plane_lamezia" | "need_pickup"
-  arrivalTime          String? // e.g. "14:30"
-  departureTime        String? // e.g. "10:00"
+  arrivalMode              String? // "own_car" | "train" | "bus" | "plane_crotone" | "plane_lamezia" | "need_pickup"
+  arrivalTime              String? // e.g. "14:30"
+  departureTime            String? // e.g. "10:00"
   // Admin-managed
-  status               String            @default("pending") // "pending" | "confirmed" | "paid" | "cancelled" | "waitlist"
+  status                   String            @default("pending") // "pending" | "confirmed" | "paid" | "cancelled" | "waitlist"
   // Payment tracking — split into registration fee (100€) + balance
-  feePaid              Boolean           @default(false) // 100€ registration fee paid
-  feePaidDate          DateTime?
-  balancePaid          Boolean           @default(false) // remaining balance paid
-  balancePaidDate      DateTime?
-  paymentIntentId      String? // M6: external payment intent reference (e.g. Stripe)
-  notes                String? // internal admin notes (length validated at app level)
+  feePaid                  Boolean           @default(false) // 100€ registration fee paid
+  feePaidDate              DateTime?
+  balancePaid              Boolean           @default(false) // remaining balance paid
+  balancePaidDate          DateTime?
+  paymentIntentId          String? // M6: external payment intent reference (e.g. Stripe)
+  notes                    String? // internal admin notes (length validated at app level)
   // Phase 2: receipt tracking — set on volunteer self-service upload,
   // approved by admin from /admin/iscrizioni.
-  depositReceiptUrl         String?
-  balanceReceiptUrl         String?
-  depositReceiptUploadedAt  DateTime?
-  balanceReceiptUploadedAt  DateTime?
-  depositReceiptApprovedAt  DateTime?
-  balanceReceiptApprovedAt  DateTime?
+  depositReceiptUrl        String?
+  balanceReceiptUrl        String?
+  depositReceiptUploadedAt DateTime?
+  balanceReceiptUploadedAt DateTime?
+  depositReceiptApprovedAt DateTime?
+  balanceReceiptApprovedAt DateTime?
   // Consent
-  privacyConsent       Boolean           @default(false)
-  marketingConsent     Boolean           @default(false)
-  imageDataConsent     Boolean           @default(false)
+  privacyConsent           Boolean           @default(false)
+  marketingConsent         Boolean           @default(false)
+  imageDataConsent         Boolean           @default(false)
   // Meta
-  deletedAt            DateTime? // M1: soft delete timestamp
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  managedBy            String? // User.id who last changed status
-  manager              User?             @relation("ManagedBy", fields: [managedBy], references: [id])
-  receipts             Receipt[]
-  payments             Payment[] // M6: payment history
+  deletedAt                DateTime? // M1: soft delete timestamp
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  managedBy                String? // User.id who last changed status
+  manager                  User?             @relation("ManagedBy", fields: [managedBy], references: [id])
+  receipts                 Receipt[]
+  payments                 Payment[] // M6: payment history
   // Personal-user area (Phase 1): when set, the volunteer cannot edit their
   // personal/contact fields via /account/profile. Logistics fields remain
   // editable until the camp starts.
-  personalDataLockedAt DateTime?
+  personalDataLockedAt     DateTime?
 
   @@index([turnoId])
   @@index([status])
@@ -352,4 +352,107 @@ model Notification {
 
   @@index([userId, readAt])
   @@index([createdAt])
+}
+
+// =====================================================================
+// Status page models — public-facing status.wwfcrotone.it
+// =====================================================================
+//
+// One StatusService row per thing we monitor (24 today, includes both our
+// own infra and external providers). Data is collected by scripts/status-poll.js
+// every 60s, persisted to StatusSnapshot (raw 60s samples, 7-day TTL) and
+// StatusPeriod (event log of status changes — grows slowly, used for 30-day
+// uptime math). Incidents are stored locally even when the source is external
+// (e.g. a Cloudflare statuspage incident is mirrored as Incident.source =
+// "statuspage-feed" so it shows up in our search/sitemap without depending on
+// our caching of their page).
+
+// Catalogue of monitored services. Populated by prisma/seed-status.ts.
+model StatusService {
+  id             String   @id @default(cuid())
+  slug           String   @unique // "main-site", "postgres", "cloudflare-dns"
+  name_it        String // "Sito principale"
+  name_en        String // "Main site"
+  category       String // "user-facing" | "infrastructure" | "external"
+  display_order  Int      @default(0)
+  source         String // "uptimerobot" | "statuspage" | "self-probe" | "instatus"
+  source_id      String? // UptimeRobot monitor id OR statuspage subdomain
+  url            String? // human-facing URL (shown in UI + clickable)
+  icon           String? // optional lucide icon name
+  description_it String?
+  description_en String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  snapshots StatusSnapshot[]
+  periods   StatusPeriod[]
+  incidents Incident[]
+
+  @@index([category, display_order])
+  @@index([source, source_id])
+}
+
+// Raw 60s samples. Heavy: pruned to last 7 days by a nightly job.
+// Powers the 24h uptime chart and instant status.
+model StatusSnapshot {
+  id          BigInt        @id @default(autoincrement())
+  service_id  String
+  status      String // "up" | "down" | "degraded" | "unknown"
+  response_ms Int?
+  taken_at    DateTime      @default(now())
+  service     StatusService @relation(fields: [service_id], references: [id], onDelete: Cascade)
+
+  @@index([service_id, taken_at])
+}
+
+// Event log: one row per status change. Powers 7d/30d uptime math.
+// Grows slowly — ~30 rows/service/month.
+model StatusPeriod {
+  id         BigInt        @id @default(autoincrement())
+  service_id String
+  status     String // "up" | "down" | "degraded"
+  started_at DateTime
+  ended_at   DateTime? // null = ongoing
+  service    StatusService @relation(fields: [service_id], references: [id], onDelete: Cascade)
+
+  @@index([service_id, started_at])
+}
+
+// Incidents (degradations + scheduled maintenance). Even external-only
+// incidents from statuspage feeds are mirrored here so we own the data.
+model Incident {
+  id          String           @id @default(cuid())
+  service_id  String?
+  external_id String? // dedupe key per source (UptimeRobot alert id, statuspage incident id, ...)
+  source      String // "manual" | "uptimerobot-webhook" | "statuspage-feed"
+  severity    String // "minor" | "major" | "critical" | "maintenance"
+  status      String // "investigating" | "identified" | "monitoring" | "resolved"
+  title_it    String
+  title_en    String
+  body_it     String           @db.Text
+  body_en     String           @db.Text
+  started_at  DateTime
+  resolved_at DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  service     StatusService?   @relation(fields: [service_id], references: [id], onDelete: SetNull)
+  updates     IncidentUpdate[]
+
+  @@unique([source, external_id])
+  @@index([status, started_at])
+  @@index([service_id])
+}
+
+// Per-incident timeline entries (e.g. "Identified root cause at 14:32").
+model IncidentUpdate {
+  id          String   @id @default(cuid())
+  incident_id String
+  status      String // mirrors Incident.status at the time of the update
+  body_it     String   @db.Text
+  body_en     String   @db.Text
+  createdAt   DateTime @default(now())
+  incident    Incident @relation(fields: [incident_id], references: [id], onDelete: Cascade)
+
+  @@index([incident_id, createdAt])
 }
