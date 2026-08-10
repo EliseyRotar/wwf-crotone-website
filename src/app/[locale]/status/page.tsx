@@ -17,6 +17,20 @@ import StatusOverviewClient from "@/components/features/StatusOverviewClient";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Status" });
+  return {
+    title: t("title"),
+    description: t("subtitle"),
+    robots: { index: false, follow: false },
+  };
+}
+
 export default async function StatusPage({
   params
 }: {
