@@ -1577,5 +1577,11 @@
         "approvalFootnote": "Receipts are verified manually by an admin. After approval you'll see the \"Approved\" state."
       }
     }
+  },
+  "RelativeTime": {
+    "now": "just now",
+    "minutes": "{n} minutes ago",
+    "hours": "{n} hours ago",
+    "days": "{n} days ago"
   }
 }

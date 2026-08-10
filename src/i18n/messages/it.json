@@ -1578,5 +1578,11 @@
         "approvalFootnote": "Le ricevute vengono verificate manualmente dall'amministratore. Dopo l'approvazione vedrai lo stato \"Approvato\"."
       }
     }
+  },
+  "RelativeTime": {
+    "now": "adesso",
+    "minutes": "{n} minuti fa",
+    "hours": "{n} ore fa",
+    "days": "{n} giorni fa"
   }
 }
