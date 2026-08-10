@@ -12,7 +12,7 @@
  *  4. For each service, computes the new StatusPeriod event if status changed
  *  5. Prunes StatusSnapshot to last 7 days
  *
- * Run as a separate Docker container (`docker compose up cron`) so it can
+ * Run(`docker compose up cron`) so it can
  * survive app container restarts. Single-instance only — no locking needed
  * because Postgres serializes the writes.
  *
@@ -23,7 +23,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { setTimeout as wait } from "node:timers/promises";
+import { setTimeout} from "node:timers/promises";
 
 const prisma = new PrismaClient();
 
@@ -33,7 +33,7 @@ const POLL_INTERVAL_MS = 60_000;
 const SNAPSHOT_TTL_DAYS = 7;
 
 // Public Atlassian-Statuspage feeds (provider slug -> URL)
-const STATUSPAGE_FEEDS: Record<string, { url: string; name_it: string; name_en: string; category: string; display_order: number; }> = {
+const STATUSPAGE_FEEDS: Record<string, { url; name_it; name_en; category; display_order; }> = {
   "status.uptimerobot.com": {
     url: "https://status.uptimerobot.com/api/v2/summary.json",
     name_it: "UptimeRobot (piattaforma)",
@@ -45,38 +45,38 @@ const STATUSPAGE_FEEDS: Record<string, { url: string; name_it: string; name_en: 
 
 // Self-probes that need to be tested from inside the Docker network
 // (the cron container can reach the postgres / redis containers by service name)
-const SELF_PROBES: { slug: string; host: string; port: number }[] = [
+const SELF_PROBES: { slug; host; port }[] = [
   { slug: "postgres", host: "postgres", port: 5432 },
   { slug: "redis", host: "redis", port: 6379 },
 ];
 
-type URMonitor = {
-  id: number;
-  friendlyName: string;
-  url: string;
-  type: number; // 1=HTTP, 2=keyword, 3=ping, 4=port
-  status: number; // 0=paused, 1=not-checked-yet, 2=up, 8=seems-down, 9=down
-  average_response_time: string | null;
-  last_checked_at: number | null; // unix ms
+
+  id;
+  friendlyName;
+  url;
+  type; // 1=HTTP, 2=keyword, 3=ping, 4=port
+  status; // 0=paused, 1=not-checked-yet, 2=up, 8=seems-down, 9=down
+  average_response_time | null;
+  last_checked_at | null; // unix ms
 };
 
-type StatuspageSummary = {
-  page: { id: string; name: string; url: string; status: string };
-  components?: { id: string; name: string; status: string }[];
+
+  page: { id; name; url; status };
+  components?: { id; name; status }[];
   incidents?: {
-    id: string;
-    name: string;
-    status: string;
-    impact: string;
-    shortlink?: string;
-    created_at: string;
-    resolved_at?: string | null;
+    id;
+    name;
+    status;
+    impact;
+    shortlink;
+    created_at;
+    resolved_at;
   }[];
-  scheduled_maintenances?: { id: string; name: string; status: string; scheduled_for?: string }[];
-  status?: { indicator: string; description: string };
+  scheduled_maintenances?: { id; name; status; scheduled_for}[];
+  status?: { indicator; description };
 };
 
-function urStatusToOurs(s: number): "up" | "down" | "degraded" | "unknown" {
+function urStatusToOurs(s): "up" | "down" | "degraded" | "unknown" {
   switch (s) {
     case 2: return "up";
     case 8: return "degraded";
@@ -86,7 +86,7 @@ function urStatusToOurs(s: number): "up" | "down" | "degraded" | "unknown" {
   }
 }
 
-function statuspageIndicatorToOurs(indicator: string): "up" | "down" | "degraded" | "unknown" {
+function statuspageIndicatorToOurs(indicator): "up" | "down" | "degraded" | "unknown" {
   switch (indicator) {
     case "none": return "up";
     case "minor": return "degraded";
@@ -96,7 +96,7 @@ function statuspageIndicatorToOurs(indicator: string): "up" | "down" | "degraded
   }
 }
 
-async function pollUptimeRobot(): Promise<{ matched: number; snapshots: number; errors: number }> {
+async function pollUptimeRobot(): Promise<{ matched; snapshots; errors }> {
   if (!UPTIMEROBOT_KEY) return { matched: 0, snapshots: 0, errors: 0 };
 
   let monitors: URMonitor[] = [];
@@ -109,7 +109,7 @@ async function pollUptimeRobot(): Promise<{ matched: number; snapshots: number; 
     const data = (await resp.json()) as { data: URMonitor[] };
     monitors = data.data;
   } catch (e) {
-    console.error(`[pollUptimeRobot] error:`, (e as Error).message);
+    console.error(`[pollUptimeRobot] error:`, (e).message);
     return { matched: 0, snapshots: 0, errors: 1 };
   }
 
@@ -138,7 +138,7 @@ async function pollUptimeRobot(): Promise<{ matched: number; snapshots: number; 
       snapshots++;
       await maybeUpdatePeriod(svc.id, status);
     } catch (e) {
-      console.error(`[pollUptimeRobot] snapshot error for ${svc.slug}:`, (e as Error).message);
+      console.error(`[pollUptimeRobot] snapshot error for ${svc.slug}:`, (e).message);
       errors++;
     }
   }
@@ -146,7 +146,7 @@ async function pollUptimeRobot(): Promise<{ matched: number; snapshots: number; 
   return { matched, snapshots, errors };
 }
 
-async function pollStatuspageFeeds(): Promise<{ feeds: number; snapshots: number; incidents: number; errors: number }> {
+async function pollStatuspageFeeds(): Promise<{ feeds; snapshots; incidents; errors }> {
   let totalSnaps = 0;
   let totalIncs = 0;
   let totalErrors = 0;
@@ -161,7 +161,7 @@ async function pollStatuspageFeeds(): Promise<{ feeds: number; snapshots: number
     try {
       const resp = await fetch(def.url, { signal: AbortSignal.timeout(10_000) });
       if (!resp.ok) throw new Error(`statuspage fetch failed: ${resp.status}`);
-      const data = (await resp.json()) as StatuspageSummary;
+      const data = (await resp.json());
 
       const overall = data.status?.indicator ?? (data.page?.status ?? "none");
       const status = statuspageIndicatorToOurs(overall);
@@ -199,7 +199,7 @@ async function pollStatuspageFeeds(): Promise<{ feeds: number; snapshots: number
         totalIncs++;
       }
     } catch (e) {
-      console.error(`[pollStatuspage] ${host} error:`, (e as Error).message);
+      console.error(`[pollStatuspage] ${host} error:`, (e).message);
       totalErrors++;
     }
   }
@@ -207,7 +207,7 @@ async function pollStatuspageFeeds(): Promise<{ feeds: number; snapshots: number
   return { feeds: Object.keys(STATUSPAGE_FEEDS).length, snapshots: totalSnaps, incidents: totalIncs, errors: totalErrors };
 }
 
-async function pollSelfProbes(): Promise<{ snapshots: number; errors: number }> {
+async function pollSelfProbes(): Promise<{ snapshots; errors }> {
   let snapshots = 0;
   let errors = 0;
   const t0 = Date.now();
@@ -228,7 +228,7 @@ async function pollSelfProbes(): Promise<{ snapshots: number; errors: number }> 
       snapshots++;
       await maybeUpdatePeriod(appSvc.id, status);
     } catch (e) {
-      console.error(`[self-probe /api/health] error:`, (e as Error).message);
+      console.error(`[self-probe /api/health] error:`, (e).message);
       errors++;
     }
   }
@@ -239,7 +239,7 @@ async function pollSelfProbes(): Promise<{ snapshots: number; errors: number }> 
     if (!svc) continue;
     const t1 = Date.now();
     try {
-      const connected = await new Promise<boolean>((resolve) => {
+      const connected = await new Promise((resolve) => {
         const net = await import("node:net");
         const sock = new net.Socket();
         const timer = setTimeout(() => { sock.destroy(); resolve(false); }, 5_000);
@@ -254,7 +254,7 @@ async function pollSelfProbes(): Promise<{ snapshots: number; errors: number }> 
       snapshots++;
       await maybeUpdatePeriod(svc.id, status);
     } catch (e) {
-      console.error(`[self-probe ${probe.slug}] error:`, (e as Error).message);
+      console.error(`[self-probe ${probe.slug}] error:`, (e).message);
       errors++;
     }
   }
@@ -266,7 +266,7 @@ async function pollSelfProbes(): Promise<{ snapshots: number; errors: number }> 
  * If the latest snapshot status differs from the latest open StatusPeriod,
  * close the current period and start a new one.
  */
-async function maybeUpdatePeriod(serviceId: string, newStatus: string) {
+async function maybeUpdatePeriod(serviceId, newStatus) {
   const open = await prisma.statusPeriod.findFirst({
     where: { service_id: serviceId, ended_at: null },
     orderBy: { started_at: "desc" },
@@ -324,7 +324,7 @@ async function main() {
     try {
       await tick();
     } catch (e) {
-      console.error("[main] tick failed:", (e as Error).message);
+      console.error("[main] tick failed:", (e).message);
     }
     await wait(POLL_INTERVAL_MS);
   }
