@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { notifyNewIscrizione, sendVolunteerConfirmation } from "@/lib/mail";
+import { notifyNewIscrizione, sendRegistrationConfirmation } from "@/lib/mail";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { validateOrigin } from "@/lib/csrf";
 import { getCampStart, isUnder18 } from "@/lib/turns";
@@ -10,6 +10,7 @@ import {
   LOOKUP_COOKIE_NAME,
   LOOKUP_COOKIE_MAX_AGE_S
 } from "@/lib/lookupToken";
+import { createVerificationTokenForIscrizione } from "@/lib/userFlow";
 
 export const dynamic = "force-dynamic";
 
@@ -208,7 +209,7 @@ export async function POST(req: Request) {
       throw err;
     }
 
-    // Notify admin
+    // Notify admin (subject is "New registration received — …")
     void notifyNewIscrizione({
       firstName: d.firstName,
       lastName: d.lastName,
@@ -219,19 +220,33 @@ export async function POST(req: Request) {
       locale: d.locale
     });
 
-    // Send confirmation email to the volunteer
-    void sendVolunteerConfirmation({
-      email: d.email,
-      firstName: d.firstName,
-      lastName: d.lastName,
-      turns: turni.map((t) => ({
-        number: t.number,
-        startDate: t.startDate.toLocaleDateString("it-IT"),
-        endDate: t.endDate.toLocaleDateString("it-IT")
-      })),
-      totalCost: turni.length * 430,
-      locale: d.locale
-    });
+    // Phase 2: mint a 24h verification token for the new Iscrizione
+    // and email the volunteer a magic link. The link goes to
+    // /api/iscrizione/[id]/verify-email which advances the lifecycle
+    // from "pending" to "email_verified".
+    try {
+      const { rawToken } = await createVerificationTokenForIscrizione(
+        createdIscrizioneId,
+        "email_verified",
+        24 * 60 * 60 * 1000
+      );
+      const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/+$/, "");
+      const verifyUrl = `${siteBase}/it/account/verify?token=${encodeURIComponent(rawToken)}&locale=${d.locale}`;
+      void sendRegistrationConfirmation({
+        to: d.email.toLowerCase(),
+        firstName: d.firstName,
+        lastName: d.lastName,
+        verifyUrl,
+        locale: d.locale
+      }).catch((err) =>
+        console.error("[iscrizione] registration-confirmation mail failed:", err)
+      );
+    } catch (err) {
+      // Non-fatal: the Iscrizione exists. The admin can still trigger
+      // a verify email from the panel if needed. We log so the team
+      // notices the failure.
+      console.error("[iscrizione] failed to mint verify token / send email:", err);
+    }
 
     return NextResponse.json({ ok: true, id: createdIscrizioneId, count: uniqueTurnoIds.length }, {
       headers: {

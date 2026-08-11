@@ -103,7 +103,7 @@ export async function notifyNewIscrizione(data: {
   const em = escapeHtml(data.email);
   const ph = escapeHtml(data.phone);
   const turn = escapeHtml(data.turno);
-  const subject = `Nuova iscrizione — ${data.firstName} ${data.lastName} — ${data.turno}`.replace(/[\r\n]/g, " ");
+  const subject = `New registration received — ${data.firstName} ${data.lastName} (${data.turno})`.replace(/[\r\n]/g, " ");
   const text = `
 Nuova iscrizione al campo di volontariato WWF Crotone.
 
@@ -444,6 +444,213 @@ If you didn't request this link, you can safely ignore this email.
     return { ok: true };
   } catch (err) {
     console.error("magic-link mail send failed:", err);
+    return { ok: false, error: "send-failed" };
+  }
+}
+
+/* =====================================================================
+ * Phase 2: full user-flow emails (registration confirmation, status
+ * change notifications to admin, receipt upload notifications).
+ * =====================================================================
+ *
+ * These are appended to the existing mail module rather than shipped
+ * as a separate file so the SMTP-transporter / config-site imports
+ * stay co-located. Each function returns the same { ok, error? } shape
+ * as sendMagicLink so API routes can branch uniformly.
+ */
+
+/**
+ * Send the post-submit confirmation email to the volunteer. Contains a
+ * single magic link to /it/account/verify?token=... that, when
+ * clicked, advances their Iscrizione from "pending" to "email_verified"
+ * via POST /api/iscrizione/[id]/verify-email.
+ *
+ * The "From" address is the dedicated noreply@wwfcrotone.it mailbox
+ * (vs. info@wwfcrotone.it for admin notifications) so the volunteer
+ * can reply only to the admin one.
+ */
+export async function sendRegistrationConfirmation(opts: {
+  to: string;
+  firstName: string;
+  lastName: string;
+  verifyUrl: string;
+  locale: "it" | "en";
+}): Promise<{ ok: boolean; error?: string }> {
+  const isIt = opts.locale === "it";
+  const safeUrl = escapeHtml(opts.verifyUrl);
+  const first = escapeHtml(opts.firstName);
+  const subject = isIt
+    ? "Conferma la tua iscrizione — WWF Crotone"
+    : "Confirm your registration — WWF Crotone";
+
+  const text = isIt
+    ? `Ciao ${opts.firstName},
+
+grazie per esserti iscritto/a ai campi di volontariato WWF Crotone.
+
+Per completare l'iscrizione e sbloccare il caricamento della ricevuta di pagamento, clicca questo link (valido 24 ore):
+
+${opts.verifyUrl}
+
+Se non hai richiesto tu questa email, puoi ignorarla.
+
+A presto,
+— WWF Crotone`
+    : `Hi ${opts.firstName},
+
+thank you for signing up for the WWF Crotone volunteer camps.
+
+To complete your registration and unlock the payment receipt upload, click this link (valid for 24 hours):
+
+${opts.verifyUrl}
+
+If you didn't request this email, you can safely ignore it.
+
+See you soon,
+— WWF Crotone`;
+
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#ffffff;color:#262626">
+  <div style="border-top:4px solid #007932;padding-top:20px;margin-bottom:20px">
+    <h1 style="font-family:Arial,Helvetica,sans-serif;color:#007932;margin:0 0 8px 0;font-size:22px">WWF Crotone</h1>
+    <p style="margin:0;color:#707070;font-size:13px">${isIt ? "Conferma iscrizione" : "Registration confirmation"}</p>
+  </div>
+  <h2 style="font-size:20px;margin:0 0 16px 0">${isIt ? "Ciao " : "Hi "}${first},</h2>
+  <p>${isIt
+    ? "grazie per esserti iscritto/a ai campi di volontariato WWF Crotone."
+    : "thank you for signing up for the WWF Crotone volunteer camps."}</p>
+  <p>${isIt
+    ? "Per completare l'iscrizione e sbloccare il caricamento della ricevuta di pagamento, clicca il pulsante qui sotto."
+    : "To complete your registration and unlock the payment receipt upload, click the button below."}</p>
+  <p style="margin:28px 0">
+    <a href="${safeUrl}" style="display:inline-block;background:#007932;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600">
+      ${isIt ? "Conferma iscrizione" : "Confirm registration"}
+    </a>
+  </p>
+  <p style="font-size:14px;color:#707070">
+    ${isIt ? "Oppure copia e incolla questo link nel browser:" : "Or copy and paste this link in your browser:"}<br/>
+    <span style="word-break:break-all;color:#007932">${safeUrl}</span>
+  </p>
+  <p style="font-size:14px;color:#9b1c1c;margin-top:24px">
+    <strong>${isIt ? "Questo link scade tra 24 ore" : "This link expires in 24 hours"}</strong>
+  </p>
+  <hr style="border:none;border-top:1px solid #cecece;margin:24px 0"/>
+  <p style="font-size:12px;color:#707070">
+    ${isIt
+      ? "Se non hai richiesto tu questa email, puoi ignorarla in tutta sicurezza."
+      : "If you didn't request this email, you can safely ignore it."}
+  </p>
+  <p style="font-size:12px;color:#707070;margin-top:24px">
+    WWF Crotone — Sezione locale di WWF Italia ETS<br/>
+    noreply@wwfcrotone.it
+  </p>
+</div>`;
+
+  try {
+    const t = getTransporter();
+    if (!t) return { ok: false, error: "smtp-not-configured" };
+    await t.sendMail({
+      from: `"WWF Crotone" <noreply@wwfcrotone.it>`,
+      to: opts.to,
+      subject,
+      text,
+      html
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("registration-confirmation mail send failed:", err);
+    return { ok: false, error: "send-failed" };
+  }
+}
+
+/**
+ * Notify the admin team that a volunteer uploaded a receipt.
+ * Sent from info@wwfcrotone.it (the admin-facing mailbox) to
+ * ADMIN_NOTIFY_EMAIL.
+ */
+export async function sendReceiptUploadedAdminNotification(iscrizione: {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  turno: { number: number } | null;
+  receiptUploads: { type: string; createdAt: Date }[];
+}): Promise<{ ok: boolean; error?: string }> {
+  const latest = iscrizione.receiptUploads[iscrizione.receiptUploads.length - 1];
+  const typeLabel = latest?.type === "balance" ? "saldo" : "acconto";
+  const typeLabelEn = latest?.type === "balance" ? "balance" : "deposit";
+  const subject = `[WWF] Ricevuta ${typeLabel} caricata — ${iscrizione.firstName} ${iscrizione.lastName}`;
+  const safeName = escapeHtml(`${iscrizione.firstName} ${iscrizione.lastName}`);
+  const safeEmail = escapeHtml(iscrizione.email);
+  const safeTurno = iscrizione.turno ? `Campo ${iscrizione.turno.number}` : "—";
+  const isAdmin = true;
+  void isAdmin;
+
+  const text = `Il volontario ${iscrizione.firstName} ${iscrizione.lastName} (${iscrizione.email}) ha caricato la ricevuta del ${typeLabel} per ${safeTurno}.
+
+ID Iscrizione: ${iscrizione.id}
+Vai al pannello admin: /admin/iscrizioni/${iscrizione.id}`;
+
+  const html = `<h2>Ricevuta ${typeLabel} caricata</h2>
+<p><strong>${safeName}</strong> (${safeEmail}) ha caricato la ricevuta del <strong>${typeLabel}</strong> per <strong>${safeTurno}</strong>.</p>
+<p><a href="/admin/iscrizioni/${iscrizione.id}">Apri nel pannello admin</a></p>`;
+
+  try {
+    const t = getTransporter();
+    if (!t) return { ok: false, error: "smtp-not-configured" };
+    await t.sendMail({
+      from: `"WWF Crotone" <info@wwfcrotone.it>`,
+      to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
+      subject,
+      text,
+      html
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("receipt-uploaded admin mail send failed:", err);
+    return { ok: false, error: "send-failed" };
+  }
+}
+
+/**
+ * Notify the admin team of a status change in the volunteer lifecycle.
+ * Covers the four lifecycle transitions:
+ *   pending          → email_verified   (volunteer clicked magic link)
+ *   email_verified   → receipt_uploaded (volunteer uploaded receipt)
+ *   receipt_uploaded → confirmed        (admin approved)
+ *   *                → cancelled        (admin or volunteer cancelled)
+ */
+export async function sendStatusChangeAdminNotification(
+  iscrizione: { id: string; firstName: string; lastName: string; email: string; turno: { number: number } | null },
+  oldStatus: string,
+  newStatus: string
+): Promise<{ ok: boolean; error?: string }> {
+  const safeName = escapeHtml(`${iscrizione.firstName} ${iscrizione.lastName}`);
+  const safeEmail = escapeHtml(iscrizione.email);
+  const safeTurno = iscrizione.turno ? `Campo ${iscrizione.turno.number}` : "—";
+  const subject = `[WWF] Iscrizione ${iscrizione.id.slice(-6)}: ${oldStatus} → ${newStatus}`;
+  const text = `Stato dell'iscrizione di ${iscrizione.firstName} ${iscrizione.lastName} (${iscrizione.email}) per ${safeTurno} cambiato: ${oldStatus} → ${newStatus}.
+
+ID: ${iscrizione.id}
+Apri: /admin/iscrizioni/${iscrizione.id}`;
+
+  const html = `<h2>Cambio stato iscrizione</h2>
+<p><strong>${safeName}</strong> (${safeEmail}) — <strong>${safeTurno}</strong></p>
+<p>Stato: <code>${oldStatus}</code> → <code>${newStatus}</code></p>
+<p><a href="/admin/iscrizioni/${iscrizione.id}">Apri nel pannello admin</a></p>`;
+
+  try {
+    const t = getTransporter();
+    if (!t) return { ok: false, error: "smtp-not-configured" };
+    await t.sendMail({
+      from: `"WWF Crotone" <info@wwfcrotone.it>`,
+      to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
+      subject,
+      text,
+      html
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("status-change admin mail send failed:", err);
     return { ok: false, error: "send-failed" };
   }
 }

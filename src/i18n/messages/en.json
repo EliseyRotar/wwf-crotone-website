@@ -1581,6 +1581,28 @@
         "cancelledNotice": "This registration has been cancelled. Receipts can't be uploaded.",
         "approvalFootnote": "Receipts are verified manually by an admin. After approval you'll see the \"Approved\" state."
       }
+    },
+    "verifyEmail": {
+      "title": "Confirm your email",
+      "success": "Email verified! You can now upload your payment receipt.",
+      "invalidToken": "Invalid token. Open the link from your email or request a new one.",
+      "expiredToken": "The link has expired (24-hour validity). Request a new one from the personal area."
+    },
+    "uploadReceipt": {
+      "title": "Upload your receipt",
+      "chooseFile": "Choose a file (PDF, JPG or PNG, max 10 MB)",
+      "success": "Receipt uploaded. Waiting for admin approval.",
+      "errorTooLarge": "File too large. 10 MB limit.",
+      "errorWrongType": "Unsupported format. Use PDF, JPG or PNG."
+    },
+    "panel": {
+      "edit": "Edit registration",
+      "cancel": "Cancel registration",
+      "locked": "Registration is locked",
+      "setPassword": {
+        "title": "Set a password (optional)",
+        "success": "Password set. You can now sign in without a magic link."
+      }
     }
   },
   "RelativeTime": {

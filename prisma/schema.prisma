@@ -25,6 +25,7 @@ model User {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   iscrizioniManaged Iscrizione[] @relation("ManagedBy")
+  receiptsApproved ReceiptUpload[] @relation("ReceiptApprovedBy")
 }
 
 // Weekly camp turns. The 12 turns for summer 2026 are seeded.
@@ -80,7 +81,23 @@ model Iscrizione {
   arrivalTime              String? // e.g. "14:30"
   departureTime            String? // e.g. "10:00"
   // Admin-managed
-  status                   String            @default("pending") // "pending" | "confirmed" | "paid" | "cancelled" | "waitlist"
+  // Lifecycle (Phase 2 — full user flow with email + receipt + confirmation):
+  //   pending           → just submitted, awaiting email verification
+  //   email_verified    → user clicked the magic link
+  //   receipt_uploaded  → user uploaded the bonifico (deposit or balance)
+  //   confirmed         → admin approved and registration is locked
+  //   cancelled         → cancelled (by user or admin)
+  //   waitlist          → full turn, on waitlist
+  status                   String            @default("pending")
+  // Phase 2 timestamps — one per status transition for audit + notifications
+  emailVerifiedAt          DateTime?
+  receiptUploadedAt        DateTime?
+  confirmedAt              DateTime?
+  cancelledAt              DateTime?
+  // Phase 2: optional password (magic-link is the default; user can set a
+  // password in their panel if they want). Null = magic-link only.
+  passwordHash             String?
+  passwordSetAt            DateTime?
   // Payment tracking — split into registration fee (100€) + balance
   feePaid                  Boolean           @default(false) // 100€ registration fee paid
   feePaidDate              DateTime?
@@ -112,6 +129,15 @@ model Iscrizione {
   // personal/contact fields via /account/profile. Logistics fields remain
   // editable until the camp starts.
   personalDataLockedAt     DateTime?
+  // Phase 2: editable-until-the-camp-starts lock for the user's personal
+  // panel. We compute this as (turno.startDate - 7 days) the first time the
+  // user visits their panel after that date, and freeze all their edits.
+  // Admins can still edit through /admin/iscrizioni.
+  editsLockedAt            DateTime?
+
+  // Phase 2 back-relations
+  verificationTokens      IscrizioneVerificationToken[]
+  receiptUploads          ReceiptUpload[]
 
   @@index([turnoId])
   @@index([status])
@@ -119,6 +145,70 @@ model Iscrizione {
   @@index([createdAt])
   @@index([turnoId, status])
   @@index([managedBy])
+}
+
+// Phase 2: single-use email verification tokens. The user clicks the magic
+// link in their confirmation email, we hash the inbound token, find a row
+// with the matching tokenHash, mark it consumed, and advance the
+// Iscrizione.status from "pending" to "email_verified".
+//
+// We use a separate table (rather than reusing the existing MagicLinkToken)
+// because the user flow here is different: registration confirmation is
+// per-Iscrizione (not per-email), and we want a tighter expiry (24h) and
+// richer metadata (which status transition does this token authorize).
+model IscrizioneVerificationToken {
+  id           String     @id @default(cuid())
+  iscrizioneId String
+  iscrizione   Iscrizione @relation(fields: [iscrizioneId], references: [id], onDelete: Cascade)
+  // SHA-256 hash of the raw token, base64url-encoded. The raw token is
+  // only ever delivered by email and never persisted.
+  tokenHash    String     @unique
+  // What status this token authorizes when consumed. Default = the next
+  // status in the lifecycle ("pending" → "email_verified"). Used by the
+  // redeem route to know what to set on the Iscrizione.
+  authorizesStatus String  @default("email_verified")
+  // 24-hour expiry. Slightly longer than the magic-link for /account login
+  // because the user has to find the email, click, then upload a receipt.
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@index([iscrizioneId])
+  @@index([expiresAt])
+}
+
+// Phase 2: receipt file uploads. Each row is one uploaded file (a photo or
+// PDF of the bonifico), stored on Cloudflare R2 in the wwf-receipts bucket.
+// Type can be "deposit" (the 100€ registration fee) or "balance" (the
+// remainder of the camp fee paid later).
+model ReceiptUpload {
+  id           String     @id @default(cuid())
+  iscrizioneId String
+  iscrizione   Iscrizione @relation(fields: [iscrizioneId], references: [id], onDelete: Cascade)
+  // "deposit" | "balance"
+  type         String
+  // R2 object key: receipts/<iscrizioneId>/<type>-<timestamp>-<random>.<ext>
+  objectKey    String
+  // Public-facing URL for the admin to view/download the receipt.
+  // Goes through a /api/admin/iscrizioni/[id]/receipt proxy that checks
+  // session auth, so we don't expose R2 credentials.
+  url          String
+  // File metadata
+  originalName String
+  mimeType     String
+  byteSize     Int
+  // SHA-256 of the file body for integrity verification.
+  sha256       String
+  // Admin workflow
+  approvedAt   DateTime?
+  approvedBy   String?
+  approver     User?     @relation("ReceiptApprovedBy", fields: [approvedBy], references: [id])
+  rejectionReason String?
+  createdAt    DateTime  @default(now())
+
+  @@index([iscrizioneId])
+  @@index([type])
+  @@index([approvedAt])
 }
 
 // M5: Junction table for multi-week registrations.

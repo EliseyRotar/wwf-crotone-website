@@ -1577,10 +1577,32 @@
         "notPaid": "Non pagato",
         "paymentComplete": "Pagamento completo",
         "depositHelp": "Versamento iniziale di € {amount} — vedi l'IBAN e le coordinate per il bonifico nella pagina Contatti.",
-        "balanceHelp": "Saldo rimanente: € {amount}. Vedi l'IBAN e le coordinate nella pagina Contatti.",
+        "balanceHelp": "Saldo rimanente: € {amount}. Vedi l'IBAN e le coordinate per il bonifico nella pagina Contatti.",
         "ibanLink": "Vedi IBAN e coordinate",
         "cancelledNotice": "Questa iscrizione è annullata. Non è possibile caricare ricevute.",
         "approvalFootnote": "Le ricevute vengono verificate manualmente dall'amministratore. Dopo l'approvazione vedrai lo stato \"Approvato\"."
+      }
+    },
+    "verifyEmail": {
+      "title": "Conferma la tua email",
+      "success": "Email verificata! Ora puoi caricare la ricevuta del bonifico.",
+      "invalidToken": "Token non valido. Apri il link direttamente dall'email o richiedi un nuovo link.",
+      "expiredToken": "Il link è scaduto (durata 24 ore). Richiedi un nuovo link dall'area personale."
+    },
+    "uploadReceipt": {
+      "title": "Carica la ricevuta",
+      "chooseFile": "Scegli un file (PDF, JPG o PNG, max 10 MB)",
+      "success": "Ricevuta caricata. In attesa di approvazione dell'amministratore.",
+      "errorTooLarge": "File troppo grande. Limite 10 MB.",
+      "errorWrongType": "Formato non supportato. Usa PDF, JPG o PNG."
+    },
+    "panel": {
+      "edit": "Modifica iscrizione",
+      "cancel": "Annulla iscrizione",
+      "locked": "Iscrizione non modificabile",
+      "setPassword": {
+        "title": "Imposta una password (opzionale)",
+        "success": "Password impostata. Ora puoi accedere anche senza magic link."
       }
     }
   },
