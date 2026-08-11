@@ -75,7 +75,7 @@ export async function sendNotification(opts: {
     const t = getTransporter();
     if (!t) return false;
     await t.sendMail({
-      from: `"WWF Crotone" <${process.env.SMTP_USER}>`,
+      from: `"WWF Crotone" <noreply@wwfcrotone.it>`,
       to: opts.to,
       subject: opts.subject,
       text: opts.text,
@@ -335,7 +335,7 @@ export async function sendBulkEmail(opts: {
     let allAccepted = true;
     for (const chunk of chunks) {
       const info = await t.sendMail({
-        from: `"WWF Crotone" <${process.env.SMTP_USER}>`,
+        from: `"WWF Crotone" <noreply@wwfcrotone.it>`,
         bcc: chunk.join(", "),
         subject: opts.subject,
         text,
@@ -435,7 +435,7 @@ If you didn't request this link, you can safely ignore this email.
     const t = getTransporter();
     if (!t) return { ok: false, error: "smtp-not-configured" };
     await t.sendMail({
-      from: `"WWF Crotone" <${process.env.SMTP_USER}>`,
+      from: `"WWF Crotone" <info@wwfcrotone.it>`,
       to: opts.to,
       subject,
       text,
