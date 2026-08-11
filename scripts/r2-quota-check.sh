@@ -6,9 +6,11 @@ set -euo pipefail
 
 # Load the production .env (same one the cron worker uses)
 set -a
+# shellcheck disable=SC1091
 source /srv/wwf/.env.production
 set +a
 
-# Use node directly via the cron worker's image (which has node + prisma client)
-docker exec infra-cron-1 sh -c 'cd /tmp && node /scripts/r2-quota-check.js' \
+# Use the cron worker's image (which has Node + prisma client baked in)
+# via the bound mount (scripts/r2-quota-check.js is mounted at /scripts/).
+docker exec infra-cron-1 node /scripts/r2-quota-check.js \
   >> /var/log/wwf/r2-quota.log 2>&1
