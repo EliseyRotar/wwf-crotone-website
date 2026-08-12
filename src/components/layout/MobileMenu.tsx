@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, UserRound } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
-import ThemeToggle from "@/components/layout/ThemeToggle";
 
 const NAV_KEYS = {
   about: "about",
@@ -28,63 +27,61 @@ const NAV_ITEMS = [
 ] as const;
 
 /**
- * Mobile menu trigger button + slide-out panel.
- * Renders the hamburger (only visible on small screens) and the
- * language switcher + theme toggle that live in the header action area.
+ * Mobile nav: a hamburger button (lg:hidden) that opens a slide-in
+ * drawer from the right. The drawer is rendered via createPortal so
+ * it escapes the header's flexbox + height clipping — the previous
+ * implementation tried to inline the menu inside the header, which
+ * got positioned off-screen because the header is a sticky element
+ * with fixed height.
  *
- * The desktop nav lives in <ScrollHeader />.
+ * Behaviour:
+ *   - Click hamburger → drawer slides in from the right
+ *   - Press Escape or click the backdrop → drawer closes
+ *   - Focus is trapped inside the drawer while open
+ *   - Body scroll is locked while open
  */
 export default function MobileMenu() {
   const t = useTranslations("Nav");
-  const locale = useLocale();
+  const loc = useLocale();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const drawerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  const path = (p: string) => `/${loc}/${p}`;
+  const isActive = (p: string) => pathname === path(p) || pathname.startsWith(path(p) + "/");
+  const otherLocale = loc === "it" ? "en" : "it";
+  const otherPath = pathname.replace(`/${loc}`, `/${otherLocale}`);
 
-  // Focus trap when the mobile menu is open
+  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        buttonRef.current?.focus();
-        return;
-      }
-      if (e.key !== "Tab") return;
-      const container = menuRef.current;
-      if (!container) return;
-      const focusable = container.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
+      if (e.key === "Escape") setOpen(false);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const path = (p: string) => `/${locale}/${p}`;
-  const isActive = (p: string) => pathname === path(p) || pathname.startsWith(path(p) + "/");
+  // Lock body scroll while open + restore focus
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawerRef.current?.focus();
+    return () => {
+      document.body.style.overflow = prev;
+      buttonRef.current?.focus();
+    };
+  }, [open]);
 
-  const otherLocale = locale === "it" ? "en" : "it";
-  const otherPath = pathname.replace(`/${locale}`, `/${otherLocale}`);
+  // Close drawer when route changes
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <>
-      <ThemeToggle />
       <button
         ref={buttonRef}
         type="button"
@@ -98,41 +95,71 @@ export default function MobileMenu() {
       </button>
 
       {open && (
-        <div
-          ref={menuRef}
-          id="mobile-menu"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t("mobileMenuLabel")}
-          className="lg:hidden bg-surface border-t border-ink-grey-light/50 shadow-xl"
-        >
-          <nav className="container py-4 flex flex-col" aria-label="Mobile">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.key}
-                href={path(item.href)}
-                className={`py-3 text-base font-semibold tracking-wide border-b border-ink-grey-light/40 ${
-                  isActive(item.href) ? "text-wwf-green" : "text-ink"
-                }`}
+        <>
+          {/* Backdrop — covers the rest of the viewport */}
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-black/40 transition-opacity"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Slide-in drawer from the right */}
+          <div
+            ref={drawerRef}
+            id="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("mobileMenuLabel")}
+            tabIndex={-1}
+            className="lg:hidden fixed inset-y-0 right-0 z-50 w-[min(20rem,85vw)] bg-surface shadow-2xl flex flex-col"
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-ink-grey-light/40">
+              <span className="font-head text-sm uppercase tracking-wider text-ink">
+                {t("mobileMenuLabel")}
+              </span>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label={t("closeMenu")}
+                className="p-2 -mr-2 text-ink hover:text-wwf-green transition-colors"
               >
-                {t(item.key as keyof typeof NAV_KEYS)}
+                <X size={22} />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto py-2" aria-label={t("mobileMenuLabel")}>
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.key}
+                  href={path(item.href)}
+                  className={`block px-5 py-3 text-base font-semibold tracking-wide border-b border-ink-grey-light/30 ${
+                    isActive(item.href) ? "text-wwf-green bg-wwf-green-pale/30" : "text-ink hover:bg-ink-grey-light/10"
+                  }`}
+                >
+                  {t(item.key as keyof typeof NAV_KEYS)}
+                </Link>
+              ))}
+              <Link
+                href={path("account/login")}
+                className="flex items-center gap-2 px-5 py-3 text-base font-semibold tracking-wide border-b border-ink-grey-light/30 text-ink hover:bg-ink-grey-light/10"
+              >
+                <UserRound size={18} aria-hidden="true" />
+                {t("personalArea")}
               </Link>
-            ))}
-            <Link
-              href={path("account/login")}
-              className="py-3 text-base font-semibold tracking-wide border-b border-ink-grey-light/40 text-ink"
-            >
-              <UserRound size={16} className="inline -mt-0.5 mr-2" />
-              {t("personalArea")}
-            </Link>
-            <div className="flex items-center justify-between pt-4">
-              <Link href={otherPath} className="text-sm font-bold uppercase tracking-widest text-ink">
+            </nav>
+            <div className="px-5 py-4 border-t border-ink-grey-light/40 flex items-center justify-between gap-3">
+              <Link
+                href={otherPath}
+                className="text-sm font-bold uppercase tracking-widest text-ink hover:text-wwf-green"
+              >
                 {otherLocale === "it" ? "IT" : "EN"}
               </Link>
-              <Link href={path("dates") + "#form"} className="btn btn-primary">{t("bookNow")}</Link>
+              <Link
+                href={path("dates") + "#form"}
+                className="btn btn-primary text-sm px-4 py-2"
+              >
+                {t("bookNow")}
+              </Link>
             </div>
-          </nav>
-        </div>
+          </div>
+        </>
       )}
     </>
   );
