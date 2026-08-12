@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Oswald, Inter } from "next/font/google";
+import { Oswald, Inter, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -15,15 +15,22 @@ import "@/app/globals.css";
 
 const oswald = Oswald({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   variable: "--font-head",
   display: "swap"
 });
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   variable: "--font-body",
+  display: "swap"
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
   display: "swap"
 });
 
@@ -239,7 +246,7 @@ export default async function LocaleLayout({
   };
 
   return (
-    <html lang={locale} className={`${oswald.variable} ${inter.variable} ${isDark ? "dark" : ""}`} suppressHydrationWarning>
+    <html lang={locale} className={`${oswald.variable} ${inter.variable} ${jetbrains.variable} ${isDark ? "dark" : ""}`} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
         <link rel="manifest" href="/manifest.json" />
