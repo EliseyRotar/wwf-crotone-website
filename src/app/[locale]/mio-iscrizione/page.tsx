@@ -1,8 +1,17 @@
-import { setRequestLocale, getTranslations } from "next-intl/server";
-import MyRegistrationClient from "@/components/features/MyRegistrationClient";
+import { redirect } from "next/navigation";
 
-export default async function MyRegistrationPage({ params }: { params: Promise<{ locale: string }> }) {
+/**
+ * /[locale]/mio-iscrizione — legacy personal-area entry point.
+ *
+ * The dashboard now lives at /[locale]/account and the bookings list
+ * at /[locale]/account/bookings. We redirect both so any external
+ * link (email, social, etc.) still works.
+ */
+export default async function MyRegistrationPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
-  setRequestLocale(locale);
-  return <MyRegistrationClient />;
+  redirect(`/${locale}/account/bookings`);
 }
