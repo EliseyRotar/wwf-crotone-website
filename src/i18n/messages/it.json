@@ -1738,7 +1738,8 @@
       "backLink": "Torna all'area personale",
       "empty": "Nessun dispositivo connesso.",
       "error": "Errore",
-      "confirming": "Conferma"
+      "confirming": "Conferma",
+      "never": "mai"
     }
   },
   "RelativeTime": {

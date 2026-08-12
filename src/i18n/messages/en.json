@@ -1717,7 +1717,8 @@
       "backLink": "Back to personal area",
       "empty": "No devices connected.",
       "error": "Error",
-      "confirming": "Confirm"
+      "confirming": "Confirm",
+      "never": "never"
     }
   },
   "RelativeTime": {
