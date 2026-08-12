@@ -5,8 +5,28 @@
 :root {
   --font-head: "Oswald", "Arial Narrow", Arial, sans-serif;
   --font-body: "Inter", system-ui, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --header-h: 5rem;
   --container-max: 137.5rem;
+
+  /* Design tokens — strict 4px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* Radius — restrained to 2 tokens */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+
+  /* Custom easing — directive §5 */
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-state: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Light mode color tokens */
   --c-ink: #101010;
@@ -108,6 +128,105 @@ html {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================
+   Design system primitives — directive §1 (tokens), §5 (easing),
+   §6 (skeleton loading, async feedback).
+   Public site keeps WWF palette. Admin uses neutral slate.
+   ============================================================ */
+
+/* Admin-only palette — same WWF brand identity, but lighter chrome
+   so the admin reads as a "tool", not a marketing page. */
+[data-surface="admin"] {
+  --ad-bg: #ffffff;
+  --ad-bg-sunken: #f6f2ed;          /* matches --c-sand */
+  --ad-bg-elevated: #ffffff;
+  --ad-border: #cecece;             /* matches --c-border */
+  --ad-border-strong: #8a8a86;
+  --ad-text: #101010;               /* matches --c-ink */
+  --ad-text-muted: #707070;         /* matches --c-ink-grey */
+  --ad-text-subtle: #9c9c98;
+  --ad-accent: #007932;             /* WWF green */
+  --ad-accent-hover: #005a25;
+  --ad-accent-soft: #c9e8a0;        /* matches --c-tag-green-bg */
+  --ad-success: #007932;
+  --ad-success-soft: #c9e8a0;
+  --ad-warning: #eb9c4b;
+  --ad-warning-soft: #f5d200;
+  --ad-danger: #ed2b00;
+  --ad-danger-soft: #ffe0d6;
+}
+
+/* Admin .card / .field / .btn / .tag override — same WWF palette, just
+   no WWF-green hover border (would mislead click affordance on rows). */
+[data-surface="admin"] .card,
+[data-surface="admin"] .field input,
+[data-surface="admin"] .field select,
+[data-surface="admin"] .field textarea {
+  border-radius: var(--radius-sm);
+}
+[data-surface="admin"] .card:hover { border-color: #8a8a86; box-shadow: none; transform: none; }
+[data-surface="admin"] .card:active { transform: none; }
+
+[data-surface="admin"] .btn-primary,
+[data-surface="admin"] .btn-green {
+  background: var(--ad-accent);
+  border-color: var(--ad-accent);
+}
+[data-surface="admin"] .btn-primary:hover,
+[data-surface="admin"] .btn-green:hover {
+  background: var(--ad-accent-hover);
+  border-color: var(--ad-accent-hover);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+[data-surface="admin"] .field input:focus,
+[data-surface="admin"] .field select:focus,
+[data-surface="admin"] .field textarea:focus {
+  outline: none;
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px var(--ad-accent-soft);
+}
+
+/* Skeleton block — directive §6 */
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--c-input-border) 0%,
+    var(--c-border) 50%,
+    var(--c-input-border) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Staggered entrance — directive §5 */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.enter { animation: fade-up 240ms var(--ease-out-soft) both; }
+.enter-1 { animation-delay: 50ms; }
+.enter-2 { animation-delay: 100ms; }
+.enter-3 { animation-delay: 150ms; }
+.enter-4 { animation-delay: 200ms; }
+
+/* Tactile hover — max 2-4px Y lift */
+.lift-hover {
+  transition: transform 180ms var(--ease-state), box-shadow 180ms var(--ease-state);
+}
+.lift-hover:hover { transform: translateY(-2px); }
 
 /* Disable expensive effects on mobile */
 @media (max-width: 767px) {
