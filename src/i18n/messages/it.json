@@ -1647,6 +1647,98 @@
         "title": "Imposta una password (opzionale)",
         "success": "Password impostata. Ora puoi accedere anche senza magic link."
       }
+    },
+    "dashboardV2": {
+      "areaLabel": "Area personale",
+      "welcome": "Ciao, {name}",
+      "welcomeWithEmoji": "Ciao, {name} 👋",
+      "sessionToday": "Sessione di oggi",
+      "session30d": "Ricordi questo dispositivo per 30 giorni",
+      "onboarding": {
+        "label": "Stato iscrizione",
+        "complete": "Iscrizione completa",
+        "of": "{done} di {total} step completati",
+        "steps": {
+          "emailVerified": "Email verificata",
+          "dataFilled": "Dati personali completi",
+          "submitted": "Iscrizione inviata",
+          "receiptUploaded": "Ricevuta del deposito caricata",
+          "adminConfirmed": "Conferma dei coordinatori"
+        },
+        "currentAction": "Continua: {step}",
+        "uploadReceiptCta": "Carica la ricevuta del deposito",
+        "viewBookingCta": "Vedi dettagli iscrizione"
+      },
+      "nextCamp": {
+        "sectionLabel": "Il tuo prossimo campo",
+        "daysToGo": "Tra {days} giorni",
+        "today": "Oggi!",
+        "tomorrow": "Domani",
+        "inProgress": "In corso · giorno {day} di {total}",
+        "ended": "Campo terminato",
+        "status": {
+          "pending": "In attesa",
+          "email_verified": "Email verificata",
+          "receipt_uploaded": "Ricevuta in revisione",
+          "confirmed": "Confermata",
+          "paid": "Pagato",
+          "waitlist": "Lista d'attesa",
+          "cancelled": "Annullata"
+        },
+        "viewDetails": "Vedi dettagli iscrizione",
+        "where": "Dove arrivare",
+        "openInMaps": "Apri in Maps",
+        "whatToBring": "Cosa portare",
+        "contacts": "Contatti referenti"
+      },
+      "payment": {
+        "sectionLabel": "Pagamenti",
+        "deposit": "Deposito cauzionale · €100",
+        "balance": "Saldo rimanente",
+        "uploaded": "caricata il {date}",
+        "notUploaded": "non ancora caricata",
+        "approved": "approvata",
+        "pendingApproval": "in attesa di approvazione",
+        "replace": "Sostituisci ricevuta",
+        "uploadNow": "Carica la ricevuta"
+      },
+      "bookings": {
+        "sectionLabel": "Le tue iscrizioni",
+        "noBookings": "Non hai ancora un'iscrizione.",
+        "viewAll": "Vedi tutte ({count})"
+      },
+      "quickLinks": {
+        "packing": "Cose da portare",
+        "directions": "Come arrivare",
+        "faq": "FAQ"
+      },
+      "account": {
+        "sectionLabel": "Account",
+        "emailVerified": "email verificata ✓",
+        "emailNotVerified": "email da verificare",
+        "manageDevices": "Dispositivi connessi",
+        "profile": "Profilo",
+        "logout": "Esci"
+      },
+      "emptyState": {
+        "title": "Non hai ancora un'iscrizione",
+        "body": "Scopri i turni disponibili per il campo di volontariato.",
+        "cta": "Vedi i turni disponibili"
+      }
+    },
+    "sessions": {
+      "title": "Dispositivi connessi",
+      "intro": "Questi sono i dispositivi attualmente collegati al tuo account. Revoca l'accesso a quelli che non riconosci.",
+      "revoke": "Disconnetti",
+      "revokeOthers": "Disconnetti tutti gli altri",
+      "currentLabel": "Questo dispositivo",
+      "browserFallback": "Browser sconosciuto",
+      "expiresOn": "Scade il {date}",
+      "lastSeen": "Visto l'ultima volta {when}",
+      "backLink": "Torna all'area personale",
+      "empty": "Nessun dispositivo connesso.",
+      "error": "Errore",
+      "confirming": "Conferma"
     }
   },
   "RelativeTime": {

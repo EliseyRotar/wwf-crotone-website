@@ -1626,6 +1626,98 @@
         "title": "Set a password (optional)",
         "success": "Password set. You can now sign in without a magic link."
       }
+    },
+    "dashboardV2": {
+      "areaLabel": "Personal area",
+      "welcome": "Hi, {name}",
+      "welcomeWithEmoji": "Hi, {name} 👋",
+      "sessionToday": "Today's session",
+      "session30d": "This device is remembered for 30 days",
+      "onboarding": {
+        "label": "Registration status",
+        "complete": "Registration complete",
+        "of": "{done} of {total} steps complete",
+        "steps": {
+          "emailVerified": "Email verified",
+          "dataFilled": "Personal data complete",
+          "submitted": "Registration submitted",
+          "receiptUploaded": "Deposit receipt uploaded",
+          "adminConfirmed": "Coordinator confirmation"
+        },
+        "currentAction": "Continue: {step}",
+        "uploadReceiptCta": "Upload the deposit receipt",
+        "viewBookingCta": "View registration details"
+      },
+      "nextCamp": {
+        "sectionLabel": "Your next camp",
+        "daysToGo": "In {days} days",
+        "today": "Today!",
+        "tomorrow": "Tomorrow",
+        "inProgress": "In progress · day {day} of {total}",
+        "ended": "Camp ended",
+        "status": {
+          "pending": "Pending",
+          "email_verified": "Email verified",
+          "receipt_uploaded": "Receipt under review",
+          "confirmed": "Confirmed",
+          "paid": "Paid",
+          "waitlist": "Waitlist",
+          "cancelled": "Cancelled"
+        },
+        "viewDetails": "View registration details",
+        "where": "Where to arrive",
+        "openInMaps": "Open in Maps",
+        "whatToBring": "What to bring",
+        "contacts": "Coordinator contacts"
+      },
+      "payment": {
+        "sectionLabel": "Payments",
+        "deposit": "Deposit · €100",
+        "balance": "Remaining balance",
+        "uploaded": "uploaded on {date}",
+        "notUploaded": "not yet uploaded",
+        "approved": "approved",
+        "pendingApproval": "awaiting approval",
+        "replace": "Replace receipt",
+        "uploadNow": "Upload receipt"
+      },
+      "bookings": {
+        "sectionLabel": "Your registrations",
+        "noBookings": "You don't have any registration yet.",
+        "viewAll": "See all ({count})"
+      },
+      "quickLinks": {
+        "packing": "Packing list",
+        "directions": "How to arrive",
+        "faq": "FAQ"
+      },
+      "account": {
+        "sectionLabel": "Account",
+        "emailVerified": "email verified ✓",
+        "emailNotVerified": "email needs verification",
+        "manageDevices": "Connected devices",
+        "profile": "Profile",
+        "logout": "Sign out"
+      },
+      "emptyState": {
+        "title": "You don't have a registration yet",
+        "body": "Discover the available turns for the volunteer camp.",
+        "cta": "See available turns"
+      }
+    },
+    "sessions": {
+      "title": "Connected devices",
+      "intro": "These are the devices currently signed in to your account. Revoke access to any you don't recognise.",
+      "revoke": "Sign out",
+      "revokeOthers": "Sign out all other devices",
+      "currentLabel": "This device",
+      "browserFallback": "Unknown browser",
+      "expiresOn": "Expires on {date}",
+      "lastSeen": "Last seen {when}",
+      "backLink": "Back to personal area",
+      "empty": "No devices connected.",
+      "error": "Error",
+      "confirming": "Confirm"
     }
   },
   "RelativeTime": {
