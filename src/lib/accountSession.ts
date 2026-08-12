@@ -24,7 +24,7 @@
  * this function — UI code treats it as "logged out".
  */
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import {
@@ -196,6 +196,10 @@ export async function clearAccountCookies() {
  * Resolve the current volunteer session, if any. Returns null on any
  * failure (cookie missing, signature mismatch, DB row gone, soft-
  * deleted). Refuses to throw — callers treat null as "logged out".
+ *
+ * If `req` is omitted, we read UA + accept-language from `next/headers`
+ * so the device-cookie fingerprint check works in Server Components
+ * (which is how every page in /account calls us).
  */
 export async function getAccountSession(req?: {
   ua: string;
@@ -207,8 +211,19 @@ export async function getAccountSession(req?: {
 
   // 1) Try the long-lived device cookie first.
   if (deviceCookie) {
-    const ua = req?.ua ?? "";
-    const al = req?.acceptLanguage ?? "";
+    let ua = req?.ua ?? "";
+    let al = req?.acceptLanguage ?? "";
+    if (!req) {
+      try {
+        const h = await headers();
+        ua = h.get("user-agent") ?? "";
+        al = h.get("accept-language") ?? "";
+      } catch {
+        // headers() unavailable in this context — UA stays empty, the
+        // fingerprint check fails, and the device cookie is treated as
+        // not-current. Better than crashing.
+      }
+    }
     const result: VerifyDeviceCookieResult = verifyDeviceCookie(deviceCookie, ua, al);
     if (result.ok) {
       const row = await prisma.deviceSession.findUnique({
