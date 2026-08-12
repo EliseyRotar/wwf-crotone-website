@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { getSession } from "@/lib/auth";
-import AdminNav from "@/components/admin/AdminNav";
+import AdminShell from "@/components/admin/AdminShell";
 import { ToastProvider } from "@/components/admin/ToastProvider";
 import { NextIntlClientProvider } from "next-intl";
 import type { AbstractIntlMessages } from "next-intl";
@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <head>
           <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
         </head>
-        <body className="bg-sand dark:bg-[#0f1a0c] min-h-screen flex items-center justify-center p-6">
+        <body data-surface="admin" className="min-h-screen flex items-center justify-center p-6 bg-[var(--ad-bg)] text-[var(--ad-text)]">
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
           </NextIntlClientProvider>
@@ -56,14 +56,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="bg-sand dark:bg-[#141413] min-h-screen text-ink dark:text-ink">
+      <body data-surface="admin" className="min-h-screen text-[var(--ad-text)]">
         <a href="#main" className="skip-link">Salta al contenuto</a>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ToastProvider>
-            <div className="flex min-h-screen">
-              <AdminNav session={session} />
-              <main id="main" className="flex-1 p-6 lg:p-10 overflow-x-auto min-w-0 lg:ml-0">{children}</main>
-            </div>
+            <AdminShell session={session}>{children}</AdminShell>
           </ToastProvider>
         </NextIntlClientProvider>
       </body>
