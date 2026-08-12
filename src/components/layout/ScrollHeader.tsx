@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { useScrollFlag } from "@/hooks/useScrollFlag";
+import { UserRound } from "lucide-react";
 import SiteSearch from "@/components/features/SiteSearch";
 
 const NAV_KEYS = {
@@ -79,6 +80,12 @@ export default function ScrollHeader({
 
         <div className="flex items-center gap-1">
           <SiteSearch />
+          <Link
+            href={path("account/login")}
+            className="hidden sm:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest px-3 py-2 text-ink hover:text-wwf-green transition-colors"
+          >
+            <UserRound size={14} /> {t("personalArea")}
+          </Link>
           <Link
             href={otherPath}
             className="hidden sm:inline-flex text-xs font-bold uppercase tracking-widest px-3 py-2 text-ink hover:text-wwf-green transition-colors"

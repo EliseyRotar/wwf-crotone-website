@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, UserRound } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 
@@ -118,6 +118,13 @@ export default function MobileMenu() {
                 {t(item.key as keyof typeof NAV_KEYS)}
               </Link>
             ))}
+            <Link
+              href={path("account/login")}
+              className="py-3 text-base font-semibold tracking-wide border-b border-ink-grey-light/40 text-ink"
+            >
+              <UserRound size={16} className="inline -mt-0.5 mr-2" />
+              {t("personalArea")}
+            </Link>
             <div className="flex items-center justify-between pt-4">
               <Link href={otherPath} className="text-sm font-bold uppercase tracking-widest text-ink">
                 {otherLocale === "it" ? "IT" : "EN"}

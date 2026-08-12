@@ -23,7 +23,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "mobileMenuLabel": "Navigation menu",
-    "switch": "Switch to Italiano"
+    "switch": "Switch to Italiano",
+    "personalArea": "Personal area"
   },
   "Lang": {
     "switch": "Passa all'italiano",
@@ -907,6 +908,7 @@
       "gallery": "Gallery",
       "blog": "Blog",
       "settings": "Settings",
+      "status": "Status",
       "users": "Users",
       "logout": "Logout",
       "adminTitle": "WWF Crotone Admin",
@@ -1414,22 +1416,27 @@
     }
   },
   "Account": {
-    "login": {
+"login": {
       "title": "Sign in to your personal area",
       "intro": "Enter the email you used to register. We'll send you a sign-in link valid for 30 minutes.",
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
       "rememberLabel": "Remember this device for 30 days",
       "submit": "Send sign-in link",
+      "sending": "Sending…",
       "sentTitle": "Check your email",
       "sentBody": "If {email} matches a registration, we sent you a sign-in link. It expires in 30 minutes.",
       "sentExpiry": "Didn't get the email? Check your spam folder or try again in a few minutes.",
-      "footnote": "For security reasons we don't confirm whether an address is registered."
+      "footnote": "For security reasons we don't confirm whether an address is registered.",
+      "errorTitle": "Link can't be used"
     },
     "errors": {
       "rate-limited": "Too many requests. Please try again later.",
       "forbidden": "Request not allowed.",
       "invalid": "Invalid email.",
+      "invalid-or-expired": "This magic link is invalid or expired. Each link is single-use and expires after 30 minutes. Enter your email below to receive a new one.",
+      "expired": "The link has expired (30-minute validity). Enter your email to receive a new one.",
+      "used": "This link has already been used. For security, each link is single-use. Enter your email to receive a new one.",
       "server": "Server error. Please try again.",
       "network": "Network error. Check your connection."
     },
@@ -1582,11 +1589,24 @@
         "approvalFootnote": "Receipts are verified manually by an admin. After approval you'll see the \"Approved\" state."
       }
     },
-    "verifyEmail": {
+"verifyEmail": {
       "title": "Confirm your email",
-      "success": "Email verified! You can now upload your payment receipt.",
-      "invalidToken": "Invalid token. Open the link from your email or request a new one.",
-      "expiredToken": "The link has expired (24-hour validity). Request a new one from the personal area."
+      "success": "Email verified! You can now upload the bank transfer receipt.",
+      "invalidToken": "Invalid token. Open the link from the email or request a new one.",
+      "expiredToken": "The link has expired (24h validity). Request a new link from the personal area.",
+      "successTitle": "Email verified",
+      "successBody": "Hi {name}, your email has been confirmed. Upload your €100 bank transfer receipt to complete the registration.",
+      "uploadReceiptCta": "Upload the receipt",
+      "backHome": "Back to home",
+      "alreadyTitle": "Email already verified",
+      "alreadyBody": "Hi {name}, your email is already verified. Go straight to your personal area.",
+      "goToPanel": "Go to personal area",
+      "invalidTitle": "Invalid link",
+      "invalidBody": "This verification link is invalid or already used. Open the last email we sent you or request a new one from the personal area.",
+      "expiredTitle": "Link expired",
+      "expiredBody": "The verification link has expired (24h validity). Request a new one from the personal area and we'll email you a working link.",
+      "errorTitle": "Technical error",
+      "errorBody": "We couldn't verify your email. Try again later or contact us at wwfcrotone26@gmail.com."
     },
     "uploadReceipt": {
       "title": "Upload your receipt",

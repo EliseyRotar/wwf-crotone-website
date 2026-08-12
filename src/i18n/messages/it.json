@@ -23,7 +23,8 @@
     "openMenu": "Apri menu",
     "closeMenu": "Chiudi menu",
     "mobileMenuLabel": "Menu di navigazione",
-    "switch": "Passa a English"
+    "switch": "Passa a English",
+    "personalArea": "Area personale"
   },
   "Lang": {
     "switch": "Switch to English",
@@ -907,6 +908,7 @@
       "gallery": "Galleria",
       "blog": "Blog",
       "settings": "Impostazioni",
+      "status": "Stato",
       "users": "Utenti",
       "logout": "Esci",
       "adminTitle": "Admin WWF Crotone",
@@ -922,6 +924,8 @@
       "inAttesa": "In attesa",
       "campiAttivi": "Campi attivi",
       "blogPosts": "Blog posts",
+      "receiptsPending": "Ricevute da approvare",
+      "balancePending": "Saldi da ricevere",
       "campoFillRate": "Turn fill rate",
       "registrationsOverTime": "Registrations over time",
       "ageDistribution": "Age distribution",
@@ -981,7 +985,25 @@
       "bulkConfirm": "Aggiornare {count} iscrizioni a \"{status}\"?",
       "select": "Seleziona",
       "selectAll": "Seleziona tutti",
-      "deselectAll": "Deseleziona tutti"
+      "deselectAll": "Deseleziona tutti",
+      "receipts": "Ricevute",
+      "receiptDeposit": "Ricevuta acconto (100€)",
+      "receiptBalance": "Ricevuta saldo",
+      "noReceipts": "Nessuna ricevuta caricata.",
+      "viewReceipt": "Apri ricevuta",
+      "approveReceipt": "Approva ricevuta",
+      "rejectReceipt": "Rifiuta",
+      "receiptApproved": "Approvata",
+      "receiptPendingReview": "Da revisionare",
+      "receiptRejected": "Rifiutata",
+      "receiptApprovedOn": "Approvata il {date}",
+      "receiptUploadedOn": "Caricata il {date}",
+      "openPanel": "Apri dettagli",
+      "closePanel": "Chiudi",
+      "saveChanges": "Salva modifiche",
+      "saving": "Salvataggio…",
+      "approveAllPayments": "Approva quota + saldo",
+      "receiptUploadError": "Impossibile approvare la ricevuta"
     },
     "volunteer": {
       "contacts": "Contatti",
@@ -1422,15 +1444,20 @@
       "emailPlaceholder": "tu@esempio.it",
       "rememberLabel": "Ricorda questo dispositivo per 30 giorni",
       "submit": "Invia link di accesso",
+      "sending": "Invio in corso…",
       "sentTitle": "Controlla la tua email",
       "sentBody": "Se l'indirizzo {email} corrisponde a un'iscrizione, abbiamo inviato un link di accesso. Il link scade tra 30 minuti.",
       "sentExpiry": "Non hai ricevuto l'email? Controlla la cartella spam o riprova tra qualche minuto.",
-      "footnote": "Per motivi di sicurezza non confermiamo se l'indirizzo è registrato."
+      "footnote": "Per motivi di sicurezza non confermiamo se l'indirizzo è registrato.",
+      "errorTitle": "Link non utilizzabile"
     },
     "errors": {
       "rate-limited": "Troppe richieste. Riprova più tardi.",
       "forbidden": "Richiesta non autorizzata.",
       "invalid": "Email non valida.",
+      "invalid-or-expired": "Il link di accesso non è valido o è scaduto. Ogni link è monouso e scade dopo 30 minuti. Inserisci la tua email qui sotto per riceverne uno nuovo.",
+      "expired": "Il link è scaduto (durata 30 minuti). Inserisci la tua email per riceverne uno nuovo.",
+      "used": "Questo link è già stato usato. Per motivi di sicurezza ogni link è monouso. Inserisci la tua email per riceverne uno nuovo.",
       "server": "Errore del server. Riprova.",
       "network": "Errore di rete. Controlla la connessione."
     },
@@ -1587,7 +1614,20 @@
       "title": "Conferma la tua email",
       "success": "Email verificata! Ora puoi caricare la ricevuta del bonifico.",
       "invalidToken": "Token non valido. Apri il link direttamente dall'email o richiedi un nuovo link.",
-      "expiredToken": "Il link è scaduto (durata 24 ore). Richiedi un nuovo link dall'area personale."
+      "expiredToken": "Il link è scaduto (durata 24 ore). Richiedi un nuovo link dall'area personale.",
+      "successTitle": "Email verificata",
+      "successBody": "Ciao {name}, la tua email è stata confermata. Adesso carica la ricevuta del bonifico da 100€ per completare l'iscrizione.",
+      "uploadReceiptCta": "Carica la ricevuta",
+      "backHome": "Torna alla home",
+      "alreadyTitle": "Email già verificata",
+      "alreadyBody": "Ciao {name}, la tua email risulta già verificata. Vai direttamente alla tua area personale.",
+      "goToPanel": "Vai all'area personale",
+      "invalidTitle": "Link non valido",
+      "invalidBody": "Questo link di verifica non è valido o è già stato usato. Apri l'ultima email che ti abbiamo inviato oppure richiedine uno nuovo dall'area personale.",
+      "expiredTitle": "Link scaduto",
+      "expiredBody": "Il link di verifica è scaduto (durata 24 ore). Richiedine uno nuovo dall'area personale: ti invieremo una nuova email con un link funzionante.",
+      "errorTitle": "Errore tecnico",
+      "errorBody": "Non siamo riusciti a verificare la tua email. Riprova più tardi oppure contattaci a wwfcrotone26@gmail.com."
     },
     "uploadReceipt": {
       "title": "Carica la ricevuta",
