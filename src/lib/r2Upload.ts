@@ -43,10 +43,23 @@ function bytesToHex(bytes: Uint8Array): string {
     .join("");
 }
 
+/**
+ * Return a copy of the ArrayBuffer underlying the given Uint8Array view.
+ * crypto.subtle.digest/sign require an ArrayBuffer of EXACTLY the byte
+ * length of the input — using `u8.buffer as ArrayBuffer` directly can
+ * pass a larger buffer (the Uint8Array may be a view into a larger
+ * allocation), which makes the digest wrong on Node ≥18.
+ */
+function toBuffer(view: Uint8Array): ArrayBuffer {
+  const out = new ArrayBuffer(view.byteLength);
+  new Uint8Array(out).set(view);
+  return out;
+}
+
 async function sha256Hex(s: string | Uint8Array): Promise<string> {
   const data: ArrayBuffer = typeof s === "string"
-    ? new TextEncoder().encode(s).buffer as ArrayBuffer
-    : (s.buffer as ArrayBuffer);
+    ? toBuffer(new TextEncoder().encode(s))
+    : toBuffer(s);
   const buf = await crypto.subtle.digest("SHA-256", data);
   return bytesToHex(new Uint8Array(buf));
 }
@@ -56,8 +69,8 @@ async function hmac(
   data: string
 ): Promise<Uint8Array> {
   const keyData: ArrayBuffer = typeof key === "string"
-    ? new TextEncoder().encode(key).buffer as ArrayBuffer
-    : (key.buffer as ArrayBuffer);
+    ? toBuffer(new TextEncoder().encode(key))
+    : toBuffer(key);
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     keyData,
@@ -65,7 +78,8 @@ async function hmac(
     false,
     ["sign"]
   );
-  const sig = await crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(data).buffer as ArrayBuffer);
+  const dataBytes = toBuffer(new TextEncoder().encode(data));
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, dataBytes);
   return new Uint8Array(sig);
 }
 
@@ -178,22 +192,17 @@ export async function uploadReceipt(
   const ext = extFromMime(file.type);
   const objectKey = `receipts/${iscrizioneId}/${type}-${Date.now()}-${randomHex(6)}.${ext}`;
 
-  // "UNSIGNED-PAYLOAD" tells R2 to skip the body hash in the canonical
-  // request, which avoids us having to base64 the entire body in the
-  // signature input. The body hash we send in x-amz-content-sha256 is
-  // still the real hash so R2 can verify integrity on its side.
-  const payloadHash = "UNSIGNED-PAYLOAD";
+  // Sign with the ACTUAL SHA-256 of the body. R2 (S3) compares the
+  // x-amz-content-sha256 header against the actual body bytes. Using
+  // "UNSIGNED-PAYLOAD" and then overwriting the header after signing
+  // makes the signature mismatch (403 SignatureDoesNotMatch).
   const signed = await signPut(
     objectKey,
     buf.length,
     file.type || "application/octet-stream",
-    payloadHash,
+    sha256,
     creds
   );
-
-  // Overwrite the content-sha256 header with the real hex hash so R2
-  // can verify the body matches what we signed.
-  signed.headers["x-amz-content-sha256"] = sha256;
 
   const resp = await fetch(signed.url, {
     method: "PUT",
