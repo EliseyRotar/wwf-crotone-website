@@ -965,7 +965,9 @@
       "statusWaitlist": "Waitlist",
       "statusCancelled": "Cancelled",
       "feePaid": "100€ fee paid",
+      "feeNotPaid": "100€ fee not paid",
       "balancePaid": "Balance paid",
+      "balanceNotPaid": "Balance not paid",
       "imageConsent": "Image consent",
       "noImageConsent": "NO IMAGE CONSENT",
       "noPhotoWarning": "do not photograph/film this volunteer",
@@ -983,7 +985,8 @@
       "bulkConfirm": "Update {count} registrations to \"{status}\"?",
       "select": "Select",
       "selectAll": "Select all",
-      "deselectAll": "Deselect all"
+      "deselectAll": "Deselect all",
+      "quotaNotPaid": "100€ fee not paid"
     },
     "volunteer": {
       "contacts": "Contacts",
@@ -1416,7 +1419,7 @@
     }
   },
   "Account": {
-"login": {
+    "login": {
       "title": "Sign in to your personal area",
       "intro": "Enter the email you used to register. We'll send you a sign-in link valid for 30 minutes.",
       "emailLabel": "Email",
@@ -1589,7 +1592,7 @@
         "approvalFootnote": "Receipts are verified manually by an admin. After approval you'll see the \"Approved\" state."
       }
     },
-"verifyEmail": {
+    "verifyEmail": {
       "title": "Confirm your email",
       "success": "Email verified! You can now upload the bank transfer receipt.",
       "invalidToken": "Invalid token. Open the link from the email or request a new one.",

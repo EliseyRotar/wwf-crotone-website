@@ -967,7 +967,9 @@
       "statusWaitlist": "Lista d'attesa",
       "statusCancelled": "Annullato",
       "feePaid": "Quota 100€ pagata",
+      "feeNotPaid": "Quota 100€ non pagata",
       "balancePaid": "Saldo pagato",
+      "balanceNotPaid": "Saldo non pagato",
       "imageConsent": "Consenso immagini",
       "noImageConsent": "NO CONSENSO IMMAGINI",
       "noPhotoWarning": "non fotografare/filmare questo volontario",
@@ -1003,7 +1005,8 @@
       "saveChanges": "Salva modifiche",
       "saving": "Salvataggio…",
       "approveAllPayments": "Approva quota + saldo",
-      "receiptUploadError": "Impossibile approvare la ricevuta"
+      "receiptUploadError": "Impossibile approvare la ricevuta",
+      "quotaNotPaid": "Quota 100€ non pagata"
     },
     "volunteer": {
       "contacts": "Contatti",
