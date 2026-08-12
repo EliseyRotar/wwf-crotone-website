@@ -31,23 +31,23 @@ export default function DashboardCharts({ turni, iscrizioni }: {
   const ageMax = Math.max(...Object.values(ageGroups), 1);
 
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
+    <div className="grid lg:grid-cols-2 gap-4">
       {/* Turn fill rate */}
       <div className="card">
         <div className="card-body">
-          <h3 className="text-lg mb-4">{t("campoFillRate")}</h3>
+          <h3 className="font-head text-lg mb-4 text-[var(--ad-text)]">{t("campoFillRate")}</h3>
           <div className="space-y-2">
             {turni.map((t) => {
               const pct = (t.booked / t.capacity) * 100;
               return (
                 <div key={t.number} className="flex items-center gap-2">
-                  <span className="text-xs font-bold w-8 shrink-0">C{t.number}</span>
-                  <div className="flex-1 h-6 bg-ink-grey-light/30 rounded overflow-hidden relative">
+                  <span className="text-xs font-semibold w-8 shrink-0 text-[var(--ad-text-muted)]">C{t.number}</span>
+                  <div className="flex-1 h-6 bg-[var(--ad-bg-sunken)] overflow-hidden relative">
                     <div
-                      className="h-full bg-wwf-green transition-all"
+                      className="h-full bg-[var(--ad-accent)] transition-all"
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />
-                    <span className="absolute inset-0 flex items-center px-2 text-xs text-white font-bold">
+                    <span className="absolute inset-0 flex items-center px-2 text-xs text-white font-semibold">
                       {t.booked}/{t.capacity}
                     </span>
                   </div>
@@ -62,18 +62,18 @@ export default function DashboardCharts({ turni, iscrizioni }: {
       {dates.length > 0 && (
         <div className="card">
           <div className="card-body">
-            <h3 className="text-lg mb-4">{t("registrationsOverTime")}</h3>
+            <h3 className="font-head text-lg mb-4 text-[var(--ad-text)]">{t("registrationsOverTime")}</h3>
             <div className="flex items-end gap-1 h-32">
               {dateValues.map((v, i) => (
                 <div
                   key={i}
-                  className="flex-1 bg-wwf-green/70 hover:bg-wwf-green transition-colors rounded-t"
+                  className="flex-1 bg-[var(--ad-accent)]/70 hover:bg-[var(--ad-accent)] transition-colors"
                   style={{ height: `${(v / maxDateVal) * 100}%` }}
                   title={`${dates[i]}: ${v}`}
                 />
               ))}
             </div>
-            <p className="text-xs text-ink-grey mt-2">{dates.length} {t("days")} — {t("first")}: {dates[0]}, {t("last")}: {dates[dates.length - 1]}</p>
+            <p className="text-xs text-[var(--ad-text-muted)] mt-2">{dates.length} {t("days")} — {t("first")}: {dates[0]}, {t("last")}: {dates[dates.length - 1]}</p>
           </div>
         </div>
       )}
@@ -81,17 +81,17 @@ export default function DashboardCharts({ turni, iscrizioni }: {
       {/* Age distribution */}
       <div className="card">
         <div className="card-body">
-          <h3 className="text-lg mb-4">{t("ageDistribution")}</h3>
+          <h3 className="font-head text-lg mb-4 text-[var(--ad-text)]">{t("ageDistribution")}</h3>
           <div className="space-y-2">
             {Object.entries(ageGroups).map(([label, count]) => (
               <div key={label} className="flex items-center gap-2">
-                <span className="text-xs font-bold w-12 shrink-0">{label}</span>
-                <div className="flex-1 h-5 bg-ink-grey-light/30 rounded overflow-hidden relative">
+                <span className="text-xs font-semibold w-12 shrink-0 text-[var(--ad-text-muted)]">{label}</span>
+                <div className="flex-1 h-5 bg-[var(--ad-bg-sunken)] overflow-hidden relative">
                   <div
-                    className="h-full bg-wwf-orange/70 rounded"
+                    className="h-full bg-[var(--ad-warning)]/80"
                     style={{ width: `${(count / ageMax) * 100}%` }}
                   />
-                  <span className="absolute inset-0 flex items-center px-2 text-xs text-ink-2 font-bold">{count}</span>
+                  <span className="absolute inset-0 flex items-center px-2 text-xs font-semibold text-[var(--ad-text)]">{count}</span>
                 </div>
               </div>
             ))}

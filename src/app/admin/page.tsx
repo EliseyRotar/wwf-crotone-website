@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import DashboardCharts from "@/components/admin/DashboardCharts";
@@ -18,19 +19,31 @@ export default async function AdminDashboard() {
     ? { isActive: true }
     : { isActive: true, id: { in: assignedIds } };
 
-  const [totalIscrizioni, pendingIscrizioni, turniCount, galleryCount, blogCount] = await Promise.all([
+  const [
+    totalIscrizioni,
+    pendingIscrizioni,
+    turniCount,
+    galleryCount,
+    blogCount,
+    receiptsPending,
+    balancePending
+  ] = await Promise.all([
     prisma.iscrizione.count({ where: scope }),
     prisma.iscrizione.count({ where: { ...scope, status: "pending" } }),
     prisma.turno.count({ where: turnScope }),
     prisma.galleryItem.count(),
-    prisma.blogPost.count({ where: { published: true } })
+    prisma.blogPost.count({ where: { published: true } }),
+    prisma.receiptUpload.count({
+      where: { approvedAt: null, iscrizione: scope }
+    }),
+    prisma.iscrizione.count({
+      where: { ...scope, feePaid: true, balancePaid: false, status: { not: "cancelled" } }
+    })
   ]);
 
   const turni = await prisma.turno.findMany({
     where: turnScope,
     orderBy: { number: "asc" },
-    // C-07: use the atomic counter for the chart, not the (includes
-    // cancelled) relation count.
     select: { number: true, capacity: true, bookedCount: true }
   });
 
@@ -41,25 +54,76 @@ export default async function AdminDashboard() {
   });
 
   const cards = [
-    { label: t("totalIscrizioni"), value: totalIscrizioni, href: "/admin/iscrizioni" },
-    { label: t("inAttesa"), value: pendingIscrizioni, href: "/admin/iscrizioni?status=pending" },
-    { label: t("campiAttivi"), value: turniCount, href: "/admin/turni" },
-    { label: t("blogPosts"), value: blogCount, href: "/admin/blog" }
+    {
+      label: t("totalIscrizioni"),
+      value: totalIscrizioni,
+      href: "/admin/iscrizioni",
+      tone: "default" as const
+    },
+    {
+      label: t("inAttesa"),
+      value: pendingIscrizioni,
+      href: "/admin/iscrizioni?status=pending",
+      tone: "warning" as const
+    },
+    {
+      label: t("receiptsPending"),
+      value: receiptsPending,
+      href: "/admin/iscrizioni",
+      tone: "warning" as const
+    },
+    {
+      label: t("balancePending"),
+      value: balancePending,
+      href: "/admin/iscrizioni?status=confirmed",
+      tone: "default" as const
+    },
+    {
+      label: t("campiAttivi"),
+      value: turniCount,
+      href: "/admin/turni",
+      tone: "default" as const
+    },
+    {
+      label: t("blogPosts"),
+      value: blogCount,
+      href: "/admin/blog",
+      tone: "default" as const
+    }
   ];
 
   return (
-    <div>
-      <h1 className="text-3xl mb-1">{t("welcome", { name: session.name ?? session.email })}</h1>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 mt-8">
+    <div className="space-y-8">
+      <header className="enter">
+        <h1 className="font-head text-3xl lg:text-4xl text-[var(--ad-text)] tracking-tight">
+          {t("welcome", { name: session.name ?? session.email })}
+        </h1>
+        <p className="mt-1 text-sm text-[var(--ad-text-muted)]">
+          {new Date().toLocaleDateString(locale === "it" ? "it-IT" : "en-GB", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+          })}
+        </p>
+      </header>
+
+      <section className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {cards.map((c, i) => (
-          <a key={i} href={c.href} className="card">
-            <div className="card-body">
-              <p className="font-head text-4xl text-wwf-green">{c.value}</p>
-              <p className="text-sm uppercase tracking-cta text-ink-grey">{c.label}</p>
-            </div>
-          </a>
+          <Link
+            key={c.label}
+            href={c.href}
+            className={`enter enter-${Math.min(i + 1, 4)} group block p-5 rounded-[var(--radius-md)] border border-[var(--ad-border)] bg-[var(--ad-bg-elevated)] lift-hover`}
+          >
+            <p className="font-head text-3xl text-[var(--ad-text)] tabular-nums">
+              {c.value}
+            </p>
+            <p className="mt-1 text-xs uppercase tracking-wider text-[var(--ad-text-subtle)]">
+              {c.label}
+            </p>
+          </Link>
         ))}
-      </div>
+      </section>
 
       <DashboardCharts
         turni={turni.map((t_) => ({ number: t_.number, booked: t_.bookedCount, capacity: t_.capacity }))}
