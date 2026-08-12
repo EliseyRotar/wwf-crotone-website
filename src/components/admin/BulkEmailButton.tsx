@@ -64,7 +64,7 @@ export default function BulkEmailButton({ turnoId }: { turnoId?: string }) {
       <div className="card-body">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg">{t("title")}</h3>
-          <button onClick={() => setOpen(false)} className="text-ink-grey hover:text-ink"><X size={20} /></button>
+          <button onClick={() => setOpen(false)} className="text-[var(--ad-text-muted)] hover:text-ink"><X size={20} /></button>
         </div>
         <div className="field">
           <label>{t("subject")}</label>

@@ -63,7 +63,7 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg">{creating ? t("newArticle") : t("editArticle")}</h3>
-              <button onClick={() => { setCreating(false); setEditing(null); }} className="text-ink-grey hover:text-ink"><X size={20} /></button>
+              <button onClick={() => { setCreating(false); setEditing(null); }} className="text-[var(--ad-text-muted)] hover:text-ink"><X size={20} /></button>
             </div>
             <div className="space-y-3">
               <div className="field"><label>{t("titleIt")}</label><input value={form.titleIt} onChange={(e) => setForm({ ...form, titleIt: e.target.value })} /></div>
@@ -85,17 +85,17 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
       <div className="space-y-2">
         {posts.length === 0 && <p className="text-ink-grey">{t("noPosts")}</p>}
         {posts.map((p) => (
-          <div key={p.id} className="flex items-center justify-between p-3 bg-surface border border-ink-grey-light">
+          <div key={p.id} className="flex items-center justify-between p-3 bg-surface border border-[var(--ad-border)]">
             <div>
               <p className="font-bold">{p.titleIt} {p.titleEn && <span className="text-xs text-ink-grey">/ {p.titleEn}</span>}</p>
               <p className="text-xs text-ink-grey">/{p.slug} — {p.published ? t("published") : t("draft")}</p>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => togglePublish(p)} className="p-2 text-ink hover:text-wwf-green" title={p.published ? t("unpublish") : t("publish")}>
+              <button onClick={() => togglePublish(p)} className="p-2 text-[var(--ad-text)] hover:text-[var(--ad-accent)]" title={p.published ? t("unpublish") : t("publish")}>
                 {p.published ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
-              <button onClick={() => startEdit(p)} className="p-2 text-ink hover:text-wwf-green"><Pencil size={16} /></button>
-              <button onClick={() => del(p.id)} className="p-2 text-wwf-red hover:bg-wwf-red/10"><Trash2 size={16} /></button>
+              <button onClick={() => startEdit(p)} className="p-2 text-[var(--ad-text)] hover:text-[var(--ad-accent)]"><Pencil size={16} /></button>
+              <button onClick={() => del(p.id)} className="p-2 text-[var(--ad-danger)] hover:bg-[var(--ad-danger-soft)]"><Trash2 size={16} /></button>
             </div>
           </div>
         ))}

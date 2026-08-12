@@ -38,7 +38,7 @@ export default function TurnoEditor({
         min={1}
         value={cap}
         onChange={(e) => setCap(Number(e.target.value))}
-        className="w-20 px-2 py-1 border-2 border-ink-grey-light focus:border-wwf-green"
+        className="w-20 px-2 py-1 border-2 border-[var(--ad-border)] focus:border-[var(--ad-accent)]"
       />
       <label className="flex items-center gap-1 text-sm">
         <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />

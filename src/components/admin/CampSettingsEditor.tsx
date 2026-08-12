@@ -57,8 +57,8 @@ export default function CampSettingsEditor({ settings }: { settings: Settings | 
 
   return (
     <div>
-      <h1 className="text-3xl mb-1">{t("title")}</h1>
-      <p className="text-ink-grey text-sm mb-8">{t("subtitle")}</p>
+      <h1 className="font-head text-3xl text-[var(--ad-text)] tracking-tight mb-1">{t("title")}</h1>
+      <p className="text-[var(--ad-text-muted)] text-sm mb-8">{t("subtitle")}</p>
 
       <div className="card max-w-2xl">
         <div className="card-body">

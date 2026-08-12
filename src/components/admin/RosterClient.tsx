@@ -50,16 +50,16 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
       </div>
 
       {selected && (
-        <h2 className="text-xl mb-4">
+        <h2 className="font-head text-xl text-[var(--ad-text)] mb-4">
           Campo {selected.number} — {new Date(selected.start).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })} → {new Date(selected.end).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}
-          <span className="text-ink-grey text-sm ml-2">({iscrizioni.length} {t("volunteers")})</span>
+          <span className="text-[var(--ad-text-muted)] text-sm ml-2">({iscrizioni.length} {t("volunteers")})</span>
         </h2>
       )}
 
       <div className="card overflow-x-auto print-card">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-ink-grey-light text-left">
+            <tr className="border-b border-[var(--ad-border)] text-left">
               <th className="p-2">#</th>
               <th className="p-2">{t("colName")}</th>
               <th className="p-2">{t("colTel")}</th>
@@ -72,7 +72,7 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
           </thead>
           <tbody>
             {iscrizioni.map((i, idx) => (
-              <tr key={i.id} className="border-b border-ink-grey-light/40">
+              <tr key={i.id} className="border-b border-[var(--ad-border)]/40">
                 <td className="p-2 text-ink-grey">{idx + 1}</td>
                 <td className="p-2 font-bold">
                   {i.firstName} {i.lastName}
@@ -80,7 +80,7 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
                 </td>
                 <td className="p-2 text-xs">{i.phone}</td>
                 <td className="p-2 text-xs">{i.dietaryNeeds ? DIET[i.dietaryNeeds] || i.dietaryNeeds : ""}</td>
-                <td className="p-2 text-xs text-wwf-red">{i.allergies || ""}</td>
+                <td className="p-2 text-xs text-[var(--ad-danger)]">{i.allergies || ""}</td>
                 <td className="p-2 text-xs">{i.arrivalMode ? ARRIVAL[i.arrivalMode] || "" : ""}</td>
                 <td className="p-2 text-xs">{i.arrivalTime || ""}</td>
                 <td className="p-2">

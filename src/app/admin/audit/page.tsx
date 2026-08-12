@@ -9,8 +9,7 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 50;
 
 /**
- * F21: Audit log viewer.
- * Restricted to superadmins (everyone else shouldn't see other users' actions).
+ * Audit log viewer. Superadmin-only.
  */
 export default async function AuditPage({
   searchParams
@@ -20,9 +19,11 @@ export default async function AuditPage({
   const session = await requireSession();
   if (session.role !== "superadmin") {
     return (
-      <div>
-        <h1 className="text-3xl mb-4">Audit</h1>
-        <p className="text-ink-grey">Solo i superadmin possono accedere al log di audit.</p>
+      <div className="space-y-4">
+        <h1 className="font-head text-3xl text-[var(--ad-text)] tracking-tight">Audit</h1>
+        <p className="text-sm text-[var(--ad-text-muted)]">
+          Solo i superadmin possono accedere al log di audit.
+        </p>
       </div>
     );
   }
@@ -50,17 +51,32 @@ export default async function AuditPage({
   ]);
 
   return (
-    <div>
-      <h1 className="text-3xl mb-2">{t("title")}</h1>
-      <p className="text-ink-grey mb-6">{t("subtitle")}</p>
+    <div className="space-y-6">
+      <header>
+        <h1 className="font-head text-3xl text-[var(--ad-text)] tracking-tight">{t("title")}</h1>
+        <p className="mt-1 text-sm text-[var(--ad-text-muted)]">{t("subtitle")}</p>
+      </header>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <Link href="/admin/audit" className={`tag ${!sp.entity ? "tag-green" : "tag-grey"}`}>{t("all")}</Link>
+      <div className="flex flex-wrap gap-1.5">
+        <Link
+          href="/admin/audit"
+          className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-[var(--radius-sm)] border transition-colors ${
+            !sp.entity
+              ? "bg-[var(--ad-accent)] text-white border-[var(--ad-accent)]"
+              : "bg-[var(--ad-bg-elevated)] text-[var(--ad-text-muted)] border-[var(--ad-border)] hover:border-[var(--ad-accent)] hover:text-[var(--ad-accent)]"
+          }`}
+        >
+          {t("all")}
+        </Link>
         {entities.map((e) => (
           <Link
             key={e.entity}
             href={`/admin/audit?entity=${e.entity}`}
-            className={`tag ${sp.entity === e.entity ? "tag-green" : "tag-grey"}`}
+            className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-[var(--radius-sm)] border transition-colors ${
+              sp.entity === e.entity
+                ? "bg-[var(--ad-accent)] text-white border-[var(--ad-accent)]"
+                : "bg-[var(--ad-bg-elevated)] text-[var(--ad-text-muted)] border-[var(--ad-border)] hover:border-[var(--ad-accent)] hover:text-[var(--ad-accent)]"
+            }`}
           >
             {e.entity} ({e._count.id})
           </Link>
@@ -68,30 +84,40 @@ export default async function AuditPage({
       </div>
 
       {logs.length === 0 ? (
-        <p className="text-ink-grey">{t("noResults")}</p>
+        <p className="text-sm text-[var(--ad-text-muted)]">{t("noResults")}</p>
       ) : (
-        <div className="card overflow-x-auto">
+        <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--ad-border)] bg-[var(--ad-bg-elevated)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-ink-grey-light text-left">
-                <th className="p-3 uppercase tracking-cta text-ink-grey text-xs">{t("when")}</th>
-                <th className="p-3 uppercase tracking-cta text-ink-grey text-xs">{t("who")}</th>
-                <th className="p-3 uppercase tracking-cta text-ink-grey text-xs">{t("action")}</th>
-                <th className="p-3 uppercase tracking-cta text-ink-grey text-xs">{t("entity")}</th>
-                <th className="p-3 uppercase tracking-cta text-ink-grey text-xs">{t("details")}</th>
+              <tr className="bg-[var(--ad-bg-sunken)] border-b border-[var(--ad-border)] text-left">
+                <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("when")}</th>
+                <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("who")}</th>
+                <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("action")}</th>
+                <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("entity")}</th>
+                <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("details")}</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log) => (
-                <tr key={log.id} className="border-b border-ink-grey-light/40">
-                  <td className="p-3 text-xs whitespace-nowrap">
+                <tr key={log.id} className="border-b border-[var(--ad-border)] last:border-0">
+                  <td className="p-3 text-xs whitespace-nowrap font-mono tabular-nums text-[var(--ad-text-muted)]">
                     {log.createdAt.toLocaleString(locale === "it" ? "it-IT" : "en-GB")}
                   </td>
-                  <td className="p-3 text-xs">{log.userId.slice(0, 8)}…</td>
-                  <td className="p-3"><span className="tag tag-grey text-xs">{log.action}</span></td>
+                  <td className="p-3 text-xs font-mono text-[var(--ad-text-muted)]">{log.userId.slice(0, 8)}…</td>
+                  <td className="p-3">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-[var(--radius-sm)] bg-[var(--ad-bg-sunken)] text-[var(--ad-text-muted)]">
+                      {log.action}
+                    </span>
+                  </td>
                   <td className="p-3 text-xs">{log.entity}</td>
-                  <td className="p-3 text-xs text-ink-2 max-w-md truncate" title={log.details ?? ""}>
-                    {log.details ? <code className="text-[10px]">{truncate(log.details, 120)}</code> : "—"}
+                  <td className="p-3 text-xs text-[var(--ad-text-muted)] max-w-md">
+                    {log.details ? (
+                      <code className="text-[10px] truncate block" title={log.details}>
+                        {truncate(log.details, 120)}
+                      </code>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               ))}
@@ -101,13 +127,25 @@ export default async function AuditPage({
       )}
 
       {totalPages > 1 && (
-        <p className="text-sm text-ink-grey mt-4">
-          {t("page")} {safePage} {t("of")} {totalPages}
+        <p className="text-sm text-[var(--ad-text-muted)] flex items-center gap-3">
+          <span>
+            {t("page")} {safePage} {t("of")} {totalPages}
+          </span>
           {safePage < totalPages && (
-            <Link href={`/admin/audit?page=${safePage + 1}${sp.entity ? `&entity=${sp.entity}` : ""}`} className="ml-3 underline">{t("next")} →</Link>
+            <Link
+              href={`/admin/audit?page=${safePage + 1}${sp.entity ? `&entity=${sp.entity}` : ""}`}
+              className="underline hover:text-[var(--ad-accent)]"
+            >
+              {t("next")} →
+            </Link>
           )}
           {safePage > 1 && (
-            <Link href={`/admin/audit?page=${safePage - 1}${sp.entity ? `&entity=${sp.entity}` : ""}`} className="ml-3 underline">← {t("previous")}</Link>
+            <Link
+              href={`/admin/audit?page=${safePage - 1}${sp.entity ? `&entity=${sp.entity}` : ""}`}
+              className="underline hover:text-[var(--ad-accent)]"
+            >
+              ← {t("previous")}
+            </Link>
           )}
         </p>
       )}

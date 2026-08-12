@@ -173,8 +173,8 @@ export default function OperatoriManager({
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl">{t("title")}</h1>
-          <p className="text-ink-grey text-sm mt-1">
+          <h1 className="font-head text-3xl text-[var(--ad-text)] tracking-tight">{t("title")}</h1>
+          <p className="text-[var(--ad-text-muted)] text-sm mt-1">
             {t("subtitle")}
           </p>
         </div>
@@ -189,8 +189,8 @@ export default function OperatoriManager({
         <div className="card mb-6">
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl">{editId ? t("edit") : t("new")}</h2>
-              <button onClick={cancel} className="text-ink-grey hover:text-ink">
+              <h2 className="font-head text-xl text-[var(--ad-text)]">{editId ? t("edit") : t("new")}</h2>
+              <button onClick={cancel} className="text-[var(--ad-text-muted)] hover:text-[var(--ad-text)]">
                 <X size={20} />
               </button>
             </div>
@@ -262,35 +262,35 @@ export default function OperatoriManager({
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-ink-grey-light text-left">
-              <th className="p-3 uppercase tracking-cta text-ink-grey">{t("name")}</th>
-              <th className="p-3 uppercase tracking-cta text-ink-grey">{t("role")}</th>
-              <th className="p-3 uppercase tracking-cta text-ink-grey">{t("sex")}</th>
-              <th className="p-3 uppercase tracking-cta text-ink-grey">{t("contact")}</th>
-              <th className="p-3 uppercase tracking-cta text-ink-grey">{t("campiCol")}</th>
-              <th className="p-3 uppercase tracking-cta text-ink-grey">{t("notesField")}</th>
+            <tr className="border-b border-[var(--ad-border)] text-left">
+              <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("name")}</th>
+              <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("role")}</th>
+              <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("sex")}</th>
+              <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("contact")}</th>
+              <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("campiCol")}</th>
+              <th className="p-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-subtle)]">{t("notesField")}</th>
               <th className="p-3"></th>
             </tr>
           </thead>
           <tbody>
             {operatori.map((op) => (
-              <tr key={op.id} className={`border-b border-ink-grey-light/60 hover:bg-sand ${editId === op.id ? "bg-wwf-green-pale/30" : ""}`}>
+              <tr key={op.id} className={`border-b border-[var(--ad-border)]/60 hover:bg-[var(--ad-bg-sunken)] ${editId === op.id ? "bg-[var(--ad-accent-soft)]" : ""}`}>
                 <td className="p-3 font-bold">{op.firstName} {op.lastName}</td>
                 <td className="p-3"><span className={`tag ${ROLE_COLORS[op.role] || "tag-grey"}`}>{t(op.role as (typeof ALL_ROLES)[number]) || op.role}</span></td>
                 <td className="p-3">{op.sex || "—"}</td>
                 <td className="p-3 text-xs">
-                  {op.email && <div><a href={`mailto:${op.email}`} className="text-wwf-green hover:underline">{op.email}</a></div>}
+                  {op.email && <div><a href={`mailto:${op.email}`} className="text-[var(--ad-accent)] hover:underline">{op.email}</a></div>}
                   {op.phone && <div><a href={`tel:${op.phone}`} className="hover:underline">{op.phone}</a></div>}
                   {!op.email && !op.phone && "—"}
                 </td>
                 <td className="p-3 text-xs">{turnNumbers(op)}</td>
-                <td className="p-3 text-xs text-ink-grey">{op.notes || "—"}</td>
+                <td className="p-3 text-xs text-[var(--ad-text-subtle)]">{op.notes || "—"}</td>
                 <td className="p-3">
                   <div className="flex gap-1">
-                    <button onClick={() => startEdit(op)} className="text-ink hover:text-wwf-green p-2" aria-label={t("editLabel")}>
+                    <button onClick={() => startEdit(op)} className="text-[var(--ad-text)] hover:text-[var(--ad-accent)] p-2" aria-label={t("editLabel")}>
                       <Pencil size={16} />
                     </button>
-                    <button onClick={() => del(op.id)} className="text-wwf-red hover:bg-wwf-red/10 p-2" aria-label={t("deleteLabel")}>
+                    <button onClick={() => del(op.id)} className="text-[var(--ad-danger)] hover:bg-[var(--ad-danger-soft)] p-2" aria-label={t("deleteLabel")}>
                       <Trash2 size={16} />
                     </button>
                   </div>

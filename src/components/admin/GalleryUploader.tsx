@@ -84,7 +84,7 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
     <div className="grid lg:grid-cols-2 gap-8">
       <div className="card">
         <div className="card-body">
-          <h2 className="text-xl mb-4">{t("addItem")}</h2>
+          <h2 className="font-head text-xl text-[var(--ad-text)] mb-4">{t("addItem")}</h2>
           <form onSubmit={submit} className="space-y-3">
             <div className="field">
               <label>{t("type")}</label>
@@ -97,7 +97,7 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
               <div className="field">
                 <label>{t("file")}</label>
                 <input type="file" accept="image/*" onChange={onFile} />
-                {src && <p className="text-xs text-wwf-green mt-1">{src}</p>}
+                {src && <p className="text-xs text-[var(--ad-accent)] mt-1">{src}</p>}
               </div>
             ) : (
               <>
@@ -148,15 +148,15 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
       </div>
 
       <div>
-        <h2 className="text-xl mb-4">{t("existingItems")} ({items.length})</h2>
+        <h2 className="font-head text-xl text-[var(--ad-text)] mb-4">{t("existingItems")} ({items.length})</h2>
         <div className="space-y-2 max-h-[40rem] overflow-y-auto">
           {items.map((it) => (
-            <div key={it.id} className="flex items-center justify-between p-3 bg-surface border border-ink-grey-light">
+            <div key={it.id} className="flex items-center justify-between p-3 bg-surface border border-[var(--ad-border)]">
               <div className="min-w-0">
                 <p className="font-bold truncate">{it.titleIt}</p>
                 <p className="text-xs text-ink-grey">{it.category}</p>
               </div>
-              <button onClick={() => del(it.id)} className="text-wwf-red hover:bg-wwf-red/10 p-2" aria-label={tC("delete")}>
+              <button onClick={() => del(it.id)} className="text-[var(--ad-danger)] hover:bg-[var(--ad-danger-soft)] p-2" aria-label={tC("delete")}>
                 <Trash2 size={16} />
               </button>
             </div>

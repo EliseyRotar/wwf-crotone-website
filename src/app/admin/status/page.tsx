@@ -57,10 +57,10 @@ export default async function StatusAdminPage() {
   const slugById = new Map(services.map((s) => [s.id, s.slug]));
 
   return (
-    <div className="p-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold mb-1">{t("page.title")}</h1>
-        <p className="text-sm text-ink-grey">{t("page.subtitle")}</p>
+    <div className="space-y-6">
+      <header>
+        <h1 className="font-head text-3xl text-[var(--ad-text)] tracking-tight">{t("page.title")}</h1>
+        <p className="mt-1 text-sm text-[var(--ad-text-muted)]">{t("page.subtitle")}</p>
       </header>
       <StatusAdminClient
         locale={locale}

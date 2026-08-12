@@ -91,13 +91,13 @@ export default function StatusAdminClient({
 
   return (
     <div>
-      <nav className="flex gap-2 mb-4 border-b border-ink/10">
+      <nav className="flex gap-2 mb-4 border-b border-[var(--ad-border)]">
         {(["services", "incidents", "history"] as Tab[]).map((k) => (
           <button
             key={k}
             onClick={() => setTab(k)}
-            className={`px-3 py-2 text-sm font-bold uppercase tracking-cta border-b-2 -mb-px transition-colors ${
-              tab === k ? "border-wwf-green text-wwf-green" : "border-transparent text-ink-grey hover:text-ink"
+            className={`px-3 py-2 text-sm font-bold text-[10px] font-semibold uppercase tracking-wider border-b-2 -mb-px transition-colors ${
+              tab === k ? "border-[var(--ad-accent)] text-[var(--ad-accent)]" : "border-transparent text-[var(--ad-text-muted)] hover:text-ink"
             }`}
           >
             {t(`page.tab${k[0].toUpperCase()}${k.slice(1)}`)}
@@ -105,7 +105,7 @@ export default function StatusAdminClient({
         ))}
         <button
           onClick={() => void refreshAll()}
-          className="ml-auto px-3 py-2 text-xs text-ink-grey hover:text-ink"
+          className="ml-auto px-3 py-2 text-xs text-[var(--ad-text-muted)] hover:text-ink"
           aria-label="refresh"
         >
           <RefreshCw size={14} />
@@ -158,7 +158,7 @@ function ServicesTab({
     <div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-cta text-ink-grey border-b border-ink/10">
+          <tr className="text-left text-xs text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-muted)] border-b border-[var(--ad-border)]">
             <th className="pb-2 pr-3">{t("services.table.name")}</th>
             <th className="pb-2 pr-3">{t("services.table.category")}</th>
             <th className="pb-2 pr-3">{t("services.table.source")}</th>
@@ -170,7 +170,7 @@ function ServicesTab({
         </thead>
         <tbody>
           {services.map((s) => (
-            <tr key={s.id} className="border-b border-ink/5">
+            <tr key={s.id} className="border-b border-[var(--ad-border)]">
               <td className="py-2 pr-3">
                 <p className="font-semibold">{s.name_it}</p>
                 <p className="text-xs text-ink-grey">{s.slug}</p>
@@ -280,11 +280,11 @@ function ServiceEditForm({
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block text-xs">
-      <span className="block text-ink-grey mb-1">{label}</span>
+      <span className="block text-[var(--ad-text-muted)] mb-1">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-2 py-1.5 border border-ink/20 rounded text-sm"
+        className="w-full px-2 py-1.5 border border-[var(--ad-border-strong)] rounded text-sm"
       />
     </label>
   );
@@ -310,7 +310,7 @@ function IncidentsTab({
       <NewIncidentForm services={services} onCreated={(inc) => onChangeActive([inc, ...active])} t={t} />
 
       <section>
-        <h3 className="text-sm font-bold uppercase tracking-cta text-ink-grey mb-2">
+        <h3 className="text-sm font-bold text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-muted)] mb-2">
           {t("incidents.active")} ({active.length})
         </h3>
         {active.length === 0 ? (
@@ -331,7 +331,7 @@ function IncidentsTab({
       </section>
 
       <section>
-        <h3 className="text-sm font-bold uppercase tracking-cta text-ink-grey mb-2">
+        <h3 className="text-sm font-bold text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-muted)] mb-2">
           {t("incidents.recent")} ({recent.length})
         </h3>
         {recent.length === 0 ? (
@@ -396,16 +396,16 @@ function NewIncidentForm({
       <h3 className="font-bold mb-3 inline-flex items-center gap-2"><CircleAlert size={14} /> {t("incidents.new")}</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <label className="block text-xs">
-          <span className="block text-ink-grey mb-1">{t("incidents.fields.service")}</span>
-          <select value={service_slug} onChange={(e) => setService(e.target.value)} className="w-full px-2 py-1.5 border border-ink/20 rounded text-sm">
+          <span className="block text-[var(--ad-text-muted)] mb-1">{t("incidents.fields.service")}</span>
+          <select value={service_slug} onChange={(e) => setService(e.target.value)} className="w-full px-2 py-1.5 border border-[var(--ad-border-strong)] rounded text-sm">
             {services.filter((s) => s.active).map((s) => (
               <option key={s.slug} value={s.slug}>{s.name_it}</option>
             ))}
           </select>
         </label>
         <label className="block text-xs">
-          <span className="block text-ink-grey mb-1">{t("incidents.fields.severity")}</span>
-          <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="w-full px-2 py-1.5 border border-ink/20 rounded text-sm">
+          <span className="block text-[var(--ad-text-muted)] mb-1">{t("incidents.fields.severity")}</span>
+          <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="w-full px-2 py-1.5 border border-[var(--ad-border-strong)] rounded text-sm">
             <option value="minor">{severityLabel("minor", t)}</option>
             <option value="major">{severityLabel("major", t)}</option>
             <option value="critical">{severityLabel("critical", t)}</option>
@@ -417,12 +417,12 @@ function NewIncidentForm({
         <Field label="title_en" value={title_en} onChange={setTitle_en} />
       </div>
       <label className="block text-xs mt-3">
-        <span className="block text-ink-grey mb-1">body_it</span>
+        <span className="block text-[var(--ad-text-muted)] mb-1">body_it</span>
         <textarea
           value={body_it}
           onChange={(e) => setBody_it(e.target.value)}
           rows={3}
-          className="w-full px-2 py-1.5 border border-ink/20 rounded text-sm"
+          className="w-full px-2 py-1.5 border border-[var(--ad-border-strong)] rounded text-sm"
         />
       </label>
       <button type="submit" disabled={saving} className="btn btn-green inline-flex items-center gap-1 mt-3">
@@ -496,10 +496,10 @@ function IncidentCard({
 
       {incident.updates.length > 0 && (
         <details className="mt-2">
-          <summary className="text-xs text-ink-grey cursor-pointer">
+          <summary className="text-xs text-[var(--ad-text-muted)] cursor-pointer">
             {t("incidents.updates.title")} ({incident.updates.length})
           </summary>
-          <ol className="mt-2 space-y-1 border-l-2 border-ink/10 pl-3 text-xs">
+          <ol className="mt-2 space-y-1 border-l-2 border-[var(--ad-border)] pl-3 text-xs">
             {incident.updates.map((u) => (
               <li key={u.id}>
                 <p className="text-ink-grey">{new Date(u.created_at).toLocaleString()}</p>
@@ -515,7 +515,7 @@ function IncidentCard({
           value={message_it}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={t("incidents.updates.message_it")}
-          className="flex-1 px-2 py-1.5 border border-ink/20 rounded text-sm"
+          className="flex-1 px-2 py-1.5 border border-[var(--ad-border-strong)] rounded text-sm"
         />
         <button type="submit" disabled={posting} className="btn btn-outline inline-flex items-center gap-1 text-xs">
           <Activity size={12} /> {t("incidents.updates.submit")}
@@ -527,7 +527,7 @@ function IncidentCard({
 
 function IncidentSummary({ incident, t }: { incident: Incident; t: ReturnType<typeof useTranslations<"Admin.status">> }) {
   return (
-    <div className="border-b border-ink/5 py-2 text-sm">
+    <div className="border-b border-[var(--ad-border)] py-2 text-sm">
       <p className="font-medium">{incident.title_it}</p>
       <p className="text-xs text-ink-grey">
         {incident.service_slug} · {incident.severity} · {new Date(incident.resolved_at!).toLocaleString()}
@@ -545,12 +545,12 @@ function HistoryTab({
 }) {
   return (
     <div>
-      <p className="text-sm text-ink-grey mb-3">
+      <p className="text-sm text-[var(--ad-text-muted)] mb-3">
         Uptime % calculated by replaying StatusPeriod rows. Read-only — see <code>src/lib/status.ts</code>.
       </p>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-cta text-ink-grey border-b border-ink/10">
+          <tr className="text-left text-xs text-[10px] font-semibold uppercase tracking-wider text-[var(--ad-text-muted)] border-b border-[var(--ad-border)]">
             <th className="pb-2 pr-3">{t("services.table.name")}</th>
             <th className="pb-2 pr-3 text-right">{t("services.table.uptime")}</th>
             <th className="pb-2 pr-3 text-right">{t("services.table.uptime30d")}</th>
@@ -558,7 +558,7 @@ function HistoryTab({
         </thead>
         <tbody>
           {services.map((s) => (
-            <tr key={s.id} className="border-b border-ink/5">
+            <tr key={s.id} className="border-b border-[var(--ad-border)]">
               <td className="py-2 pr-3">
                 <p className="font-semibold">{s.name_it}</p>
                 <p className="text-xs text-ink-grey">{s.slug}</p>

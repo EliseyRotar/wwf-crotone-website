@@ -70,7 +70,7 @@ export default function UsersManager({
     <div className="grid lg:grid-cols-2 gap-8">
       <div className="card">
         <div className="card-body">
-          <h2 className="text-xl mb-4">{t("newUser")}</h2>
+          <h2 className="font-head text-xl text-[var(--ad-text)] mb-4">{t("newUser")}</h2>
           <form onSubmit={create} className="space-y-3">
             <div className="field">
               <label>{t("email")}</label>
@@ -117,23 +117,23 @@ export default function UsersManager({
       </div>
 
       <div>
-        <h2 className="text-xl mb-4">{t("existingUsers")} ({users.length})</h2>
+        <h2 className="font-head text-xl text-[var(--ad-text)] mb-4">{t("existingUsers")} ({users.length})</h2>
         <div className="space-y-2">
           {users.map((u) => {
             const expired = u.expiresAt && new Date(u.expiresAt).getTime() < Date.now();
             return (
-            <div key={u.id} className="flex items-center justify-between p-3 bg-surface border border-ink-grey-light">
+            <div key={u.id} className="flex items-center justify-between p-3 bg-surface border border-[var(--ad-border)]">
               <div>
-                <p className="font-bold">{u.email} {u.id === currentId && <span className="text-xs text-wwf-green">{t("you")}</span>}</p>
+                <p className="font-bold">{u.email} {u.id === currentId && <span className="text-xs text-[var(--ad-accent)]">{t("you")}</span>}</p>
                 <p className="text-xs text-ink-grey">
                   {u.role === "superadmin" ? t("superadmin") : t("manager")} — {u.name ?? "—"}
-                  {!u.active && <span className="text-wwf-red ml-2">{t("disabled")}</span>}
-                  {expired && <span className="text-wwf-red ml-2">{t("expired")}</span>}
+                  {!u.active && <span className="text-[var(--ad-danger)] ml-2">{t("disabled")}</span>}
+                  {expired && <span className="text-[var(--ad-danger)] ml-2">{t("expired")}</span>}
                   {u.expiresAt && !expired && <span className="ml-2">{t("expires")} {new Date(u.expiresAt).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}</span>}
                 </p>
               </div>
               {u.id !== currentId && (
-                <button onClick={() => del(u.id)} className="text-wwf-red hover:bg-wwf-red/10 p-2" aria-label={tC("delete")}>
+                <button onClick={() => del(u.id)} className="text-[var(--ad-danger)] hover:bg-[var(--ad-danger-soft)] p-2" aria-label={tC("delete")}>
                   <Trash2 size={16} />
                 </button>
               )}
