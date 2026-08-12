@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { notifyNewIscrizione, sendRegistrationConfirmation } from "@/lib/mail";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { validateOrigin } from "@/lib/csrf";
-import { getCampStart, isUnder18 } from "@/lib/turns";
+import { getCampStart, isUnder18, calcAge } from "@/lib/turns";
 import {
   signLookupToken,
   LOOKUP_COOKIE_NAME,
@@ -79,6 +79,7 @@ export async function POST(req: Request) {
 
     const { startDate: campStart } = await getCampStart();
     const ref = campStart || CAMP_START_FALLBACK;
+    const age = calcAge(birth, ref);
     const serverMinor = isUnder18(birth, ref);
     if (serverMinor !== d.isMinor) {
       return NextResponse.json({ ok: false, error: "minor-mismatch" }, { status: 400 });
@@ -209,15 +210,46 @@ export async function POST(req: Request) {
       throw err;
     }
 
-    // Notify admin (subject is "New registration received — …")
+    // Notify admin with the FULL iscrizione data (subject is "Nuova
+    // iscrizione ricevuta — …"). The HTML template is the redesigned
+    // responsive WWF-branded email.
+    const primaryTurno = turni.find((t) => t.id === primaryTurnoId)!;
+    const fmtDate = (d: Date) =>
+      d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
     void notifyNewIscrizione({
       firstName: d.firstName,
       lastName: d.lastName,
       email: d.email,
       phone: d.phone,
-      turno: `${turni.map((t) => `Campo ${t.number}`).join(" + ")} (${turni.length} ${d.locale === "it" ? "settimane" : "weeks"})`,
+      birthDate: d.birthDate,
+      age: age,
       isMinor: serverMinor,
-      locale: d.locale
+      guardianName: d.guardianName,
+      guardianEmail: d.guardianEmail,
+      guardianPhone: d.guardianPhone,
+      guardianConsent: d.guardianConsent,
+      allergies: d.allergies,
+      medications: d.medications,
+      swimmingAbility: d.swimmingAbility,
+      tetanusStatus: d.tetanusStatus,
+      fitnessSelf: d.fitnessSelf,
+      dietaryNeeds: d.dietaryNeeds,
+      dietaryNotes: d.dietaryNotes,
+      tshirtSize: d.tshirtSize,
+      arrivalMode: d.arrivalMode,
+      arrivalTime: d.arrivalTime,
+      departureTime: d.departureTime,
+      privacyConsent: d.privacyConsent,
+      marketingConsent: d.marketingConsent ?? false,
+      imageDataConsent: d.imageDataConsent ?? false,
+      turno: `Campo ${primaryTurno.number}`,
+      turnoStart: fmtDate(primaryTurno.startDate),
+      turnoEnd: fmtDate(primaryTurno.endDate),
+      extraTurni: uniqueTurnoIds.length > 1
+        ? turni.filter((t) => t.id !== primaryTurnoId).map((t) => `Campo ${t.number}`)
+        : undefined,
+      locale: d.locale,
+      adminPanelUrl: (process.env.NEXT_PUBLIC_SITE_URL ?? "") + "/admin/iscrizioni"
     });
 
     // Phase 2: mint a 24h verification token for the new Iscrizione
@@ -231,7 +263,7 @@ export async function POST(req: Request) {
         24 * 60 * 60 * 1000
       );
       const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/+$/, "");
-      const verifyUrl = `${siteBase}/it/account/verify?token=${encodeURIComponent(rawToken)}&locale=${d.locale}`;
+      const verifyUrl = `${siteBase}/${d.locale}/account/verify?token=${encodeURIComponent(rawToken)}`;
       void sendRegistrationConfirmation({
         to: d.email.toLowerCase(),
         firstName: d.firstName,
