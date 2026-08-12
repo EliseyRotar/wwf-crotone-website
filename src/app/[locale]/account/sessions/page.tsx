@@ -59,7 +59,7 @@ export default async function AccountSessionsPage({
     isCurrent: currentId !== null && r.id === currentId
   }));
 
-  const t = await getTranslations({ locale, namespace: "Account.sessions" });
+  const t = await getTranslations("Account.sessions");
 
   return (
     <main className="container section max-w-2xl space-y-6">
