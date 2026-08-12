@@ -94,39 +94,164 @@ export async function notifyNewIscrizione(data: {
   lastName: string;
   email: string;
   phone: string;
-  turno: string;
+  birthDate: string | null;
+  age: number | null;
   isMinor: boolean;
+  guardianName?: string | null;
+  guardianEmail?: string | null;
+  guardianPhone?: string | null;
+  guardianConsent?: boolean;
+  allergies?: string | null;
+  medications?: string | null;
+  swimmingAbility?: string | null;
+  tetanusStatus?: string | null;
+  fitnessSelf?: string | null;
+  dietaryNeeds?: string | null;
+  dietaryNotes?: string | null;
+  tshirtSize?: string | null;
+  arrivalMode?: string | null;
+  arrivalTime?: string | null;
+  departureTime?: string | null;
+  privacyConsent: boolean;
+  marketingConsent: boolean;
+  imageDataConsent: boolean;
+  notes?: string | null;
+  turno: string;
+  turnoStart?: string;
+  turnoEnd?: string;
+  extraTurni?: string[];
   locale: string;
+  adminPanelUrl?: string;
 }) {
-  const fn = escapeHtml(data.firstName);
-  const ln = escapeHtml(data.lastName);
-  const em = escapeHtml(data.email);
-  const ph = escapeHtml(data.phone);
-  const turn = escapeHtml(data.turno);
-  const subject = `New registration received — ${data.firstName} ${data.lastName} (${data.turno})`.replace(/[\r\n]/g, " ");
-  const text = `
-Nuova iscrizione al campo di volontariato WWF Crotone.
+  // ─── HTML email ───
+  // Inline CSS only (Gmail / Outlook strip <style> blocks).
+  // Layout is a 2-column key/value grid that stacks on narrow viewports.
+  const escapeHtml = (s: string | null | undefined) =>
+    String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 
-Nome: ${data.firstName} ${data.lastName}
+  const yesNo = (v: boolean) => (v ? "✅ Sì" : "❌ No");
+  const turnoDisplay = data.turno + (data.turnoStart && data.turnoEnd ? ` (${data.turnoStart} → ${data.turnoEnd})` : "");
+  const extraTurniHtml = data.extraTurni && data.extraTurni.length > 0
+    ? `<tr><td style="padding:6px 10px;border-bottom:1px solid #f0e6da;background:#fdfaf5;width:35%;color:#707070;font-size:13px;vertical-align:top"><strong>Altri turni</strong></td><td style="padding:6px 10px;border-bottom:1px solid #f0e6da;font-size:14px;color:#101010">${data.extraTurni.map(escapeHtml).join(", ")}</td></tr>`
+    : "";
+
+  const adminUrl = data.adminPanelUrl ?? (process.env.NEXT_PUBLIC_SITE_URL ?? "") + "/admin/iscrizioni";
+
+  const rows = [
+    ["<strong>Nome e cognome</strong>", `${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}`],
+    ["<strong>Email</strong>", `<a href="mailto:${escapeHtml(data.email)}" style="color:#007932;text-decoration:underline">${escapeHtml(data.email)}</a>`],
+    ["<strong>Telefono</strong>", `<a href="tel:${escapeHtml(data.phone)}" style="color:#007932;text-decoration:underline">${escapeHtml(data.phone)}</a>`],
+    ["<strong>Data di nascita</strong>", `${escapeHtml(data.birthDate ?? "—")} (${data.age ?? "—"} anni)`],
+    ["<strong>Turno principale</strong>", escapeHtml(turnoDisplay)],
+    extraTurniHtml,
+    ["<strong>Minorenne</strong>", data.isMinor ? "✅ Sì" : "❌ No"],
+    data.isMinor
+      ? [
+          "<strong>Genitore/tutore</strong>",
+          `${escapeHtml(data.guardianName ?? "—")} · ${escapeHtml(data.guardianEmail ?? "—")} · ${escapeHtml(data.guardianPhone ?? "—")}<br/><small style="color:#707070">Consenso firmato: ${yesNo(!!data.guardianConsent)}</small>`
+        ]
+      : [],
+    [
+      "<strong>Allergie / condizioni mediche</strong>",
+      data.allergies
+        ? `<span style="color:#ed2b00;font-weight:600">${escapeHtml(data.allergies)}</span>`
+        : '<span style="color:#9c9c98">Nessuna</span>'
+    ],
+    ["<strong>Farmaci</strong>", escapeHtml(data.medications) || '<span style="color:#9c9c98">Nessuno</span>'],
+    ["<strong>Nuoto</strong>", escapeHtml(data.swimmingAbility) || "—"],
+    ["<strong>Tetano</strong>", escapeHtml(data.tetanusStatus) || "—"],
+    ["<strong>Autovalutazione forma fisica</strong>", escapeHtml(data.fitnessSelf) || "—"],
+    ["<strong>Esigenze alimentari</strong>", escapeHtml(data.dietaryNeeds) || "Nessuna"],
+    ["<strong>Note alimentari</strong>", escapeHtml(data.dietaryNotes) || "—"],
+    ["<strong>Taglia T-shirt</strong>", escapeHtml(data.tshirtSize) || "—"],
+    [
+      "<strong>Modalità di arrivo</strong>",
+      `${escapeHtml(data.arrivalMode) || "—"}` +
+        (data.arrivalTime ? ` &nbsp;<small style="color:#707070">ore ${escapeHtml(data.arrivalTime)}</small>` : "") +
+        (data.departureTime ? ` &nbsp;<small style="color:#707070">partenza ore ${escapeHtml(data.departureTime)}</small>` : "")
+    ],
+    [
+      "<strong>Consensi</strong>",
+      `Privacy: ${yesNo(data.privacyConsent)}<br/>Marketing: ${yesNo(data.marketingConsent)}<br/>Immagini: ${yesNo(data.imageDataConsent)}<br/>`
+    ],
+    ["<strong>Note admin (lasciate dal volontario)</strong>", escapeHtml(data.notes) || '<span style="color:#9c9c98">Nessuna</span>']
+  ].flat().filter(Boolean);
+
+  const rowsHtml = rows
+    .map(
+      (pair) =>
+        `<tr><td style="padding:8px 12px;border-bottom:1px solid #f0e6da;background:#fdfaf5;width:35%;color:#707070;font-size:13px;vertical-align:top"><strong>${pair[0]}</strong></td><td style="padding:8px 12px;border-bottom:1px solid #f0e6da;font-size:14px;color:#101010;line-height:1.4">${pair[1]}</td></tr>`
+    )
+    .join("");
+
+  const subject = `Nuova iscrizione ricevuta — ${data.firstName} ${data.lastName} (${data.turno})`.replace(/[\r\n]/g, " ");
+
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${subject}</title></head>
+<body style="margin:0;padding:0;background:#f6f2ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;color:#101010">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f6f2ed;padding:24px 16px">
+  <tr><td align="center">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #cecece;border-radius:8px;overflow:hidden">
+      <!-- Header -->
+      <tr><td style="background:#007932;padding:20px 24px;color:#ffffff;font-family:Oswald,'Arial Narrow',Arial,sans-serif">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr>
+          <td style="vertical-align:middle">
+            <p style="margin:0;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;opacity:0.85">WWF Crotone · Pannello admin</p>
+            <h1 style="margin:4px 0 0;font-size:22px;font-weight:600;letter-spacing:-0.01em">Nuova iscrizione ricevuta</h1>
+          </td>
+        </tr></table>
+      </td></tr>
+      <!-- Intro -->
+      <tr><td style="padding:24px 24px 8px;font-size:15px;line-height:1.5">
+        <p style="margin:0 0 8px"><strong>${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}</strong> ha appena inviato il modulo di iscrizione al campo di volontariato.</p>
+        <p style="margin:0;color:#707070;font-size:13px">Ricevuta il ${new Date().toLocaleString("it-IT", { dateStyle: "full", timeStyle: "short" })} · lingua: ${escapeHtml(data.locale).toUpperCase()}</p>
+      </td></tr>
+      <!-- All details -->
+      <tr><td style="padding:8px 16px 16px">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border:1px solid #f0e6da;border-radius:6px;overflow:hidden">
+          ${rowsHtml}
+        </table>
+      </td></tr>
+      <!-- CTA -->
+      <tr><td align="center" style="padding:8px 24px 24px">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td style="background:#007932;border-radius:6px">
+          <a href="${escapeHtml(adminUrl)}" style="display:inline-block;padding:12px 24px;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:0.01em">Apri nel pannello admin →</a>
+        </td></tr></table>
+        <p style="margin:12px 0 0;color:#9c9c98;font-size:12px">Il link apre direttamente /admin/iscrizioni filtrato sul turno.</p>
+      </td></tr>
+      <!-- Footer -->
+      <tr><td style="background:#fdfaf5;padding:14px 24px;border-top:1px solid #f0e6da;color:#707070;font-size:11px;line-height:1.5">
+        <p style="margin:0">Inviato automaticamente dal sistema di iscrizioni di <strong style="color:#007932">wwfcrotone.it</strong>. Non rispondere a questa email.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+
+  const text = `
+Nuova iscrizione al campo di volontariato WWF Crotone
+Ricevuta il ${new Date().toLocaleString("it-IT")} · lingua: ${data.locale}
+
+Nome e cognome: ${data.firstName} ${data.lastName}
 Email: ${data.email}
 Telefono: ${data.phone}
-Turno: ${data.turno}
-Minorenne: ${data.isMinor ? "Sì" : "No"}
-Lingua: ${data.locale}
+Data di nascita: ${data.birthDate ?? "—"} (${data.age ?? "—"} anni)
+Turno principale: ${turnoDisplay}
+${data.extraTurni && data.extraTurni.length > 0 ? `Altri turni: ${data.extraTurni.join(", ")}\n` : ""}Minorenne: ${data.isMinor ? "Sì" : "No"}
+${data.isMinor ? `Genitore/tutore: ${data.guardianName ?? "—"} · ${data.guardianEmail ?? "—"} · ${data.guardianPhone ?? "—"} (consenso firmato: ${data.guardianConsent ? "Sì" : "No"})\n` : ""}Allergie/condizioni mediche: ${data.allergies ?? "Nessuna"}
+Farmaci: ${data.medications ?? "Nessuno"}
+Nuoto: ${data.swimmingAbility ?? "—"}
+Tetano: ${data.tetanusStatus ?? "—"}
+Autovalutazione forma fisica: ${data.fitnessSelf ?? "—"}
+Esigenze alimentari: ${data.dietaryNeeds ?? "Nessuna"}
+Note alimentari: ${data.dietaryNotes ?? "—"}
+Taglia T-shirt: ${data.tshirtSize ?? "—"}
+Modalità di arrivo: ${data.arrivalMode ?? "—"}${data.arrivalTime ? ` ore ${data.arrivalTime}` : ""}${data.departureTime ? ` (partenza ore ${data.departureTime})` : ""}
+Consensi: privacy=${data.privacyConsent ? "Sì" : "No"}, marketing=${data.marketingConsent ? "Sì" : "No"}, immagini=${data.imageDataConsent ? "Sì" : "No"}
+Note admin: ${data.notes ?? "Nessuna"}
 
-Vedi il pannello admin per i dettagli completi.
-`.trim();
-  const html = `
-<h2>Nuova iscrizione al campo di volontariato WWF Crotone</h2>
-<table style="border-collapse:collapse">
-  <tr><th style="text-align:left;padding:4px 12px;border:1px solid #cecece">Nome</th><td style="padding:4px 12px;border:1px solid #cecece">${fn} ${ln}</td></tr>
-  <tr><th style="text-align:left;padding:4px 12px;border:1px solid #cecece">Email</th><td style="padding:4px 12px;border:1px solid #cecece">${em}</td></tr>
-  <tr><th style="text-align:left;padding:4px 12px;border:1px solid #cecece">Telefono</th><td style="padding:4px 12px;border:1px solid #cecece">${ph}</td></tr>
-  <tr><th style="text-align:left;padding:4px 12px;border:1px solid #cecece">Turno</th><td style="padding:4px 12px;border:1px solid #cecece">${turn}</td></tr>
-  <tr><th style="text-align:left;padding:4px 12px;border:1px solid #cecece">Minorenne</th><td style="padding:4px 12px;border:1px solid #cecece">${data.isMinor ? "Sì" : "No"}</td></tr>
-</table>
-<p style="margin-top:16px;color:#707070">Vedi il pannello admin per i dettagli completi.</p>
+Apri nel pannello admin: ${adminUrl}
   `.trim();
+
   return sendNotification({
     to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
     subject,
