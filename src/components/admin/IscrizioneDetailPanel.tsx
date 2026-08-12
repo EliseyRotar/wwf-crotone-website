@@ -77,11 +77,11 @@ function esc(s: string): string {
 function Row({ label, value, warn }: { label: string; value: React.ReactNode; warn?: boolean }) {
   if (value === null || value === undefined || value === "") return null;
   return (
-    <div className="grid grid-cols-[160px_1fr] gap-3 py-2 border-b border-[var(--ad-border)] text-sm">
-      <span className="text-[var(--ad-text-subtle)] text-xs uppercase tracking-wider pt-0.5">
+    <div className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] sm:grid-cols-[10rem_minmax(0,1fr)] gap-2 sm:gap-3 py-2 border-b border-[var(--ad-border)] text-sm">
+      <span className="text-[var(--ad-text-subtle)] text-[11px] uppercase tracking-wider pt-0.5 truncate">
         {label}
       </span>
-      <span className={warn ? "text-[var(--ad-danger)] font-medium" : "text-[var(--ad-text)]"}>
+      <span className={warn ? "text-[var(--ad-danger)] font-medium break-words" : "text-[var(--ad-text)] break-words"}>
         {value}
       </span>
     </div>
@@ -292,7 +292,7 @@ export default function IscrizioneDetailPanel({
         className="relative ml-auto w-full max-w-xl h-full bg-[var(--ad-bg-elevated)] border-l border-[var(--ad-border)] flex flex-col animate-[slide-in-right_240ms_cubic-bezier(0.16,1,0.3,1)]"
       >
         {/* Header */}
-        <header className="px-6 py-4 border-b border-[var(--ad-border)] shrink-0">
+        <header className="px-4 sm:px-6 py-4 border-b border-[var(--ad-border)] shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -348,7 +348,7 @@ export default function IscrizioneDetailPanel({
         </header>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-2">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-2">
           {error && (
             <div className="mb-4 p-3 rounded-[var(--radius-sm)] bg-[var(--ad-danger-soft)] border border-[var(--ad-danger)]/30 text-sm text-[var(--ad-danger)]">
               {error}
