@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Loader2, AlertTriangle, Mail, Check } from "lucide-react";
 
 type Status =
   | { kind: "idle" }
@@ -16,14 +17,37 @@ type Status =
  * same generic "ok" response — the success message we show to the
  * user is therefore the same whether or not the address matches an
  * account. This is the intended security property.
+ *
+ * If the page is reached with `?error=invalid-or-expired|used|expired`
+ * in the query (the user clicked a magic link that was bad), we render
+ * a prominent warning banner above the form explaining what happened
+ * and suggesting they request a new link.
  */
 export default function AccountLoginClient() {
   const t = useTranslations("Account.login");
   const tErr = useTranslations("Account.errors");
   const loc = useLocale();
+  const sp = useSearchParams();
   const [email, setEmail] = useState("");
   const [remember, setRemember] = useState(true);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+
+  // Read the `?error=...` query (set by /api/account/redeem on failure).
+  const urlError = sp.get("error");
+  const showBanner =
+    urlError !== null &&
+    (urlError === "invalid-or-expired" ||
+      urlError === "used" ||
+      urlError === "expired" ||
+      urlError === "rate-limited" ||
+      urlError === "server");
+
+  // If the URL has `?email=foo@bar`, pre-fill the field so the user
+  // only has to click "Send new link" instead of typing again.
+  useEffect(() => {
+    const e = sp.get("email");
+    if (e && !email) setEmail(e);
+  }, [sp, email]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,15 +75,42 @@ export default function AccountLoginClient() {
     }
   }
 
+  const bannerMessage =
+    urlError && showBanner
+      ? tErr(urlError as "invalid-or-expired" | "used" | "expired" | "rate-limited" | "server") ||
+        tErr("invalid-or-expired")
+      : null;
+
   return (
     <div className="container section max-w-md">
       <h1 className="text-3xl md:text-4xl mb-3">{t("title")}</h1>
       <p className="text-ink-2 mb-6">{t("intro")}</p>
 
+      {showBanner && bannerMessage && (
+        <div
+          role="alert"
+          data-testid="login-error-banner"
+          className="mb-6 p-4 bg-wwf-orange/10 border-l-4 border-wwf-orange rounded-r-md flex gap-3 items-start"
+        >
+          <AlertTriangle
+            size={20}
+            className="text-wwf-orange shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
+          <div className="text-sm text-ink-2">
+            <p className="font-bold mb-1 text-ink">{t("errorTitle")}</p>
+            <p>{bannerMessage}</p>
+          </div>
+        </div>
+      )}
+
       {status.kind === "sent" ? (
         <div className="card" data-testid="account-sent">
           <div className="card-body">
-            <h2 className="text-lg mb-2">{t("sentTitle")}</h2>
+            <div className="flex items-center gap-2 mb-2">
+              <Check size={20} className="text-wwf-green" aria-hidden="true" />
+              <h2 className="text-lg">{t("sentTitle")}</h2>
+            </div>
             <p className="text-ink-2">{t("sentBody", { email: status.email })}</p>
             <p className="text-sm text-ink-grey mt-3">{t("sentExpiry")}</p>
           </div>
@@ -98,10 +149,12 @@ export default function AccountLoginClient() {
               className="btn btn-primary w-full flex items-center justify-center gap-2"
               disabled={status.kind === "sending"}
             >
-              {status.kind === "sending" && (
+              {status.kind === "sending" ? (
                 <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Mail size={16} aria-hidden="true" />
               )}
-              {t("submit")}
+              {status.kind === "sending" ? t("sending") : t("submit")}
             </button>
             {status.kind === "error" && (
               <p className="text-sm text-tag-red" role="alert">
