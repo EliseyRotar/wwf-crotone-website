@@ -3,12 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getAccountSession } from "@/lib/accountSession";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
 import { sendNotification } from "@/lib/mail";
 import { SITE } from "@/config/site";
 import { logAudit } from "@/lib/audit";
+import { uploadReceipt } from "@/lib/r2Upload";
+import { advanceStatus } from "@/lib/userFlow";
 
 export const dynamic = "force-dynamic";
 
@@ -127,50 +126,61 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "already-paid" }, { status: 409 });
     }
 
-    const buf = Buffer.from(await file.arrayBuffer());
-    if (!validateMagicBytes(buf, file.type)) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!validateMagicBytes(Buffer.from(bytes), file.type)) {
       return NextResponse.json({ ok: false, error: "invalid-content" }, { status: 400 });
     }
 
-    const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-    const filename = `${crypto.randomUUID()}.${ext}`;
-    const dir = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "receipts",
-      iscrizione.id,
-      type
-    );
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, filename), buf);
-    const publicPath = `/uploads/receipts/${iscrizione.id}/${type}/${filename}`;
+    // Upload to R2 (Phase 2 storage). Same r2Upload helper as the
+    // /api/iscrizione/[id]/upload-receipt endpoint so both volunteer
+    // entry points feed the same admin panel.
+    let uploaded;
+    try {
+      const fakeFile = new File([bytes], file.name || "receipt", { type: file.type });
+      uploaded = await uploadReceipt(fakeFile, iscrizione.id, type as "deposit" | "balance");
+    } catch (err) {
+      console.error("R2 upload failed:", err);
+      return NextResponse.json({ ok: false, error: "upload-failed" }, { status: 502 });
+    }
+
+    // Persist the ReceiptUpload row (the canonical record — the admin
+    // /admin/iscrizioni panel reads from this table via R2 proxy).
+    await prisma.receiptUpload.create({
+      data: {
+        iscrizioneId: iscrizione.id,
+        type,
+        objectKey: uploaded.objectKey,
+        url: uploaded.url,
+        originalName: uploaded.originalName,
+        mimeType: uploaded.mimeType,
+        byteSize: uploaded.byteSize,
+        sha256: uploaded.sha256
+      }
+    });
 
     const data: Record<string, unknown> = {};
     const now = new Date();
     if (type === "deposit") {
-      data.depositReceiptUrl = publicPath;
+      data.depositReceiptUrl = uploaded.url;
       data.depositReceiptUploadedAt = now;
       data.feePaid = true;
       data.feePaidDate = now;
     } else {
-      data.balanceReceiptUrl = publicPath;
+      data.balanceReceiptUrl = uploaded.url;
       data.balanceReceiptUploadedAt = now;
       data.balancePaid = true;
       data.balancePaidDate = now;
     }
 
     await prisma.iscrizione.update({ where: { id: iscrizione.id }, data });
-    // Also create a row in the legacy `Receipt` table so the admin
-    // list of receipts stays in sync with the new columns.
-    await prisma.receipt.create({
-      data: {
-        iscrizioneId: iscrizione.id,
-        fileName: file.name,
-        filePath: publicPath,
-        mimeType: file.type
-      }
-    });
+
+    // Phase 2: if the user uploaded a receipt, the lifecycle status
+    // should now be "receipt_uploaded" (admin will flip to confirmed).
+    if (iscrizione.status === "pending" || iscrizione.status === "email_verified") {
+      await advanceStatus(iscrizione.id, "receipt_uploaded", { skipNotification: false }).catch((err) =>
+        console.error("[legacy-receipt] advanceStatus failed:", err)
+      );
+    }
 
     // Audit + admin notification (best-effort)
     const ip = clientKey(req);
@@ -180,7 +190,7 @@ export async function POST(
       action: "receipt_upload",
       entity: "iscrizione",
       entityId: iscrizione.id,
-      details: JSON.stringify({ type, filePath: publicPath }),
+      details: JSON.stringify({ type, objectKey: uploaded.objectKey }),
       ipAddress: ip,
       userAgent: ua
     });
@@ -190,7 +200,7 @@ export async function POST(
 
 In attesa di approvazione.
 ID Iscrizione: ${iscrizione.id}
-File: ${publicPath}
+File: ${uploaded.objectKey}
 
 Vedi: /admin/iscrizioni/${iscrizione.id}`;
 
@@ -221,7 +231,7 @@ Vedi: /admin/iscrizioni/${iscrizione.id}`;
       console.error("[receipt] notification row failed:", err);
     }
 
-    return NextResponse.json({ ok: true, path: publicPath, type });
+    return NextResponse.json({ ok: true, path: uploaded.url, type });
   } catch (err) {
     console.error("receipt upload error:", err);
     return NextResponse.json({ ok: false, error: "server" }, { status: 500 });
