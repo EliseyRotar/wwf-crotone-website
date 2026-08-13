@@ -1,13 +1,12 @@
-import { consumeVerificationToken, advanceStatus } from "@/lib/userFlow";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
-import { setAccountCookie } from "@/lib/accountSession";
+import { createHash } from "node:crypto";
 
 type Outcome =
-  | { kind: "ok"; firstName: string; iscrizioneId: string }
-  | { kind: "already-verified"; firstName: string }
+  | { kind: "ready"; firstName: string; iscrizioneId: string; token: string }
+  | { kind: "already-verified"; firstName: string; iscrizioneId: string; token: string }
   | { kind: "invalid-token" }
   | { kind: "expired" }
   | { kind: "server-error"; message: string };
@@ -16,12 +15,20 @@ type Outcome =
  * /[locale]/account/verify?token=...&locale=...
  *
  * Lands here when a volunteer clicks the verify-email link from their
- * registration confirmation mail. We redeem the token server-side,
- * advance the Iscrizione lifecycle from "pending" → "email_verified",
- * and render a confirmation card with a CTA to upload the receipt.
+ * registration confirmation mail. We render an interstitial card that
+ * confirms the email — but we DO NOT consume the token here, because
+ * Server Components in Next.js 15 can't write cookies, and we need
+ * to set the session cookie so the "Carica la ricevuta" CTA lands
+ * the user on the receipts page logged in.
  *
- * We deliberately do this in a Server Component (no client-side JS) —
- * the user just opened an email link, no SPA needed.
+ * The actual consume + cookie + 302-redirect lives in the companion
+ * Route Handler at /api/account/verify-email. The CTA button links
+ * to that endpoint; clicking it does the verify + login + redirect
+ * in a single round-trip.
+ *
+ * If the user reads the success message and walks away without
+ * clicking the CTA, that's fine — the token expires 24h after it was
+ * issued.
  */
 export default async function VerifyEmailPage({
   params,
@@ -41,14 +48,8 @@ export default async function VerifyEmailPage({
 
   // Hash the raw token the same way createVerificationTokenForIscrizione
   // does, then look up by the unique tokenHash column.
-  const crypto = await import("node:crypto");
-  const tokenHash = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  const tokenHash = createHash("sha256").update(token).digest("base64")
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
   const candidate = await prisma.iscrizioneVerificationToken.findUnique({
     where: { tokenHash },
@@ -64,67 +65,43 @@ export default async function VerifyEmailPage({
     return <VerifyLayout outcome={{ kind: "expired" }} t={t} locale={locale} />;
   }
 
-  // If already past email_verified, just confirm idempotently — and
-  // also log them in so the "go to panel" CTA doesn't bounce back
-  // through the magic-link round-trip.
+  // Already verified → still show the success page (idempotent), with a
+  // CTA that goes through the API route to log the user in.
   if (
     candidate.iscrizione.status === "email_verified" ||
     candidate.iscrizione.status === "receipt_uploaded" ||
     candidate.iscrizione.status === "confirmed" ||
     candidate.iscrizione.status === "paid"
   ) {
-    try {
-      await setAccountCookie(candidate.iscrizione.id);
-    } catch (err) {
-      console.error("[verify] setAccountCookie (already-verified) failed:", err);
-    }
     return (
       <VerifyLayout
-        outcome={{ kind: "already-verified", firstName: candidate.iscrizione.firstName }}
+        outcome={{
+          kind: "already-verified",
+          firstName: candidate.iscrizione.firstName,
+          iscrizioneId: candidate.iscrizione.id,
+          token
+        }}
         t={t}
         locale={locale}
       />
     );
   }
 
-  let outcome: Outcome;
-  try {
-    const iscrizioneId = await consumeVerificationToken(token, "email_verified");
-    if (!iscrizioneId || iscrizioneId !== candidate.iscrizione.id) {
-      outcome = { kind: "invalid-token" };
-    } else {
-      const updated = await advanceStatus(candidate.iscrizione.id, "email_verified", {
-        skipNotification: false
-      });
-      if (!updated) {
-        outcome = { kind: "server-error", message: "advanceStatus failed" };
-      } else {
-        // Log the user straight in so the "upload receipt" CTA lands on the
-        // receipts page without a second round-trip through /account/login.
-        // 24-hour cookie is fine — this is a one-off, low-trust verify link
-        // from a confirmation email; the user can tick "remember this device"
-        // from inside the panel if they want the 30-day cookie.
-        try {
-          await setAccountCookie(updated.id);
-        } catch (err) {
-          console.error("[verify] setAccountCookie failed:", err);
-          // Non-fatal: we still show the success page; the user just has to
-          // sign in via the magic link. Better to degrade gracefully than to
-          // undo the verification.
-        }
-        outcome = {
-          kind: "ok",
-          firstName: updated.firstName,
-          iscrizioneId: updated.id
-        };
-      }
-    }
-  } catch (err) {
-    console.error("[verify] redeem failed:", err);
-    outcome = { kind: "server-error", message: String(err) };
-  }
-
-  return <VerifyLayout outcome={outcome} t={t} locale={locale} />;
+  // Token is still valid, iscrizione is still pending. Render the
+  // interstitial; the CTA will trigger the actual consume + cookie
+  // + redirect via the API route.
+  return (
+    <VerifyLayout
+      outcome={{
+        kind: "ready",
+        firstName: candidate.iscrizione.firstName,
+        iscrizioneId: candidate.iscrizione.id,
+        token
+      }}
+      t={t}
+      locale={locale}
+    />
+  );
 }
 
 function VerifyLayout({
@@ -150,8 +127,14 @@ function VerifyLayout({
     </main>
   );
 
+  // Build the API URL for the CTA. Same endpoint does consume + cookie +
+  // 302-redirect, so the click lands the user logged-in on the receipts
+  // page.
+  const apiHref = (tok: string) =>
+    `/api/account/verify-email?token=${encodeURIComponent(tok)}&locale=${locale}`;
+
   switch (outcome.kind) {
-    case "ok":
+    case "ready":
       return card(
         <>
           <h1 className="text-2xl sm:text-3xl mb-2">{t("successTitle")}</h1>
@@ -160,7 +143,7 @@ function VerifyLayout({
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
-              href={`/account/bookings/${outcome.iscrizioneId}/receipts`}
+              href={apiHref(outcome.token)}
               className="btn btn-primary flex items-center justify-center gap-2"
             >
               {t("uploadReceiptCta")}
@@ -184,7 +167,8 @@ function VerifyLayout({
             {t("alreadyBody", { name: outcome.firstName })}
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/account" className="btn btn-primary">
+            {/* API route sets the cookie + redirects to /account */}
+            <Link href={apiHref(outcome.token)} className="btn btn-primary">
               {t("goToPanel")}
             </Link>
           </div>
