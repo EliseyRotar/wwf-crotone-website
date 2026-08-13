@@ -12,20 +12,18 @@ type Session = {
   lastSeenAt: string;
   expiresAt: string;
   isCurrent: boolean;
+  lastSeenLabel: string;
+  expiresOnLabel: string;
 };
 
 type Labels = {
   revoke: string;
   revokeOthers: string;
   currentLabel: string;
-  never: string;
   browserFallback: string;
-  expiresOn: string;
-  lastSeen: string;
   backLink: string;
   empty: string;
   error: string;
-  confirming: string;
 };
 
 const UA_PATTERNS: { match: RegExp; icon: typeof Monitor; label: string }[] = [
@@ -54,36 +52,12 @@ function describe(ua: string | null, fallback: string) {
   };
 }
 
-function fmtRelative(iso: string, neverLabel: string): string {
-  const t = new Date(iso).getTime();
-  if (!Number.isFinite(t)) return neverLabel;
-  const diff = Date.now() - t;
-  const min = Math.floor(diff / 60_000);
-  if (min < 1) return "ora";
-  if (min < 60) return `${min} min fa`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `${h} ore fa`;
-  const d = Math.floor(h / 24);
-  if (d < 30) return `${d} giorni fa`;
-  return new Date(iso).toLocaleDateString("it-IT");
-}
-
-function fmtDate(iso: string, locale: string): string {
-  return new Date(iso).toLocaleDateString(locale === "it" ? "it-IT" : "en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  });
-}
-
 export default function AccountSessionsClient({
   initial,
-  labels,
-  locale
+  labels
 }: {
   initial: Session[];
   labels: Labels;
-  locale: string;
 }) {
   const router = useRouter();
   const [sessions, setSessions] = useState(initial);
@@ -161,11 +135,9 @@ export default function AccountSessionsClient({
                       </span>
                     )}
                   </p>
+                  <p className="text-xs text-ink-grey tabular-nums">{s.lastSeenLabel}</p>
                   <p className="text-xs text-ink-grey tabular-nums">
-                    {labels.lastSeen.replace("{when}", fmtRelative(s.lastSeenAt, labels.never))}
-                  </p>
-                  <p className="text-xs text-ink-grey tabular-nums">
-                    {labels.expiresOn.replace("{date}", fmtDate(s.expiresAt, locale))}
+                    {s.expiresOnLabel}
                     {s.ipAddress && (
                       <span className="ml-2 font-mono">{s.ipAddress}</span>
                     )}
@@ -208,7 +180,7 @@ export default function AccountSessionsClient({
 
       <div className="pt-2">
         <Link
-          href={`/${locale}/account`}
+          href="/account"
           className="inline-flex items-center gap-1 text-sm text-ink-grey hover:text-ink"
         >
           ← {labels.backLink}
