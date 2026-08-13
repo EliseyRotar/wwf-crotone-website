@@ -74,7 +74,7 @@ export async function GET(req: Request) {
       } catch (err) {
         console.error("[verify-email] setAccountCookie (already-verified) failed:", err);
       }
-      return redirectTo("/account", { verified: "already" }, req);
+      return redirectTo(`/${locale}/account`, { verified: "already" }, req);
     }
 
     // First-time verify → consume token, advance status, log in,
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
       // Non-fatal: user can still sign in via the magic link.
     }
 
-    return redirectTo(`/account/bookings/${updated.id}/receipts`, {}, req);
+    return redirectTo(`/${locale}/account/bookings/${updated.id}/receipts`, {}, req);
   } catch (err) {
     console.error("verify-email GET error:", err);
     return redirectTo(`/${locale}/account/verify`, { error: "server" }, req);
