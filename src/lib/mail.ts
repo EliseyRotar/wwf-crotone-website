@@ -702,28 +702,81 @@ export async function sendReceiptUploadedAdminNotification(iscrizione: {
 }): Promise<{ ok: boolean; error?: string }> {
   const latest = iscrizione.receiptUploads[iscrizione.receiptUploads.length - 1];
   const typeLabel = latest?.type === "balance" ? "saldo" : "acconto";
-  const typeLabelEn = latest?.type === "balance" ? "balance" : "deposit";
   const subject = `[WWF] Ricevuta ${typeLabel} caricata — ${iscrizione.firstName} ${iscrizione.lastName}`;
   const safeName = escapeHtml(`${iscrizione.firstName} ${iscrizione.lastName}`);
   const safeEmail = escapeHtml(iscrizione.email);
   const safeTurno = iscrizione.turno ? `Campo ${iscrizione.turno.number}` : "—";
-  const isAdmin = true;
-  void isAdmin;
+  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? `https://${SITE.domain}`}/admin/iscrizioni/${iscrizione.id}`;
+  const turnoBadge = iscrizione.turno
+    ? `<span style="display:inline-block;background:#e6f4ea;color:#007932;padding:3px 10px;border-radius:12px;font-size:13px;font-weight:600">${escapeHtml(`Campo ${iscrizione.turno.number}`)}</span>`
+    : `<span style="color:#707070">—</span>`;
+  const typeBadge = `<span style="display:inline-block;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:12px;font-size:13px;font-weight:600">${typeLabel}</span>`;
+  const uploadedAt = latest ? new Date(latest.createdAt).toLocaleString("it-IT", { dateStyle: "medium", timeStyle: "short" }) : "—";
 
-  const text = `Il volontario ${iscrizione.firstName} ${iscrizione.lastName} (${iscrizione.email}) ha caricato la ricevuta del ${typeLabel} per ${safeTurno}.
+  const text = `Ricevuta del ${typeLabel} caricata
 
-ID Iscrizione: ${iscrizione.id}
-Vai al pannello admin: /admin/iscrizioni/${iscrizione.id}`;
+Volontario: ${iscrizione.firstName} ${iscrizione.lastName}
+Email: ${iscrizione.email}
+Turno: ${safeTurno}
+Tipo ricevuta: ${typeLabel}
+Caricata il: ${uploadedAt}
 
-  const html = `<h2>Ricevuta ${typeLabel} caricata</h2>
-<p><strong>${safeName}</strong> (${safeEmail}) ha caricato la ricevuta del <strong>${typeLabel}</strong> per <strong>${safeTurno}</strong>.</p>
-<p><a href="/admin/iscrizioni/${iscrizione.id}">Apri nel pannello admin</a></p>`;
+Apri nel pannello admin: ${adminUrl}`;
+
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#ffffff;color:#262626">
+  <div style="border-top:4px solid #007932;padding-top:20px;margin-bottom:20px">
+    <h1 style="font-family:Arial,Helvetica,sans-serif;color:#007932;margin:0 0 4px 0;font-size:22px">WWF Crotone — Notifica admin</h1>
+    <p style="margin:0;color:#707070;font-size:13px">Pannello di gestione iscrizioni</p>
+  </div>
+
+  <h2 style="font-size:18px;margin:0 0 16px 0;color:#262626">Ricevuta di pagamento caricata</h2>
+  <p style="margin:0 0 20px 0;color:#404040">Un volontario ha appena caricato la ricevuta del <strong>${typeLabel}</strong>. Verifica l'importo e approva l'iscrizione dal pannello.</p>
+
+  <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;background:#fafafa;border:1px solid #e5e5e5;border-radius:6px;margin-bottom:24px">
+    <tr>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;color:#707070;font-size:13px;width:35%">Volontario</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;font-size:14px;font-weight:600">${safeName}</td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;color:#707070;font-size:13px">Email</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;font-size:14px"><a href="mailto:${safeEmail}" style="color:#007932;text-decoration:none">${safeEmail}</a></td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;color:#707070;font-size:13px">Turno</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5">${turnoBadge}</td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;color:#707070;font-size:13px">Tipo ricevuta</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5">${typeBadge}</td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;color:#707070;font-size:13px">Caricata il</td>
+      <td style="padding:12px 16px;font-size:14px">${uploadedAt}</td>
+    </tr>
+  </table>
+
+  <p style="margin:28px 0">
+    <a href="${adminUrl}" style="display:inline-block;background:#007932;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600">
+      Apri nel pannello admin →
+    </a>
+  </p>
+
+  <p style="font-size:12px;color:#9b1c1c;margin-top:16px;background:#fef2f2;padding:10px 14px;border-radius:4px;border-left:3px solid #dc2626">
+    <strong>Azione richiesta:</strong> verifica che l'importo in ricevuta corrisponda a quello previsto e approva l'iscrizione dal pannello.
+  </p>
+
+  <hr style="border:none;border-top:1px solid #cecece;margin:24px 0"/>
+  <p style="font-size:12px;color:#707070;margin:0">
+    Notifica automatica — sistema di gestione iscrizioni WWF Crotone.<br/>
+    Questa email è stata inviata al team amministrativo.
+  </p>
+</div>`;
 
   try {
     const t = getTransporter();
     if (!t) return { ok: false, error: "smtp-not-configured" };
     await t.sendMail({
-      from: `"WWF Crotone" <info@wwfcrotone.it>`,
+      from: `"WWF Crotone — Notifiche" <info@wwfcrotone.it>`,
       to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
       subject,
       text,
@@ -752,22 +805,101 @@ export async function sendStatusChangeAdminNotification(
   const safeName = escapeHtml(`${iscrizione.firstName} ${iscrizione.lastName}`);
   const safeEmail = escapeHtml(iscrizione.email);
   const safeTurno = iscrizione.turno ? `Campo ${iscrizione.turno.number}` : "—";
-  const subject = `[WWF] Iscrizione ${iscrizione.id.slice(-6)}: ${oldStatus} → ${newStatus}`;
-  const text = `Stato dell'iscrizione di ${iscrizione.firstName} ${iscrizione.lastName} (${iscrizione.email}) per ${safeTurno} cambiato: ${oldStatus} → ${newStatus}.
+  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? `https://${SITE.domain}`}/admin/iscrizioni/${iscrizione.id}`;
 
-ID: ${iscrizione.id}
-Apri: /admin/iscrizioni/${iscrizione.id}`;
+  const STATUS_LABELS: Record<string, { label: string; tone: "pending" | "progress" | "ok" | "warn" }> = {
+    pending: { label: "In attesa di conferma email", tone: "pending" },
+    email_verified: { label: "Email verificata", tone: "progress" },
+    receipt_uploaded: { label: "Ricevuta caricata", tone: "progress" },
+    confirmed: { label: "Iscrizione confermata", tone: "ok" },
+    paid: { label: "Pagato", tone: "ok" },
+    waitlist: { label: "Lista d'attesa", tone: "warn" },
+    cancelled: { label: "Annullata", tone: "warn" }
+  };
+  const oldL = STATUS_LABELS[oldStatus] ?? { label: oldStatus, tone: "pending" as const };
+  const newL = STATUS_LABELS[newStatus] ?? { label: newStatus, tone: "pending" as const };
 
-  const html = `<h2>Cambio stato iscrizione</h2>
-<p><strong>${safeName}</strong> (${safeEmail}) — <strong>${safeTurno}</strong></p>
-<p>Stato: <code>${oldStatus}</code> → <code>${newStatus}</code></p>
-<p><a href="/admin/iscrizioni/${iscrizione.id}">Apri nel pannello admin</a></p>`;
+  const TONE_COLORS: Record<string, { bg: string; fg: string }> = {
+    pending: { bg: "#fef3c7", fg: "#92400e" },
+    progress: { bg: "#dbeafe", fg: "#1e40af" },
+    ok: { bg: "#d1fae5", fg: "#065f46" },
+    warn: { bg: "#fee2e2", fg: "#991b1b" }
+  };
+  const badge = (l: { label: string; tone: "pending" | "progress" | "ok" | "warn" }) => {
+    const c = TONE_COLORS[l.tone];
+    return `<span style="display:inline-block;background:${c.bg};color:${c.fg};padding:4px 12px;border-radius:14px;font-size:13px;font-weight:600">${escapeHtml(l.label)}</span>`;
+  };
+
+  const ACTION_TEXT: Record<string, { it: string; severity: "info" | "action" }> = {
+    email_verified: { it: "Il volontario ha confermato l'email. Attendi che carichi la ricevuta del bonifico di acconto (€100).", severity: "info" },
+    receipt_uploaded: { it: "Il volontario ha caricato la ricevuta. Verifica l'importo e approva l'iscrizione dal pannello.", severity: "action" },
+    confirmed: { it: "Iscrizione confermata. Ricordati di seguire i passaggi successivi (es. comunicazioni logistiche al volontario).", severity: "info" },
+    cancelled: { it: "Iscrizione annullata. Controlla se serve aggiornare lista d'attesa o comunicare il posto liberato.", severity: "action" }
+  };
+  const actionHint = ACTION_TEXT[newStatus];
+
+  // Friendly subject — humans first, machine-readable slug after a pipe
+  const subject = `${safeName} — ${newL.label} (${safeTurno})`;
+
+  const text = `Aggiornamento iscrizione
+
+Volontario: ${iscrizione.firstName} ${iscrizione.lastName}
+Email: ${iscrizione.email}
+Turno: ${safeTurno}
+
+Stato precedente: ${oldL.label}
+Nuovo stato: ${newL.label}
+
+${actionHint ? actionHint.it + "\n\n" : ""}Apri nel pannello admin: ${adminUrl}`;
+
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#ffffff;color:#262626">
+  <div style="border-top:4px solid #007932;padding-top:20px;margin-bottom:20px">
+    <h1 style="font-family:Arial,Helvetica,sans-serif;color:#007932;margin:0 0 4px 0;font-size:22px">WWF Crotone — Notifica admin</h1>
+    <p style="margin:0;color:#707070;font-size:13px">Aggiornamento stato iscrizione</p>
+  </div>
+
+  <h2 style="font-size:18px;margin:0 0 16px 0;color:#262626">${safeName} <span style="color:#707070;font-weight:400;font-size:16px">— ${escapeHtml(safeTurno)}</span></h2>
+
+  <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;background:#fafafa;border:1px solid #e5e5e5;border-radius:6px;margin-bottom:16px">
+    <tr>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;color:#707070;font-size:13px;width:35%">Email</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;font-size:14px"><a href="mailto:${safeEmail}" style="color:#007932;text-decoration:none">${safeEmail}</a></td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;color:#707070;font-size:13px">Stato precedente</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5">${badge(oldL)}</td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;color:#707070;font-size:13px">Nuovo stato</td>
+      <td style="padding:12px 16px">${badge(newL)}</td>
+    </tr>
+  </table>
+
+  ${actionHint
+    ? `<p style="font-size:14px;color:#404040;background:${actionHint.severity === "action" ? "#fef2f2" : "#f0f9ff"};padding:12px 16px;border-radius:6px;border-left:3px solid ${actionHint.severity === "action" ? "#dc2626" : "#0284c7"};margin:0 0 24px 0">
+        <strong>${actionHint.severity === "action" ? "Azione richiesta:" : "Cosa succede ora:"}</strong> ${escapeHtml(actionHint.it)}
+      </p>`
+    : ""
+  }
+
+  <p style="margin:24px 0">
+    <a href="${adminUrl}" style="display:inline-block;background:#007932;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600">
+      Apri nel pannello admin →
+    </a>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #cecece;margin:24px 0"/>
+  <p style="font-size:12px;color:#707070;margin:0">
+    Notifica automatica — sistema di gestione iscrizioni WWF Crotone.<br/>
+    ID tecnico: ${iscrizione.id} · Stato: ${escapeHtml(oldStatus)} → ${escapeHtml(newStatus)}
+  </p>
+</div>`;
 
   try {
     const t = getTransporter();
     if (!t) return { ok: false, error: "smtp-not-configured" };
     await t.sendMail({
-      from: `"WWF Crotone" <info@wwfcrotone.it>`,
+      from: `"WWF Crotone — Notifiche" <info@wwfcrotone.it>`,
       to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
       subject,
       text,

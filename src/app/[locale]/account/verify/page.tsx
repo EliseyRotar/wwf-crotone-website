@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
+import { setAccountCookie } from "@/lib/accountSession";
 
 type Outcome =
   | { kind: "ok"; firstName: string; iscrizioneId: string }
@@ -63,13 +64,20 @@ export default async function VerifyEmailPage({
     return <VerifyLayout outcome={{ kind: "expired" }} t={t} locale={locale} />;
   }
 
-  // If already past email_verified, just confirm idempotently.
+  // If already past email_verified, just confirm idempotently — and
+  // also log them in so the "go to panel" CTA doesn't bounce back
+  // through the magic-link round-trip.
   if (
     candidate.iscrizione.status === "email_verified" ||
     candidate.iscrizione.status === "receipt_uploaded" ||
     candidate.iscrizione.status === "confirmed" ||
     candidate.iscrizione.status === "paid"
   ) {
+    try {
+      await setAccountCookie(candidate.iscrizione.id);
+    } catch (err) {
+      console.error("[verify] setAccountCookie (already-verified) failed:", err);
+    }
     return (
       <VerifyLayout
         outcome={{ kind: "already-verified", firstName: candidate.iscrizione.firstName }}
@@ -91,6 +99,19 @@ export default async function VerifyEmailPage({
       if (!updated) {
         outcome = { kind: "server-error", message: "advanceStatus failed" };
       } else {
+        // Log the user straight in so the "upload receipt" CTA lands on the
+        // receipts page without a second round-trip through /account/login.
+        // 24-hour cookie is fine — this is a one-off, low-trust verify link
+        // from a confirmation email; the user can tick "remember this device"
+        // from inside the panel if they want the 30-day cookie.
+        try {
+          await setAccountCookie(updated.id);
+        } catch (err) {
+          console.error("[verify] setAccountCookie failed:", err);
+          // Non-fatal: we still show the success page; the user just has to
+          // sign in via the magic link. Better to degrade gracefully than to
+          // undo the verification.
+        }
         outcome = {
           kind: "ok",
           firstName: updated.firstName,
@@ -139,7 +160,7 @@ function VerifyLayout({
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
-              href={path("account/login") + `?next=${encodeURIComponent(`/account/bookings/${outcome.iscrizioneId}/receipts`)}`}
+              href={`/account/bookings/${outcome.iscrizioneId}/receipts`}
               className="btn btn-primary flex items-center justify-center gap-2"
             >
               {t("uploadReceiptCta")}
@@ -163,7 +184,7 @@ function VerifyLayout({
             {t("alreadyBody", { name: outcome.firstName })}
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href={path("account/login")} className="btn btn-primary">
+            <Link href="/account" className="btn btn-primary">
               {t("goToPanel")}
             </Link>
           </div>
