@@ -137,7 +137,7 @@ export default function MobileMenu() {
                 </Link>
               ))}
               <Link
-                href={path("account/login")}
+                href={path("account")}
                 className="flex items-center gap-2 px-5 py-3 text-base font-semibold tracking-wide border-b border-ink-grey-light/30 text-ink hover:bg-ink-grey-light/10"
               >
                 <UserRound size={18} aria-hidden="true" />

@@ -131,26 +131,31 @@ export async function notifyNewIscrizione(data: {
 
   const yesNo = (v: boolean) => (v ? "✅ Sì" : "❌ No");
   const turnoDisplay = data.turno + (data.turnoStart && data.turnoEnd ? ` (${data.turnoStart} → ${data.turnoEnd})` : "");
-  const extraTurniHtml = data.extraTurni && data.extraTurni.length > 0
-    ? `<tr><td style="padding:6px 10px;border-bottom:1px solid #f0e6da;background:#fdfaf5;width:35%;color:#707070;font-size:13px;vertical-align:top"><strong>Altri turni</strong></td><td style="padding:6px 10px;border-bottom:1px solid #f0e6da;font-size:14px;color:#101010">${data.extraTurni.map(escapeHtml).join(", ")}</td></tr>`
-    : "";
+  const extraTurniList = data.extraTurni && data.extraTurni.length > 0
+    ? data.extraTurni.map(escapeHtml).join(", ")
+    : null;
 
   const adminUrl = data.adminPanelUrl ?? (process.env.NEXT_PUBLIC_SITE_URL ?? "") + "/admin/iscrizioni";
 
-  const rows = [
+  // Build a flat list of [label, value] pairs. We use a flat array of
+  // pairs (no nested arrays, no pre-formatted <tr>) and join them in
+  // the mapping below. Mixing pre-formatted HTML strings in here used
+  // to work but got mangled by Gmail's HTML sanitiser, producing
+  // visible artefacts like "<s", "<a" in the rendered email.
+  const rows: Array<[string, string]> = [
     ["<strong>Nome e cognome</strong>", `${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}`],
     ["<strong>Email</strong>", `<a href="mailto:${escapeHtml(data.email)}" style="color:#007932;text-decoration:underline">${escapeHtml(data.email)}</a>`],
     ["<strong>Telefono</strong>", `<a href="tel:${escapeHtml(data.phone)}" style="color:#007932;text-decoration:underline">${escapeHtml(data.phone)}</a>`],
     ["<strong>Data di nascita</strong>", `${escapeHtml(data.birthDate ?? "—")} (${data.age ?? "—"} anni)`],
     ["<strong>Turno principale</strong>", escapeHtml(turnoDisplay)],
-    extraTurniHtml,
+    ...(extraTurniList ? [["<strong>Altri turni</strong>", extraTurniList] as [string, string]] : []),
     ["<strong>Minorenne</strong>", data.isMinor ? "✅ Sì" : "❌ No"],
-    data.isMinor
-      ? [
+    ...(data.isMinor
+      ? [[
           "<strong>Genitore/tutore</strong>",
           `${escapeHtml(data.guardianName ?? "—")} · ${escapeHtml(data.guardianEmail ?? "—")} · ${escapeHtml(data.guardianPhone ?? "—")}<br/><small style="color:#707070">Consenso firmato: ${yesNo(!!data.guardianConsent)}</small>`
-        ]
-      : [],
+        ] as [string, string]]
+      : []),
     [
       "<strong>Allergie / condizioni mediche</strong>",
       data.allergies
@@ -172,10 +177,10 @@ export async function notifyNewIscrizione(data: {
     ],
     [
       "<strong>Consensi</strong>",
-      `Privacy: ${yesNo(data.privacyConsent)}<br/>Marketing: ${yesNo(data.marketingConsent)}<br/>Immagini: ${yesNo(data.imageDataConsent)}<br/>`
+      `Privacy: ${yesNo(data.privacyConsent)}<br/>Marketing: ${yesNo(data.marketingConsent)}<br/>Immagini: ${yesNo(data.imageDataConsent)}`
     ],
     ["<strong>Note admin (lasciate dal volontario)</strong>", escapeHtml(data.notes) || '<span style="color:#9c9c98">Nessuna</span>']
-  ].flat().filter(Boolean);
+  ];
 
   const rowsHtml = rows
     .map(

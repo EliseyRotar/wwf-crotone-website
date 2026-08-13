@@ -412,6 +412,7 @@ export default async function IscrizioniPage({
                       <td className="p-3 text-right">
                         <IscrizioneDetailPanel
                           canApproveReceipts={true}
+                          canEditAll={session.role === "superadmin"}
                           iscrizione={{
                             id: i.id,
                             firstName: i.firstName,

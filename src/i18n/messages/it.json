@@ -1035,6 +1035,10 @@
       "marketing": "Marketing",
       "images": "Immagini",
       "adminNotes": "Note admin",
+      "editTitle": "Modifica",
+      "field": {
+        "isMinor": "Minorenne"
+      },
       "notes": "Note",
       "registeredOn": "Iscritto il",
       "quota": "Quota 100€",

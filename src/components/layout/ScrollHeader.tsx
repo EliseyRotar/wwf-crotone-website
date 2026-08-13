@@ -81,7 +81,7 @@ export default function ScrollHeader({
         <div className="flex items-center gap-1">
           <SiteSearch />
           <Link
-            href={path("account/login")}
+            href={path("account")}
             className="hidden sm:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest px-3 py-2 text-ink hover:text-wwf-green transition-colors"
           >
             <UserRound size={14} /> {t("personalArea")}

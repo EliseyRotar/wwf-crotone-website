@@ -7,6 +7,34 @@ import { X, Printer, ExternalLink, Check, Loader2 } from "lucide-react";
 import { calcAge } from "@/lib/turns";
 import { useRouter } from "next/navigation";
 
+/**
+ * Map a raw DB enum value to its Italian label. Falls back to the raw
+ * value if no translation is defined (e.g. for free-text entries like
+ * fitnessSelf) so we never show a raw key to a non-technical admin.
+ */
+function translateEnum(
+  t: ReturnType<typeof useTranslations>,
+  namespace: string,
+  value: string | null | undefined
+): string {
+  if (!value) return "—";
+  try {
+    // next-intl throws when the namespace path is missing; we wrap in
+    // try/catch and fall back to the raw value rather than crashing
+    // the detail panel on a partially-translated field.
+    const label = t(`${namespace}.${value}` as never);
+    // If the key was missing, next-intl returns the path itself (e.g.
+    // "Admin.volunteer.swimValues.confident"). Detect that and fall
+    // back to the raw value.
+    if (typeof label === "string" && label.includes(`${value}`) && label.startsWith("Admin")) {
+      return value;
+    }
+    return label;
+  } catch {
+    return value;
+  }
+}
+
 export type IscrizioneDetail = {
   id: string;
   firstName: string;
@@ -99,16 +127,130 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+/**
+ * Inline-editable form field. In read-only mode it renders a value
+ * with a label, just like <Row>. In edit mode it renders the right
+ * input (text / select / checkbox) bound to the local `draft` state.
+ *
+ * The field is identified by a Prisma column name. The `options`
+ * prop is required for enum fields so we can render a <select>; the
+ * label for each option is resolved through `translateEnum` so the
+ * stored enum code never reaches the user.
+ */
+function EditField({
+  label,
+  field,
+  type = "text",
+  options,
+  isEditing,
+  draft,
+  onChange
+}: {
+  label: string;
+  field: string;
+  type?: "text" | "date" | "select" | "checkbox" | "textarea";
+  options?: { value: string; label: string }[];
+  isEditing: boolean;
+  draft: Record<string, string | boolean | null>;
+  onChange: (field: string, value: string | boolean | null) => void;
+}) {
+  if (!isEditing) return null;
+  const value = draft[field] ?? null;
+  const baseInput =
+    "w-full text-sm rounded-[var(--radius-sm)] border border-[var(--ad-border)] bg-[var(--ad-bg)] px-2.5 py-1.5 text-[var(--ad-text)] focus:border-[var(--ad-accent)] focus:outline-none";
+
+  return (
+    <div className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] sm:grid-cols-[10rem_minmax(0,1fr)] gap-2 sm:gap-3 py-2 border-b border-[var(--ad-border)] text-sm">
+      <label htmlFor={`edit-${field}`} className="text-[var(--ad-text-subtle)] text-[11px] uppercase tracking-wider pt-1.5 truncate">
+        {label}
+      </label>
+      <div className="text-[var(--ad-text)]">
+        {type === "select" && options ? (
+          <select
+            id={`edit-${field}`}
+            value={(value as string) ?? ""}
+            onChange={(e) => onChange(field, e.target.value || null)}
+            className={baseInput}
+          >
+            <option value="">—</option>
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        ) : type === "checkbox" ? (
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={!!value}
+              onChange={(e) => onChange(field, e.target.checked)}
+              className="h-4 w-4 rounded border-[var(--ad-border)]"
+            />
+            <span className="text-sm text-[var(--ad-text-muted)]">{value ? "Sì" : "No"}</span>
+          </label>
+        ) : type === "textarea" ? (
+          <textarea
+            id={`edit-${field}`}
+            value={(value as string) ?? ""}
+            onChange={(e) => onChange(field, e.target.value)}
+            className={baseInput + " min-h-[80px]"}
+            rows={3}
+          />
+        ) : type === "date" ? (
+          <input
+            id={`edit-${field}`}
+            type="date"
+            value={(value as string) ?? ""}
+            onChange={(e) => onChange(field, e.target.value || null)}
+            className={baseInput}
+          />
+        ) : (
+          <input
+            id={`edit-${field}`}
+            type="text"
+            value={(value as string) ?? ""}
+            onChange={(e) => onChange(field, e.target.value)}
+            className={baseInput}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Resolve a set of <option> items for a given enum namespace, with
+ * each value mapped to its i18n label.
+ */
+function enumOptions(
+  t: ReturnType<typeof useTranslations>,
+  namespace: string,
+  keys: string[]
+): { value: string; label: string }[] {
+  return keys.map((value) => ({
+    value,
+    label: translateEnum(t, namespace, value)
+  }));
+}
+
 export default function IscrizioneDetailPanel({
   iscrizione,
-  canApproveReceipts
+  canApproveReceipts,
+  canEditAll
 }: {
   iscrizione: IscrizioneDetail;
   canApproveReceipts: boolean;
+  canEditAll: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<"fee" | "balance" | "status" | "receipt" | null>(null);
+  const [busy, setBusy] = useState<"fee" | "balance" | "status" | "receipt" | "edit" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  // Local edit-form state. Initialised from the iscrizione prop; on save
+  // we PATCH only the changed fields and let the server response trigger
+  // a router.refresh() that re-feeds us new server state.
+  const [draft, setDraft] = useState<Record<string, string | boolean | null>>({});
   const router = useRouter();
   const t = useTranslations("Admin.volunteer");
   const tIsc = useTranslations("Admin.iscrizioni");
@@ -230,6 +372,70 @@ export default function IscrizioneDetailPanel({
     }
   };
 
+  const startEdit = () => {
+    // Snapshot the current iscrizione values into the local draft.
+    setDraft({
+      firstName: iscrizione.firstName,
+      lastName: iscrizione.lastName,
+      email: iscrizione.email,
+      phone: iscrizione.phone,
+      birthDate: iscrizione.birthDate ? iscrizione.birthDate.slice(0, 10) : null,
+      isMinor: iscrizione.isMinor,
+      guardianName: iscrizione.guardianName ?? null,
+      guardianEmail: iscrizione.guardianEmail ?? null,
+      guardianPhone: iscrizione.guardianPhone ?? null,
+      guardianConsent: iscrizione.guardianConsent,
+      allergies: iscrizione.allergies ?? null,
+      medications: iscrizione.medications ?? null,
+      swimmingAbility: iscrizione.swimmingAbility ?? null,
+      tetanusStatus: iscrizione.tetanusStatus ?? null,
+      fitnessSelf: iscrizione.fitnessSelf ?? null,
+      dietaryNeeds: iscrizione.dietaryNeeds ?? null,
+      dietaryNotes: iscrizione.dietaryNotes ?? null,
+      tshirtSize: iscrizione.tshirtSize ?? null,
+      arrivalMode: iscrizione.arrivalMode ?? null,
+      arrivalTime: iscrizione.arrivalTime ?? null,
+      departureTime: iscrizione.departureTime ?? null
+    });
+    setEditing(true);
+    setError(null);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setDraft({});
+    setError(null);
+  };
+
+  const saveEdit = async () => {
+    setBusy("edit");
+    setError(null);
+    try {
+      const resp = await fetch("/api/admin/iscrizioni", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: iscrizione.id, ...draft })
+      });
+      const json = (await resp.json().catch(() => ({}))) as { ok?: boolean; error?: string; rejected?: Record<string, string> };
+      if (!resp.ok || !json.ok) {
+        setError(json.error || tIsc("networkError"));
+        return;
+      }
+      setEditing(false);
+      setDraft({});
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      setError(tIsc("networkError"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const setField = (field: string, value: string | boolean | null) => {
+    setDraft((cur) => ({ ...cur, [field]: value }));
+  };
+
   const printRecord = () => {
     const w = window.open("", "_blank", "width=800,height=900");
     if (!w) return;
@@ -316,6 +522,14 @@ export default function IscrizioneDetailPanel({
               </p>
             </div>
             <div className="flex items-center gap-1 shrink-0">
+              {canEditAll && !editing && (
+                <button
+                  onClick={startEdit}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-[var(--radius-sm)] border border-[var(--ad-border)] text-[var(--ad-text)] hover:border-[var(--ad-accent)] hover:text-[var(--ad-accent)] transition-colors"
+                >
+                  {t("editTitle")}
+                </button>
+              )}
               <button
                 onClick={printRecord}
                 aria-label={t("printAria")}
@@ -488,42 +702,96 @@ export default function IscrizioneDetailPanel({
 
           {/* Contacts */}
           <Section title={t("contacts")}>
-            <Row label={tIsc("email")} value={<a href={`mailto:${iscrizione.email}`} className="text-[var(--ad-accent)] hover:underline">{iscrizione.email}</a>} />
-            <Row label={tIsc("phone")} value={<a href={`tel:${iscrizione.phone}`} className="text-[var(--ad-accent)] hover:underline">{iscrizione.phone || "—"}</a>} />
-            <Row label={t("birthDate")} value={birth ? fmtDate(birth.toISOString()) : "—"} />
+            {editing ? (
+              <>
+                <EditField label={tIsc("email")} field="email" isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={tIsc("phone")} field="phone" isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("birthDate")} field="birthDate" type="date" isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("field.isMinor")} field="isMinor" type="checkbox" isEditing={editing} draft={draft} onChange={setField} />
+              </>
+            ) : (
+              <>
+                <Row label={tIsc("email")} value={<a href={`mailto:${iscrizione.email}`} className="text-[var(--ad-accent)] hover:underline">{iscrizione.email}</a>} />
+                <Row label={tIsc("phone")} value={<a href={`tel:${iscrizione.phone}`} className="text-[var(--ad-accent)] hover:underline">{iscrizione.phone || "—"}</a>} />
+                <Row label={t("birthDate")} value={birth ? fmtDate(birth.toISOString()) : "—"} />
+              </>
+            )}
           </Section>
 
           {/* Guardian */}
-          {iscrizione.isMinor && (
+          {(iscrizione.isMinor || editing) && (
             <Section title={t("guardian")}>
-              <Row label={t("guardianName")} value={iscrizione.guardianName ?? "—"} />
-              <Row label={t("guardianEmail")} value={iscrizione.guardianEmail ?? "—"} />
-              <Row label={t("guardianPhone")} value={iscrizione.guardianPhone ?? "—"} />
-              <Row label={t("guardianConsent")} value={iscrizione.guardianConsent ? t("signed") : t("missing")} warn={!iscrizione.guardianConsent} />
+              {editing ? (
+                <>
+                  <EditField label={t("guardianName")} field="guardianName" isEditing={editing} draft={draft} onChange={setField} />
+                  <EditField label={t("guardianEmail")} field="guardianEmail" isEditing={editing} draft={draft} onChange={setField} />
+                  <EditField label={t("guardianPhone")} field="guardianPhone" isEditing={editing} draft={draft} onChange={setField} />
+                  <EditField label={t("guardianConsent")} field="guardianConsent" type="checkbox" isEditing={editing} draft={draft} onChange={setField} />
+                </>
+              ) : (
+                <>
+                  <Row label={t("guardianName")} value={iscrizione.guardianName ?? "—"} />
+                  <Row label={t("guardianEmail")} value={iscrizione.guardianEmail ?? "—"} />
+                  <Row label={t("guardianPhone")} value={iscrizione.guardianPhone ?? "—"} />
+                  <Row label={t("guardianConsent")} value={iscrizione.guardianConsent ? t("signed") : t("missing")} warn={!iscrizione.guardianConsent} />
+                </>
+              )}
             </Section>
           )}
 
           {/* Health */}
           <Section title={t("health")}>
-            <Row label={t("allergies")} value={iscrizione.allergies} warn={!!iscrizione.allergies} />
-            <Row label={t("medications")} value={iscrizione.medications} />
-            <Row label={t("swimming")} value={iscrizione.swimmingAbility} />
-            <Row label={t("tetanus")} value={iscrizione.tetanusStatus} />
-            <Row label={t("fitness")} value={iscrizione.fitnessSelf} />
+            {editing ? (
+              <>
+                <EditField label={t("allergies")} field="allergies" type="textarea" isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("medications")} field="medications" type="textarea" isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("swimming")} field="swimmingAbility" type="select" options={enumOptions(t, "swimValues", ["none", "basic", "confident"])} isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("tetanus")} field="tetanusStatus" type="select" options={enumOptions(t, "tetanusValues", ["unknown", "vaccinated", "not_vaccinated"])} isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("fitness")} field="fitnessSelf" isEditing={editing} draft={draft} onChange={setField} />
+              </>
+            ) : (
+              <>
+                <Row label={t("allergies")} value={iscrizione.allergies} warn={!!iscrizione.allergies} />
+                <Row label={t("medications")} value={iscrizione.medications} />
+                <Row label={t("swimming")} value={translateEnum(t, "swimValues", iscrizione.swimmingAbility)} />
+                <Row label={t("tetanus")} value={translateEnum(t, "tetanusValues", iscrizione.tetanusStatus)} />
+                <Row label={t("fitness")} value={iscrizione.fitnessSelf} />
+              </>
+            )}
           </Section>
 
           {/* Diet */}
           <Section title={t("diet")}>
-            <Row label={t("dietaryNeeds")} value={iscrizione.dietaryNeeds && iscrizione.dietaryNeeds !== "none" ? iscrizione.dietaryNeeds : t("none")} />
-            <Row label={t("dietaryNotes")} value={iscrizione.dietaryNotes} />
+            {editing ? (
+              <>
+                <EditField label={t("dietaryNeeds")} field="dietaryNeeds" type="select" options={enumOptions(t, "dietValues", ["none", "vegetarian", "vegan", "celiac", "other"])} isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("dietaryNotes")} field="dietaryNotes" type="textarea" isEditing={editing} draft={draft} onChange={setField} />
+              </>
+            ) : (
+              <>
+                <Row label={t("dietaryNeeds")} value={translateEnum(t, "dietValues", iscrizione.dietaryNeeds)} />
+                <Row label={t("dietaryNotes")} value={iscrizione.dietaryNotes} />
+              </>
+            )}
           </Section>
 
           {/* Logistics */}
           <Section title={t("logistics")}>
-            <Row label={t("arrivalMode")} value={iscrizione.arrivalMode} />
-            <Row label={t("arrivalTime")} value={iscrizione.arrivalTime} />
-            <Row label={t("departureTime")} value={iscrizione.departureTime} />
-            <Row label={t("tshirtSize")} value={iscrizione.tshirtSize} />
+            {editing ? (
+              <>
+                <EditField label={t("arrivalMode")} field="arrivalMode" type="select" options={enumOptions(t, "arrivalValues", ["own_car", "train", "bus", "plane_crotone", "plane_lamezia", "need_pickup"])} isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("arrivalTime")} field="arrivalTime" isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("departureTime")} field="departureTime" isEditing={editing} draft={draft} onChange={setField} />
+                <EditField label={t("tshirtSize")} field="tshirtSize" type="select" options={["S", "M", "L", "XL", "XXL"].map((v) => ({ value: v, label: v }))} isEditing={editing} draft={draft} onChange={setField} />
+              </>
+            ) : (
+              <>
+                <Row label={t("arrivalMode")} value={translateEnum(t, "arrivalValues", iscrizione.arrivalMode)} />
+                <Row label={t("arrivalTime")} value={iscrizione.arrivalTime} />
+                <Row label={t("departureTime")} value={iscrizione.departureTime} />
+                <Row label={t("tshirtSize")} value={iscrizione.tshirtSize} />
+              </>
+            )}
             {isMultiTurn && (
               <Row
                 label={t("extraTurnsField")}
@@ -541,9 +809,37 @@ export default function IscrizioneDetailPanel({
 
           {/* Admin notes */}
           <Section title={t("adminNotes")}>
-            <Row label={t("notes")} value={iscrizione.notes} />
+            {editing ? (
+              <EditField label={t("notes")} field="notes" type="textarea" isEditing={editing} draft={draft} onChange={setField} />
+            ) : (
+              <Row label={t("notes")} value={iscrizione.notes} />
+            )}
             <Row label={t("registeredOn")} value={fmtDate(iscrizione.createdAt)} />
           </Section>
+
+          {/* Edit save/cancel bar — sticks to the bottom of the panel. */}
+          {editing && (
+            <div className="sticky bottom-0 left-0 right-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-[var(--ad-bg-elevated)] border-t border-[var(--ad-border)] flex items-center justify-end gap-2">
+              {error && (
+                <span className="text-xs text-[var(--ad-danger)] mr-auto">{error}</span>
+              )}
+              <button
+                onClick={cancelEdit}
+                disabled={busy === "edit"}
+                className="px-3 py-1.5 text-sm rounded-[var(--radius-sm)] border border-[var(--ad-border)] text-[var(--ad-text)] hover:border-[var(--ad-text-muted)] disabled:opacity-50"
+              >
+                {tIsc("cancel")}
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={busy === "edit"}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-sm)] bg-[var(--ad-accent)] text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {busy === "edit" ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {tIsc("saveChanges")}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>,

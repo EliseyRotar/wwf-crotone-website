@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAccountSession } from "@/lib/accountSession";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
-import { sendNotification } from "@/lib/mail";
+import { sendNotification, sendReceiptUploadedAdminNotification } from "@/lib/mail";
 import { SITE } from "@/config/site";
 import { logAudit } from "@/lib/audit";
 import { uploadReceipt } from "@/lib/r2Upload";
@@ -98,7 +98,8 @@ export async function POST(
     }
 
     const iscrizione = await prisma.iscrizione.findFirst({
-      where: { id, deletedAt: null }
+      where: { id, deletedAt: null },
+      include: { turno: { select: { number: true } } }
     });
     if (!iscrizione) {
       return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
@@ -195,19 +196,17 @@ export async function POST(
       userAgent: ua
     });
 
-    const subject = `[Volontario] Ricevuta ${type === "deposit" ? "acconto" : "saldo"} — ${session.firstName} ${session.lastName}`;
-    const text = `Il volontario ${session.firstName} ${session.lastName} (${iscrizione.email}) ha caricato la ricevuta del ${type === "deposit" ? "acconto di €100" : "saldo"}.
-
-In attesa di approvazione.
-ID Iscrizione: ${iscrizione.id}
-File: ${uploaded.objectKey}
-
-Vedi: /admin/iscrizioni/${iscrizione.id}`;
-
-    void sendNotification({
-      to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
-      subject,
-      text
+    // Use the proper designed email helper so the admin gets the same
+    // styled "Ricevuta caricata" email as the canonical flow. Pass the
+    // objectKey of the just-uploaded file as the only receipt entry so
+    // the email shows the latest file metadata.
+    void sendReceiptUploadedAdminNotification({
+      id: iscrizione.id,
+      firstName: session.firstName,
+      lastName: session.lastName,
+      email: iscrizione.email,
+      turno: iscrizione.turno ? { number: iscrizione.turno.number } : null,
+      receiptUploads: [{ type, createdAt: new Date() }]
     }).catch((err) => console.error("[receipt] admin mail failed:", err));
 
     // Notification row for the admin panel

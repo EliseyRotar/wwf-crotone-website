@@ -7,6 +7,135 @@ import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Whitelist of fields an admin can edit on an Iscrizione. Two scopes:
+ *
+ *   - `PAYMENT_STATUS_FIELDS`: status, notes, payment flags — both
+ *     superadmin and the assigned turn manager can change these.
+ *   - `VOLUNTEER_FIELDS`: all the volunteer's personal data — only
+ *     superadmin can edit (managers are scoped to their assigned
+ *     turns and shouldn't be touching other volunteers' data).
+ *
+ * Anything not on these lists is silently dropped. The schema is
+ * effectively owned by the volunteer; the admin endpoint is a narrow
+ * escape hatch.
+ */
+const PAYMENT_STATUS_FIELDS = [
+  "status",
+  "notes",
+  "feePaid",
+  "balancePaid"
+] as const;
+const VOLUNTEER_FIELDS = [
+  "firstName",
+  "lastName",
+  "birthDate",
+  "email",
+  "phone",
+  "isMinor",
+  "guardianName",
+  "guardianEmail",
+  "guardianPhone",
+  "guardianConsent",
+  "allergies",
+  "medications",
+  "swimmingAbility",
+  "tetanusStatus",
+  "fitnessSelf",
+  "dietaryNeeds",
+  "dietaryNotes",
+  "tshirtSize",
+  "arrivalMode",
+  "arrivalTime",
+  "departureTime"
+] as const;
+const ALL_EDITABLE_FIELDS = [...PAYMENT_STATUS_FIELDS, ...VOLUNTEER_FIELDS];
+
+const VALID_STATUSES = [
+  "pending",
+  "email_verified",
+  "receipt_uploaded",
+  "confirmed",
+  "paid",
+  "cancelled",
+  "waitlist"
+];
+
+const VALID_ENUMS: Record<string, ReadonlySet<string>> = {
+  swimmingAbility: new Set(["none", "basic", "confident"]),
+  tetanusStatus: new Set(["unknown", "vaccinated", "not_vaccinated"]),
+  dietaryNeeds: new Set(["none", "vegetarian", "vegan", "celiac", "other"]),
+  arrivalMode: new Set([
+    "own_car",
+    "train",
+    "bus",
+    "plane_crotone",
+    "plane_lamezia",
+    "need_pickup"
+  ]),
+  tshirtSize: new Set(["S", "M", "L", "XL", "XXL"])
+};
+
+/**
+ * Coerce a JSON value into the right shape for the Prisma column.
+ * Returns `null` for invalid input rather than throwing, so a single
+ * bad field doesn't blow up the whole patch.
+ */
+function coerce(field: string, raw: unknown): { ok: true; value: unknown } | { ok: false; reason: string } {
+  // Booleans: status, feePaid, balancePaid, isMinor, guardianConsent
+  if (["feePaid", "balancePaid", "isMinor", "guardianConsent"].includes(field)) {
+    if (typeof raw === "boolean") return { ok: true, value: raw };
+    return { ok: false, reason: "expected boolean" };
+  }
+  // Enums
+  if (field === "status") {
+    if (typeof raw === "string" && VALID_STATUSES.includes(raw)) return { ok: true, value: raw };
+    return { ok: false, reason: "invalid status" };
+  }
+  if (field in VALID_ENUMS) {
+    const allowed = VALID_ENUMS[field];
+    if (raw === null || raw === "") return { ok: true, value: null };
+    if (typeof raw === "string" && allowed.has(raw)) return { ok: true, value: raw };
+    return { ok: false, reason: `expected one of ${[...allowed].join(", ")}` };
+  }
+  // birthDate: ISO date or null
+  if (field === "birthDate") {
+    if (raw === null || raw === "") return { ok: true, value: null };
+    if (typeof raw === "string") {
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) return { ok: true, value: d };
+    }
+    return { ok: false, reason: "expected ISO date or null" };
+  }
+  // Short text fields: truncate to a sane length
+  if (
+    [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "guardianName",
+      "guardianEmail",
+      "guardianPhone",
+      "allergies",
+      "medications",
+      "fitnessSelf",
+      "dietaryNotes",
+      "arrivalTime",
+      "departureTime",
+      "notes"
+    ].includes(field)
+  ) {
+    if (raw === null) return { ok: true, value: null };
+    if (typeof raw === "string") {
+      const max = field === "notes" ? 5000 : field === "allergies" || field === "medications" || field === "dietaryNotes" ? 1000 : 200;
+      return { ok: true, value: raw.slice(0, max) };
+    }
+    return { ok: false, reason: "expected string or null" };
+  }
+  return { ok: false, reason: "unknown field" };
+}
+
 export async function PATCH(req: Request) {
   try {
     const session = await getSession();
@@ -20,14 +149,10 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
     }
 
-    const { id, status, notes, feePaid, balancePaid } = await req.json();
+    const body = await req.json();
+    const { id } = body;
     if (!id) {
       return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
-    }
-
-    const valid = ["pending", "confirmed", "paid", "cancelled", "waitlist"];
-    if (status && !valid.includes(status)) {
-      return NextResponse.json({ ok: false, error: "invalid-status" }, { status: 400 });
     }
 
     const iscrizione = await prisma.iscrizione.findUnique({
@@ -39,47 +164,58 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
     }
 
-    const data: {
-      status?: string;
-      notes?: string;
-      feePaid?: boolean;
-      feePaidDate?: Date | null;
-      balancePaid?: boolean;
-      balancePaidDate?: Date | null;
-      depositReceiptApprovedAt?: Date | null;
-      balanceReceiptApprovedAt?: Date | null;
-      managedBy?: string;
-    } = {};
-    if (status) data.status = status;
-    if (notes !== undefined) data.notes = String(notes).slice(0, 5000);
-    if (feePaid !== undefined) {
-      data.feePaid = feePaid;
-      data.feePaidDate = feePaid ? new Date() : null;
-      // Phase 2: stamp the approval timestamp when the admin confirms
-      // the deposit receipt. We only set it on the "true" transition
-      // so a later un-set doesn't leave a stale approval time.
-      if (feePaid) {
+    // Determine which fields the caller is allowed to touch:
+    //   - Payment/status fields: any admin who can see this turn
+    //   - Volunteer fields: superadmin only
+    const attempted = Object.keys(body).filter((k) => k !== "id" && ALL_EDITABLE_FIELDS.includes(k as never));
+    const hasVolunteerEdit = attempted.some((f) =>
+      (VOLUNTEER_FIELDS as readonly string[]).includes(f)
+    );
+    if (hasVolunteerEdit && session.role !== "superadmin") {
+      return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+    }
+
+    const data: Record<string, unknown> = {};
+    const rejected: Record<string, string> = {};
+    for (const field of attempted) {
+      const c = coerce(field, body[field]);
+      if (c.ok) {
+        data[field] = c.value;
+      } else {
+        rejected[field] = c.reason;
+      }
+    }
+
+    // Stamps: payment transitions update the *PaidDate + receiptApprovedAt
+    // columns so the admin panel's "Approvata il …" tooltip stays accurate.
+    if ("feePaid" in data) {
+      if (data.feePaid) {
+        data.feePaidDate = new Date();
         data.depositReceiptApprovedAt = new Date();
       } else {
+        data.feePaidDate = null;
         data.depositReceiptApprovedAt = null;
       }
     }
-    if (balancePaid !== undefined) {
-      data.balancePaid = balancePaid;
-      data.balancePaidDate = balancePaid ? new Date() : null;
-      if (balancePaid) {
+    if ("balancePaid" in data) {
+      if (data.balancePaid) {
+        data.balancePaidDate = new Date();
         data.balanceReceiptApprovedAt = new Date();
       } else {
+        data.balancePaidDate = null;
         data.balanceReceiptApprovedAt = null;
       }
     }
     data.managedBy = session.id;
 
-    // C-07: if the new status is "cancelled" and the prior status was NOT
-    // cancelled, decrement the turno's bookedCount so the freed slot becomes
-    // available again. If the status was already cancelled, do not
-    // double-decrement. If we're moving FROM "cancelled" to something active,
-    // re-increment with the same capacity guard.
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "no-edits", rejected },
+        { status: 400 }
+      );
+    }
+
+    // C-07: capacity accounting on cancel / re-activate.
     const wasActive = iscrizione.status !== "cancelled";
     const goingToCancelled = data.status === "cancelled";
 
@@ -87,14 +223,11 @@ export async function PATCH(req: Request) {
       await tx.iscrizione.update({ where: { id }, data });
 
       if (goingToCancelled && wasActive) {
-        // Decrement — never below 0 (clamp with a single SQL guard).
         await tx.turno.updateMany({
           where: { id: iscrizione.turnoId, bookedCount: { gt: 0 } },
           data: { bookedCount: { decrement: 1 } }
         });
       } else if (!goingToCancelled && !wasActive) {
-        // Re-activating a previously cancelled record: try to claim a slot
-        // back, but never exceed capacity.
         await tx.turno.updateMany({
           where: {
             id: iscrizione.turnoId,
@@ -107,12 +240,12 @@ export async function PATCH(req: Request) {
 
     await logAudit({
       userId: session.id,
-      action: "status_change",
+      action: "iscrizione_edit",
       entity: "iscrizione",
       entityId: id,
-      details: JSON.stringify(data)
+      details: JSON.stringify({ fields: Object.keys(data), rejected })
     });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, rejected });
   } catch (err) {
     console.error("iscrizione PATCH error:", err);
     return NextResponse.json({ ok: false, error: "server" }, { status: 500 });
