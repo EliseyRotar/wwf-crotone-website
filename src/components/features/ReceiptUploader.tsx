@@ -21,7 +21,13 @@ export default function ReceiptUploader({
 }: {
   iscrizioneId: string;
   type: "deposit" | "balance";
-  onUploaded: () => void;
+  /**
+   * Optional callback fired after a successful upload. Server
+   * Components can't pass functions to Client Components (Next.js 15
+   * strict mode), so this is optional and most call sites omit it —
+   * we already call `router.refresh()` ourselves on success.
+   */
+  onUploaded?: () => void;
 }) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement | null>(null);
@@ -69,7 +75,7 @@ export default function ReceiptUploader({
       setFile(null);
       if (fileInput.current) fileInput.current.value = "";
       router.refresh();
-      onUploaded();
+      onUploaded?.();
     } catch {
       setErr("network");
     } finally {

@@ -127,13 +127,6 @@ export default async function AccountBookingReceiptsPage({
               <ReceiptUploader
                 iscrizioneId={iscrizione.id}
                 type="deposit"
-                onUploaded={() => {
-                  // Server components can't trigger a refresh — but
-                  // Next.js will refresh on navigation. We rely on
-                  // the user clicking "back" and re-entering the
-                  // page, OR on the form's redirect-after-success
-                  // pattern below.
-                }}
               />
             </div>
           )}
@@ -146,9 +139,6 @@ export default async function AccountBookingReceiptsPage({
               <ReceiptUploader
                 iscrizioneId={iscrizione.id}
                 type="balance"
-                onUploaded={() => {
-                  /* see above */
-                }}
               />
             </div>
           )}
