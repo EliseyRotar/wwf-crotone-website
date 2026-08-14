@@ -238,12 +238,28 @@
     "dietaryNotes": "Note alimentari",
     "tshirtSize": "Taglia T-shirt",
     "arrivalMode": "Modalità di arrivo",
+    "arrivalModeHelp": "Dicci come pensi di raggiungere il campo. Così possiamo organizzare i trasferimenti e il parcheggio.",
+    "arrivalModeRequired": "Seleziona come raggiungerai il campo.",
     "arrivalOwn": "Auto propria",
     "arrivalTrain": "Treno",
-    "arrivalBus": "Autobus",
-    "arrivalPlaneCrotone": "Aereo — Aeroporto di Crotone-Sant'Anna",
+    "arrivalBus": "Autobus (pullman)",
+    "arrivalPlaneCrotone": "Aereo — Aeroporto di Crotone (Sant'Anna)",
     "arrivalPlaneLamezia": "Aereo — Aeroporto di Lamezia Terme",
+    "arrivalFerry": "Traghetto (Civitavecchia / Villa San Giovanni)",
+    "arrivalTaxi": "Taxi / NCC",
+    "arrivalRentalCar": "Auto a noleggio",
     "arrivalPickup": "Ho bisogno di trasferimento",
+    "arrivalOther": "Altro",
+    "arrivalFrom": "Partenza da (città o stazione)",
+    "arrivalFromHelp": "Es. \"Milano Centrale\", \"Aeroporto Roma Fiumicino\", \"Civitavecchia porto\"",
+    "flightNumber": "Numero del volo",
+    "flightNumberHelp": "Es. \"FR1234\" o \"AZ234\". Ci serve per monitorare i ritardi.",
+    "trainNumber": "Numero del treno",
+    "trainNumberHelp": "Es. \"Frecciarossa 9512\" o \"IC 757\".",
+    "busCompany": "Compagnia / linea",
+    "busCompanyHelp": "Es. \"FlixBus\", \"MarinoBus\", \"Simet\".",
+    "arrivalNotes": "Note aggiuntive",
+    "arrivalNotesHelp": "Numero di bagagli, animali, esigenze particolari, ecc.",
     "arrivalTime": "Orario di arrivo",
     "departureTime": "Orario di partenza",
     "arrivalTimeWarning": "Importante: gli arrivi con mezzi pubblici (aereo, treno, autobus) devono avvenire tra le 8:00 e le 22:00. Le partenze dalla sede WWF per le stazioni (aereo, treno, autobus) devono avvenire tra le 7:00 e le 22:00. Ti consigliamo di programmare arrivi e partenze nelle ore centrali della giornata.",
@@ -1150,7 +1166,11 @@
         "bus": "Autobus",
         "plane_crotone": "Aereo — Crotone",
         "plane_lamezia": "Aereo — Lamezia",
-        "need_pickup": "Trasferimento richiesto"
+        "ferry": "Traghetto",
+        "taxi": "Taxi / NCC",
+        "rental_car": "Auto a noleggio",
+        "need_pickup": "Trasferimento richiesto",
+        "other": "Altro"
       },
       "printSections": {
         "contacts": "Contatti",
@@ -1727,10 +1747,22 @@
       "welcomeWithEmoji": "Ciao, {name} 👋",
       "sessionToday": "Sessione di oggi",
       "session30d": "Ricordi questo dispositivo per 30 giorni",
+      "sessionUntil": "Sessione attiva fino al {date}",
+      "summary": {
+        "label": "Riepilogo",
+        "campsCount": "{count, plural, =0 {Nessun campo} =1 {1 campo} other {# campi}}",
+        "campsCountUpcoming": "{upcoming} in arrivo · {past} conclusi",
+        "totalDue": "Da versare: €{amount}",
+        "totalDueNothing": "Tutto pagato",
+        "nextCampLabel": "Prossimo campo",
+        "nextCampNone": "Nessun campo in programma"
+      },
       "onboarding": {
         "label": "Stato iscrizione",
         "complete": "Iscrizione completa",
         "of": "{done} di {total} step completati",
+        "aggregate": "{done} di {total} campi pronti",
+        "allDone": "Tutte le iscrizioni sono complete",
         "steps": {
           "emailVerified": "Email verificata",
           "dataFilled": "Dati personali completi",
@@ -1742,15 +1774,23 @@
         "uploadReceiptCta": "Carica la ricevuta del deposito",
         "viewBookingCta": "Vedi dettagli iscrizione"
       },
-      "nextCamp": {
-        "sectionLabel": "Il tuo prossimo campo",
-        "daysToGo": "Tra {days} giorni",
-        "today": "Oggi!",
-        "tomorrow": "Domani",
-        "inProgress": "In corso · giorno {day} di {total}",
-        "ended": "Campo terminato",
+      "camp": {
+        "sectionLabel": "I tuoi campi",
+        "camp": "Campo {number}",
+        "dates": "Date",
+        "countdown": {
+          "today": "Oggi!",
+          "tomorrow": "Domani",
+          "daysToGo": "Tra {days} giorni",
+          "inProgress": "In corso · giorno {day} di {total}",
+          "ended": "Campo concluso",
+          "past": "Concluso"
+        },
+        "openDetails": "Apri dettagli",
+        "uploadReceipt": "Carica ricevuta",
+        "editArrival": "Modifica arrivo",
         "status": {
-          "pending": "In attesa",
+          "pending": "In attesa di email",
           "email_verified": "Email verificata",
           "receipt_uploaded": "Ricevuta in revisione",
           "confirmed": "Confermata",
@@ -1758,25 +1798,46 @@
           "waitlist": "Lista d'attesa",
           "cancelled": "Annullata"
         },
-        "viewDetails": "Vedi dettagli iscrizione",
-        "where": "Dove arrivare",
-        "openInMaps": "Apri in Maps",
-        "whatToBring": "Cosa portare",
-        "contacts": "Contatti referenti"
-      },
-      "payment": {
-        "sectionLabel": "Pagamenti",
-        "deposit": "Deposito cauzionale · €100",
-        "balance": "Saldo rimanente",
-        "uploaded": "caricata il {date}",
-        "notUploaded": "non ancora caricata",
-        "approved": "approvata",
-        "pendingApproval": "in attesa di approvazione",
-        "replace": "Sostituisci ricevuta",
-        "uploadNow": "Carica la ricevuta"
+        "payment": {
+          "title": "Pagamenti",
+          "deposit": "Deposito · €100",
+          "balance": "Saldo rimanente · €{amount}",
+          "paid": "Pagato",
+          "depositMissing": "Carica la ricevuta del deposito",
+          "depositPending": "Ricevuta in attesa di approvazione",
+          "depositApproved": "Ricevuta approvata",
+          "balanceMissing": "Saldo non ancora versato",
+          "balancePaid": "Saldo versato"
+        },
+        "arrival": {
+          "title": "Arrivo",
+          "editCta": "Modifica arrivo",
+          "mode": {
+            "own_car": "Auto propria",
+            "train": "Treno",
+            "bus": "Autobus",
+            "plane_crotone": "Aereo — Crotone",
+            "plane_lamezia": "Aereo — Lamezia Terme",
+            "ferry": "Traghetto",
+            "taxi": "Taxi / NCC",
+            "rental_car": "Auto a noleggio",
+            "need_pickup": "Trasferimento richiesto",
+            "other": "Altro"
+          },
+          "from": "Da {from}",
+          "atTime": "ore {time}",
+          "flight": "Volo {number}",
+          "train": "Treno {number}",
+          "bus": "{company}",
+          "departure": "Partenza ore {time}",
+          "notes": "Note: {notes}",
+          "notSet": "Non ancora comunicato"
+        },
+        "addAnotherCta": "Aggiungi un altro campo",
+        "emptyTitle": "Non hai ancora un'iscrizione"
       },
       "bookings": {
-        "sectionLabel": "Le tue iscrizioni",
+        "sectionLabel": "Tutte le iscrizioni",
         "noBookings": "Non hai ancora un'iscrizione.",
         "viewAll": "Vedi tutte ({count})"
       },
@@ -1791,12 +1852,17 @@
         "emailNotVerified": "email da verificare",
         "manageDevices": "Dispositivi connessi",
         "profile": "Profilo",
-        "logout": "Esci"
+        "logout": "Esci",
+        "deviceCount": "{count, plural, =0 {Nessun dispositivo} =1 {1 dispositivo connesso} other {# dispositivi connessi}}"
       },
       "emptyState": {
         "title": "Non hai ancora un'iscrizione",
-        "body": "Scopri i turni disponibili per il campo di volontariato.",
+        "body": "Scegli il campo e le date che preferisci — sono 12 turni settimanali tra giugno e settembre.",
         "cta": "Vedi i turni disponibili"
+      },
+      "confirmed": {
+        "title": "Iscrizione confermata",
+        "body": "Ti aspettiamo al campo! Trovi tutte le informazioni logistiche qui sotto."
       }
     },
     "sessions": {

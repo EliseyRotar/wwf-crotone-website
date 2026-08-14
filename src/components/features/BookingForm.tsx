@@ -36,6 +36,11 @@ type FormState = {
   dietaryNotes: string;
   tshirtSize: string;
   arrivalMode: string;
+  arrivalFrom: string;
+  flightNumber: string;
+  trainNumber: string;
+  busCompany: string;
+  arrivalNotes: string;
   arrivalTime: string;
   departureTime: string;
   privacyConsent: boolean;
@@ -93,6 +98,11 @@ const INITIAL_STATE: FormState = {
   dietaryNotes: "",
   tshirtSize: "",
   arrivalMode: "",
+  arrivalFrom: "",
+  flightNumber: "",
+  trainNumber: "",
+  busCompany: "",
+  arrivalNotes: "",
   arrivalTime: "",
   departureTime: "",
   privacyConsent: false,
@@ -236,6 +246,19 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
       if (!state.tshirtSize) return { message: t("required"), fieldId: "ts" };
     }
     if (s === 3) {
+      // Arrival mode is REQUIRED for logistics planning
+      if (!state.arrivalMode) return { message: t("arrivalModeRequired"), fieldId: "arr" };
+      // Public transport / flight / ferry / pickup — strongly suggest flight/train/company
+      const needsTransportDetails =
+        state.arrivalMode === "train" ||
+        state.arrivalMode === "bus" ||
+        state.arrivalMode === "plane_crotone" ||
+        state.arrivalMode === "plane_lamezia" ||
+        state.arrivalMode === "ferry" ||
+        state.arrivalMode === "need_pickup";
+      if (needsTransportDetails && !state.arrivalFrom) {
+        return { message: t("required"), fieldId: "arrfrom" };
+      }
       if (computedIsMinor && !state.guardianName) return { message: t("required"), fieldId: "gn" };
       if (computedIsMinor && !state.guardianPhone) return { message: t("required"), fieldId: "gp" };
       if (computedIsMinor && !state.guardianConsent)
@@ -327,7 +350,7 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
     );
   }
 
-  const isPublicTransport = ["train", "bus", "plane_crotone", "plane_lamezia"].includes(state.arrivalMode);
+  const isPublicTransport = ["train", "bus", "plane_crotone", "plane_lamezia", "ferry"].includes(state.arrivalMode);
 
   return (
     <div className="card max-w-3xl">
@@ -530,34 +553,140 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
               <h3 className="text-sm uppercase tracking-cta text-wwf-green mb-3 border-b-2 border-wwf-green pb-1">
                 {t("logisticsTitle")}
               </h3>
-              <div className="grid sm:grid-cols-2 gap-x-4">
-                <div className="field">
-                  <label htmlFor="arr">{t("arrivalMode")}</label>
-                  <select id="arr" value={state.arrivalMode} onChange={(e) => set("arrivalMode", e.target.value)}>
-                    <option value="">—</option>
-                    <option value="own_car">{t("arrivalOwn")}</option>
-                    <option value="train">{t("arrivalTrain")}</option>
-                    <option value="bus">{t("arrivalBus")}</option>
-                    <option value="plane_crotone">{t("arrivalPlaneCrotone")}</option>
-                    <option value="plane_lamezia">{t("arrivalPlaneLamezia")}</option>
-                    <option value="need_pickup">{t("arrivalPickup")}</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label htmlFor="ts2">{t("tshirtSize")}</label>
-                  <span className="text-sm text-ink-2">{state.tshirtSize || "—"}</span>
-                </div>
-                <div className="field">
-                  <label htmlFor="atime">{t("arrivalTime")}</label>
-                  <input id="atime" type="time" value={state.arrivalTime} onChange={(e) => set("arrivalTime", e.target.value)} />
-                </div>
-                <div className="field">
-                  <label htmlFor="dtime">{t("departureTime")}</label>
-                  <input id="dtime" type="time" value={state.departureTime} onChange={(e) => set("departureTime", e.target.value)} />
-                </div>
+              <p className="text-sm text-ink-grey mb-4">{t("arrivalModeHelp")}</p>
+
+              <div className="field mb-4">
+                <label htmlFor="arr" className="font-semibold">
+                  {t("arrivalMode")} <span className="text-ink-red">*</span>
+                </label>
+                <select
+                  id="arr"
+                  value={state.arrivalMode}
+                  onChange={(e) => set("arrivalMode", e.target.value)}
+                  className={!state.arrivalMode ? "border-ink-red" : ""}
+                >
+                  <option value="">—</option>
+                  <option value="own_car">{t("arrivalOwn")}</option>
+                  <option value="train">{t("arrivalTrain")}</option>
+                  <option value="bus">{t("arrivalBus")}</option>
+                  <option value="plane_crotone">{t("arrivalPlaneCrotone")}</option>
+                  <option value="plane_lamezia">{t("arrivalPlaneLamezia")}</option>
+                  <option value="ferry">{t("arrivalFerry")}</option>
+                  <option value="taxi">{t("arrivalTaxi")}</option>
+                  <option value="rental_car">{t("arrivalRentalCar")}</option>
+                  <option value="need_pickup">{t("arrivalPickup")}</option>
+                  <option value="other">{t("arrivalOther")}</option>
+                </select>
               </div>
+
+              {/* Conditional sub-fields based on arrival mode */}
+              {state.arrivalMode && state.arrivalMode !== "own_car" && (
+                <div className="field mb-4">
+                  <label htmlFor="arrfrom" className="font-semibold">
+                    {t("arrivalFrom")}
+                    {(state.arrivalMode === "train" ||
+                      state.arrivalMode === "bus" ||
+                      state.arrivalMode === "plane_crotone" ||
+                      state.arrivalMode === "plane_lamezia" ||
+                      state.arrivalMode === "ferry" ||
+                      state.arrivalMode === "need_pickup") && (
+                      <span className="text-ink-red"> *</span>
+                    )}
+                  </label>
+                  <input
+                    id="arrfrom"
+                    value={state.arrivalFrom}
+                    onChange={(e) => set("arrivalFrom", e.target.value)}
+                    placeholder={t("arrivalFromHelp")}
+                  />
+                </div>
+              )}
+
+              {state.arrivalMode === "plane_crotone" && (
+                <div className="field mb-4">
+                  <label htmlFor="flight">{t("flightNumber")}</label>
+                  <input
+                    id="flight"
+                    value={state.flightNumber}
+                    onChange={(e) => set("flightNumber", e.target.value)}
+                    placeholder={t("flightNumberHelp")}
+                  />
+                </div>
+              )}
+
+              {state.arrivalMode === "plane_lamezia" && (
+                <div className="field mb-4">
+                  <label htmlFor="flight">{t("flightNumber")}</label>
+                  <input
+                    id="flight"
+                    value={state.flightNumber}
+                    onChange={(e) => set("flightNumber", e.target.value)}
+                    placeholder={t("flightNumberHelp")}
+                  />
+                </div>
+              )}
+
+              {state.arrivalMode === "train" && (
+                <div className="field mb-4">
+                  <label htmlFor="trainnum">{t("trainNumber")}</label>
+                  <input
+                    id="trainnum"
+                    value={state.trainNumber}
+                    onChange={(e) => set("trainNumber", e.target.value)}
+                    placeholder={t("trainNumberHelp")}
+                  />
+                </div>
+              )}
+
+              {(state.arrivalMode === "bus" || state.arrivalMode === "ferry") && (
+                <div className="field mb-4">
+                  <label htmlFor="buscomp">{t("busCompany")}</label>
+                  <input
+                    id="buscomp"
+                    value={state.busCompany}
+                    onChange={(e) => set("busCompany", e.target.value)}
+                    placeholder={t("busCompanyHelp")}
+                  />
+                </div>
+              )}
+
+              {state.arrivalMode && (
+                <div className="grid sm:grid-cols-2 gap-x-4">
+                  <div className="field">
+                    <label htmlFor="atime">{t("arrivalTime")}</label>
+                    <input
+                      id="atime"
+                      type="time"
+                      value={state.arrivalTime}
+                      onChange={(e) => set("arrivalTime", e.target.value)}
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="dtime">{t("departureTime")}</label>
+                    <input
+                      id="dtime"
+                      type="time"
+                      value={state.departureTime}
+                      onChange={(e) => set("departureTime", e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="field mt-4">
+                <label htmlFor="arrnotes">{t("arrivalNotes")}</label>
+                <textarea
+                  id="arrnotes"
+                  rows={2}
+                  value={state.arrivalNotes}
+                  onChange={(e) => set("arrivalNotes", e.target.value)}
+                  placeholder={t("arrivalNotesHelp")}
+                  className="min-h-[60px]"
+                />
+              </div>
+
               {isPublicTransport && (
-                <div className="sm:col-span-2 flex items-start gap-2 p-3 mt-2 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400">
+                <div className="flex items-start gap-2 p-3 mt-2 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400">
                   <AlertTriangle size={20} className="text-ink shrink-0 mt-0.5" />
                   <p className="text-sm text-ink-2">{t("arrivalTimeWarning")}</p>
                 </div>
@@ -644,17 +773,42 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
             )}
             {state.tshirtSize && <p><strong>{t("tshirtSize")}:</strong> {state.tshirtSize}</p>}
             {state.arrivalMode && (
-              <p><strong>{t("arrivalMode")}:</strong> {
-                state.arrivalMode === "own_car" ? t("arrivalOwn") :
-                state.arrivalMode === "train" ? t("arrivalTrain") :
-                state.arrivalMode === "bus" ? t("arrivalBus") :
-                state.arrivalMode === "plane_crotone" ? t("arrivalPlaneCrotone") :
-                state.arrivalMode === "plane_lamezia" ? t("arrivalPlaneLamezia") :
-                t("arrivalPickup")
-              }
-                {state.arrivalTime && ` · ${t("arrivalTime")}: ${state.arrivalTime}`}
-                {state.departureTime && ` · ${t("departureTime")}: ${state.departureTime}`}
-              </p>
+              <div className="space-y-1">
+                <p>
+                  <strong>{t("arrivalMode")}:</strong>{" "}
+                  {state.arrivalMode === "own_car" ? t("arrivalOwn") :
+                   state.arrivalMode === "train" ? t("arrivalTrain") :
+                   state.arrivalMode === "bus" ? t("arrivalBus") :
+                   state.arrivalMode === "plane_crotone" ? t("arrivalPlaneCrotone") :
+                   state.arrivalMode === "plane_lamezia" ? t("arrivalPlaneLamezia") :
+                   state.arrivalMode === "ferry" ? t("arrivalFerry") :
+                   state.arrivalMode === "taxi" ? t("arrivalTaxi") :
+                   state.arrivalMode === "rental_car" ? t("arrivalRentalCar") :
+                   state.arrivalMode === "need_pickup" ? t("arrivalPickup") :
+                   t("arrivalOther")}
+                </p>
+                {state.arrivalFrom && (
+                  <p className="text-sm text-ink-grey pl-4">{t("arrivalFrom")}: {state.arrivalFrom}</p>
+                )}
+                {state.flightNumber && (
+                  <p className="text-sm text-ink-grey pl-4">{t("flightNumber")}: {state.flightNumber}</p>
+                )}
+                {state.trainNumber && (
+                  <p className="text-sm text-ink-grey pl-4">{t("trainNumber")}: {state.trainNumber}</p>
+                )}
+                {state.busCompany && (
+                  <p className="text-sm text-ink-grey pl-4">{t("busCompany")}: {state.busCompany}</p>
+                )}
+                {state.arrivalTime && (
+                  <p className="text-sm text-ink-grey pl-4">{t("arrivalTime")}: {state.arrivalTime}</p>
+                )}
+                {state.departureTime && (
+                  <p className="text-sm text-ink-grey pl-4">{t("departureTime")}: {state.departureTime}</p>
+                )}
+                {state.arrivalNotes && (
+                  <p className="text-sm text-ink-grey pl-4">{t("arrivalNotes")}: {state.arrivalNotes}</p>
+                )}
+              </div>
             )}
             {!state.imageDataConsent && (
               <p className="text-wwf-red"><AlertTriangle size={14} className="inline mr-1" />{t("imageDataWarning")}</p>

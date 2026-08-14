@@ -238,12 +238,28 @@
     "dietaryNotes": "Dietary notes",
     "tshirtSize": "T-shirt size",
     "arrivalMode": "Arrival mode",
+    "arrivalModeHelp": "Tell us how you plan to reach the camp so we can arrange transfers and parking.",
+    "arrivalModeRequired": "Please select how you will reach the camp.",
     "arrivalOwn": "Own car",
     "arrivalTrain": "Train",
-    "arrivalBus": "Bus",
+    "arrivalBus": "Bus (coach)",
     "arrivalPlaneCrotone": "Plane — Crotone-Sant'Anna Airport",
     "arrivalPlaneLamezia": "Plane — Lamezia Terme Airport",
+    "arrivalFerry": "Ferry (Civitavecchia / Villa San Giovanni)",
+    "arrivalTaxi": "Taxi / private hire",
+    "arrivalRentalCar": "Rental car",
     "arrivalPickup": "I need a transfer",
+    "arrivalOther": "Other",
+    "arrivalFrom": "Departing from (city or station)",
+    "arrivalFromHelp": "e.g. \"Milano Centrale\", \"Rome Fiumicino Airport\", \"Civitavecchia port\"",
+    "flightNumber": "Flight number",
+    "flightNumberHelp": "e.g. \"FR1234\" or \"AZ234\". We monitor delays.",
+    "trainNumber": "Train number",
+    "trainNumberHelp": "e.g. \"Frecciarossa 9512\" or \"IC 757\".",
+    "busCompany": "Bus company / line",
+    "busCompanyHelp": "e.g. \"FlixBus\", \"MarinoBus\", \"Simet\".",
+    "arrivalNotes": "Additional notes",
+    "arrivalNotesHelp": "Number of bags, pets, special requirements, etc.",
     "arrivalTime": "Arrival time",
     "departureTime": "Departure time",
     "arrivalTimeWarning": "Important: arrivals by public transport (plane, train, bus) must be between 8:00 AM and 10:00 PM. Departures from the WWF base to stations (plane, train, bus) must be between 7:00 AM and 10:00 PM. We recommend scheduling arrivals and departures in the middle of the day.",
@@ -1057,7 +1073,11 @@
         "bus": "Bus",
         "plane_crotone": "Plane — Crotone",
         "plane_lamezia": "Plane — Lamezia",
-        "need_pickup": "Transfer requested"
+        "ferry": "Ferry",
+        "taxi": "Taxi / private hire",
+        "rental_car": "Rental car",
+        "need_pickup": "Transfer requested",
+        "other": "Other"
       },
       "printSections": {
         "contacts": "Contacts",
@@ -1633,10 +1653,22 @@
       "welcomeWithEmoji": "Hi, {name} 👋",
       "sessionToday": "Today's session",
       "session30d": "This device is remembered for 30 days",
+      "sessionUntil": "Session active until {date}",
+      "summary": {
+        "label": "Summary",
+        "campsCount": "{count, plural, =0 {No camps} =1 {1 camp} other {# camps}}",
+        "campsCountUpcoming": "{upcoming} upcoming · {past} completed",
+        "totalDue": "Due: €{amount}",
+        "totalDueNothing": "All paid up",
+        "nextCampLabel": "Next camp",
+        "nextCampNone": "No upcoming camp"
+      },
       "onboarding": {
         "label": "Registration status",
         "complete": "Registration complete",
         "of": "{done} of {total} steps complete",
+        "aggregate": "{done} of {total} registrations ready",
+        "allDone": "All registrations are complete",
         "steps": {
           "emailVerified": "Email verified",
           "dataFilled": "Personal data complete",
@@ -1648,15 +1680,23 @@
         "uploadReceiptCta": "Upload the deposit receipt",
         "viewBookingCta": "View registration details"
       },
-      "nextCamp": {
-        "sectionLabel": "Your next camp",
-        "daysToGo": "In {days} days",
-        "today": "Today!",
-        "tomorrow": "Tomorrow",
-        "inProgress": "In progress · day {day} of {total}",
-        "ended": "Camp ended",
+      "camp": {
+        "sectionLabel": "Your camps",
+        "camp": "Camp {number}",
+        "dates": "Dates",
+        "countdown": {
+          "today": "Today!",
+          "tomorrow": "Tomorrow",
+          "daysToGo": "In {days} days",
+          "inProgress": "Day {day} of {total}",
+          "ended": "Camp ended",
+          "past": "Completed"
+        },
+        "openDetails": "Open details",
+        "uploadReceipt": "Upload receipt",
+        "editArrival": "Edit arrival",
         "status": {
-          "pending": "Pending",
+          "pending": "Pending email",
           "email_verified": "Email verified",
           "receipt_uploaded": "Receipt under review",
           "confirmed": "Confirmed",
@@ -1664,25 +1704,46 @@
           "waitlist": "Waitlist",
           "cancelled": "Cancelled"
         },
-        "viewDetails": "View registration details",
-        "where": "Where to arrive",
-        "openInMaps": "Open in Maps",
-        "whatToBring": "What to bring",
-        "contacts": "Coordinator contacts"
-      },
-      "payment": {
-        "sectionLabel": "Payments",
-        "deposit": "Deposit · €100",
-        "balance": "Remaining balance",
-        "uploaded": "uploaded on {date}",
-        "notUploaded": "not yet uploaded",
-        "approved": "approved",
-        "pendingApproval": "awaiting approval",
-        "replace": "Replace receipt",
-        "uploadNow": "Upload receipt"
+        "payment": {
+          "title": "Payments",
+          "deposit": "Deposit · €100",
+          "balance": "Remaining balance · €{amount}",
+          "paid": "Paid",
+          "depositMissing": "Upload the deposit receipt",
+          "depositPending": "Receipt awaiting approval",
+          "depositApproved": "Receipt approved",
+          "balanceMissing": "Balance not yet paid",
+          "balancePaid": "Balance paid"
+        },
+        "arrival": {
+          "title": "Arrival",
+          "editCta": "Edit arrival",
+          "mode": {
+            "own_car": "Own car",
+            "train": "Train",
+            "bus": "Bus",
+            "plane_crotone": "Plane — Crotone",
+            "plane_lamezia": "Plane — Lamezia Terme",
+            "ferry": "Ferry",
+            "taxi": "Taxi / private hire",
+            "rental_car": "Rental car",
+            "need_pickup": "Transfer requested",
+            "other": "Other"
+          },
+          "from": "From {from}",
+          "atTime": "at {time}",
+          "flight": "Flight {number}",
+          "train": "Train {number}",
+          "bus": "{company}",
+          "departure": "Departure at {time}",
+          "notes": "Notes: {notes}",
+          "notSet": "Not yet communicated"
+        },
+        "addAnotherCta": "Book another camp",
+        "emptyTitle": "No registration yet"
       },
       "bookings": {
-        "sectionLabel": "Your registrations",
+        "sectionLabel": "All registrations",
         "noBookings": "You don't have any registration yet.",
         "viewAll": "See all ({count})"
       },
@@ -1697,12 +1758,17 @@
         "emailNotVerified": "email needs verification",
         "manageDevices": "Connected devices",
         "profile": "Profile",
-        "logout": "Sign out"
+        "logout": "Sign out",
+        "deviceCount": "{count, plural, =0 {No devices} =1 {1 connected device} other {# connected devices}}"
       },
       "emptyState": {
         "title": "You don't have a registration yet",
-        "body": "Discover the available turns for the volunteer camp.",
+        "body": "Pick a camp and your preferred dates — there are 12 weekly turns between June and September.",
         "cta": "See available turns"
+      },
+      "confirmed": {
+        "title": "Registration confirmed",
+        "body": "We look forward to seeing you at camp! All the logistics are below."
       }
     },
     "sessions": {
