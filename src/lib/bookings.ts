@@ -45,6 +45,9 @@ export async function findBookingsForVolunteer(opts: {
       turno: { select: { id: true, number: true, startDate: true, endDate: true } },
       iscrizioneTurni: {
         include: { turno: { select: { id: true, number: true, startDate: true, endDate: true } } }
+      },
+      receiptUploads: {
+        select: { id: true, type: true, approvedAt: true, createdAt: true }
       }
     },
     orderBy: [{ createdAt: "asc" }]
