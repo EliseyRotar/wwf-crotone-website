@@ -51,9 +51,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={`flex items-center gap-2 px-4 py-3 rounded shadow-lg text-sm ${reducedMotion ? "" : "animate-in slide-in-from-right "}${
-              t.type === "success" ? "bg-wwf-green text-white"
-              : t.type === "error" ? "bg-wwf-red text-white"
-              : "bg-[var(--ad-bg)] text-white"
+              t.type === "success" ? "bg-[var(--ad-success)] text-white"
+              : t.type === "error" ? "bg-[var(--ad-danger)] text-white"
+              : "bg-[var(--ad-bg-elevated)] text-[var(--ad-text)]"
             }`}
           >
             {t.type === "success" ? <CheckCircle size={16} /> : t.type === "error" ? <AlertCircle size={16} /> : null}

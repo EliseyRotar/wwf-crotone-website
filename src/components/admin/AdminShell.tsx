@@ -79,8 +79,8 @@ export default function AdminShell({
         onClick={() => setMobileOpen(false)}
         className={`group flex items-center gap-3 px-3 py-2 text-sm rounded-[var(--radius-sm)] transition-colors duration-150 ${
           active
-            ? "bg-wwf-green text-white font-semibold"
-            : "text-[var(--ad-text)] hover:bg-wwf-green-pale/40 hover:text-wwf-green-dark"
+            ? "bg-[var(--ad-accent)] text-white font-semibold"
+            : "text-[var(--ad-text-muted)] hover:bg-[var(--ad-bg-elevated)] hover:text-[var(--ad-text)]"
         }`}
       >
         <l.icon
@@ -153,12 +153,12 @@ export default function AdminShell({
   return (
     <div className="flex min-h-screen bg-[var(--ad-bg)]">
       {/* Desktop sidebar — directive §3 layout variety: persistent left nav (sticky, full height) */}
-      <aside className="hidden lg:flex w-60 shrink-0 sticky top-0 h-screen border-r border-[var(--ad-border)] bg-sand">
+      <aside className="hidden lg:flex w-60 shrink-0 sticky top-0 h-screen border-r border-[var(--ad-border)] bg-[var(--ad-bg-sunken)]">
         {sidebarContent}
       </aside>
 
       {/* Mobile: top bar + slide-in drawer */}
-      <header className="lg:hidden fixed inset-x-0 top-0 z-40 h-14 flex items-center gap-3 px-4 border-b border-[var(--ad-border)] bg-sand">
+      <header className="lg:hidden fixed inset-x-0 top-0 z-40 h-14 flex items-center gap-3 px-4 border-b border-[var(--ad-border)] bg-[var(--ad-bg-sunken)]">
         <button
           onClick={() => setMobileOpen((v) => !v)}
           aria-label={mobileOpen ? tNav("closeMenu") : tNav("openMenu")}
@@ -184,7 +184,7 @@ export default function AdminShell({
 
       {/* Mobile sidebar */}
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-64 border-r border-[var(--ad-border)] bg-sand transform transition-transform duration-200 ease-out ${
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-64 border-r border-[var(--ad-border)] bg-[var(--ad-bg-sunken)] transform transition-transform duration-200 ease-out ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
