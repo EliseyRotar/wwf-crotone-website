@@ -14,7 +14,7 @@ export default async function GalleryAdminPage() {
   return (
     <div>
       <h1 className="text-3xl mb-1">Galleria</h1>
-      <p className="text-ink-grey text-sm mb-8">Carica foto e video. I video richiedono l&apos;ID YouTube.</p>
+      <p className="text-[var(--ad-text-muted)] text-sm mb-8">Carica foto e video. I video richiedono l&apos;ID YouTube.</p>
       <GalleryUploader items={items.map((i) => ({ id: i.id, titleIt: i.titleIt, category: i.category }))} />
     </div>
   );

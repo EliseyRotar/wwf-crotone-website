@@ -918,6 +918,74 @@
       "superadmin": "Superadmin",
       "manager": "Manager"
     },
+    "rawDataShow": "Mostra dati grezzi",
+    "rawDataHide": "Nascondi dati grezzi",
+    "prettyActions": {
+      "iscrizione_edit": "{actor} ha modificato l'iscrizione",
+      "iscrizione_create": "{actor} ha creato un'iscrizione",
+      "status_change": "{actor} ha cambiato lo stato dell'iscrizione",
+      "receipt_upload": "{actor} ha caricato una ricevuta",
+      "receipt_approve": "{actor} ha approvato una ricevuta",
+      "receipt_reject": "{actor} ha rifiutato una ricevuta",
+      "delete": "{actor} ha eliminato un record",
+      "login": "{actor} ha effettuato l'accesso",
+      "logout": "{actor} ha terminato la sessione",
+      "create": "{actor} ha creato un record",
+      "update": "{actor} ha aggiornato un record",
+      "settings_change": "{actor} ha modificato le impostazioni",
+      "default": "{actor} ha eseguito {action}"
+    },
+    "prettyEntities": {
+      "iscrizione": "iscrizione",
+      "receipt_upload": "ricevuta",
+      "iscrizione_edit": "iscrizione",
+      "user": "utente",
+      "turno": "turno",
+      "blog_post": "articolo blog",
+      "gallery_item": "elemento galleria",
+      "camp_settings": "impostazioni campo"
+    },
+    "statusLabels": {
+      "pending": "In attesa",
+      "email_verified": "Email verificata",
+      "receipt_uploaded": "Ricevuta caricata",
+      "confirmed": "Confermata",
+      "paid": "Pagato",
+      "cancelled": "Annullata",
+      "waitlist": "Lista d'attesa",
+      "from": "da",
+      "to": "a"
+    },
+    "paymentLabels": {
+      "feePaid": "Quota 100€",
+      "feePaidDate": "data quota",
+      "balancePaid": "Saldo",
+      "balancePaidDate": "data saldo",
+      "depositReceiptApprovedAt": "data approvazione acconto",
+      "balanceReceiptApprovedAt": "data approvazione saldo",
+      "true": "impostato a PAGATO",
+      "false": "impostato a NON PAGATO"
+    },
+    "fieldLabels": {
+      "method": "Metodo",
+      "persistent": "Dispositivo ricordato",
+      "type": "Tipo",
+      "objectKey": "File",
+      "fields": "Campi modificati",
+      "rejected": "Valori non validi",
+      "reason": "Motivo"
+    },
+    "methodLabels": {
+      "magic-link": "Magic link (via email)"
+    },
+    "receiptTypes": {
+      "deposit": "acconto",
+      "balance": "saldo"
+    },
+    "persistentLabels": {
+      "true": "sì (30 giorni)",
+      "false": "no (24 ore)"
+    },
     "dashboard": {
       "welcome": "Benvenuto, {name}",
       "totalIscrizioni": "Iscrizioni totali",
@@ -957,6 +1025,7 @@
       "delete": "Elimina",
       "noResults": "Nessuna iscrizione trovata.",
       "deleteConfirm": "Eliminare definitivamente {name}? Questa azione non può essere annullata.",
+      "deleteVolunteer": "Elimina iscrizione",
       "deleteError": "Errore",
       "networkError": "Errore di rete",
       "fee100": "Quota 100€",

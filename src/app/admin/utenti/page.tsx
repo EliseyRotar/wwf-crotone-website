@@ -17,7 +17,7 @@ export default async function UtentiPage() {
   return (
     <div>
       <h1 className="text-3xl mb-1">Utenti</h1>
-      <p className="text-ink-grey text-sm mb-8">
+      <p className="text-[var(--ad-text-muted)] text-sm mb-8">
         Crea account manager (con turni assegnati) o superadmin. I manager scadono automaticamente una settimana dopo la fine del loro ultimo turno assegnato.
       </p>
       <UsersManager

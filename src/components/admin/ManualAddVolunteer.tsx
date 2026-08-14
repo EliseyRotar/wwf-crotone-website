@@ -87,7 +87,7 @@ export default function ManualAddVolunteer({ turni }: { turni: Turno[] }) {
       <div className="card-body">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl">{t("title")}</h2>
-          <button onClick={() => setOpen(false)} className="text-[var(--ad-text-muted)] hover:text-ink">
+          <button onClick={() => setOpen(false)} className="text-[var(--ad-text-muted)] hover:text-[var(--ad-text)]">
             <X size={20} />
           </button>
         </div>

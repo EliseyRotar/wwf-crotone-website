@@ -97,7 +97,7 @@ export default function StatusAdminClient({
             key={k}
             onClick={() => setTab(k)}
             className={`px-3 py-2 text-sm font-bold text-[10px] font-semibold uppercase tracking-wider border-b-2 -mb-px transition-colors ${
-              tab === k ? "border-[var(--ad-accent)] text-[var(--ad-accent)]" : "border-transparent text-[var(--ad-text-muted)] hover:text-ink"
+              tab === k ? "border-[var(--ad-accent)] text-[var(--ad-accent)]" : "border-transparent text-[var(--ad-text-muted)] hover:text-[var(--ad-text)]"
             }`}
           >
             {t(`page.tab${k[0].toUpperCase()}${k.slice(1)}`)}
@@ -105,7 +105,7 @@ export default function StatusAdminClient({
         ))}
         <button
           onClick={() => void refreshAll()}
-          className="ml-auto px-3 py-2 text-xs text-[var(--ad-text-muted)] hover:text-ink"
+          className="ml-auto px-3 py-2 text-xs text-[var(--ad-text-muted)] hover:text-[var(--ad-text)]"
           aria-label="refresh"
         >
           <RefreshCw size={14} />
@@ -173,7 +173,7 @@ function ServicesTab({
             <tr key={s.id} className="border-b border-[var(--ad-border)]">
               <td className="py-2 pr-3">
                 <p className="font-semibold">{s.name_it}</p>
-                <p className="text-xs text-ink-grey">{s.slug}</p>
+                <p className="text-xs text-[var(--ad-text-muted)]">{s.slug}</p>
               </td>
               <td className="py-2 pr-3 text-xs">{categoryLabel(s.category, t)}</td>
               <td className="py-2 pr-3 text-xs">{sourceLabel(s.source, t)}</td>
@@ -190,7 +190,7 @@ function ServicesTab({
                 <div className="flex gap-1">
                   <button
                     onClick={() => setEditing(editing === s.slug ? null : s.slug)}
-                    className="px-2 py-1 text-xs rounded hover:bg-ink/5"
+                    className="px-2 py-1 text-xs rounded hover:bg-[var(--ad-bg)]/5"
                     title={t("services.edit")}
                   >
                     {t("services.edit")}
@@ -201,7 +201,7 @@ function ServicesTab({
                         void toggleActive(s);
                       }
                     }}
-                    className="px-2 py-1 text-xs rounded hover:bg-ink/5"
+                    className="px-2 py-1 text-xs rounded hover:bg-[var(--ad-bg)]/5"
                     title={s.active ? t("services.deactivate") : t("services.reactivate")}
                   >
                     {s.active ? <Trash2 size={12} /> : <RotateCcw size={12} />}
@@ -314,7 +314,7 @@ function IncidentsTab({
           {t("incidents.active")} ({active.length})
         </h3>
         {active.length === 0 ? (
-          <p className="text-sm text-ink-grey">{t("incidents.noActive")}</p>
+          <p className="text-sm text-[var(--ad-text-muted)]">{t("incidents.noActive")}</p>
         ) : (
           <div className="space-y-3">
             {active.map((inc) => (
@@ -335,7 +335,7 @@ function IncidentsTab({
           {t("incidents.recent")} ({recent.length})
         </h3>
         {recent.length === 0 ? (
-          <p className="text-sm text-ink-grey">{t("incidents.noRecent")}</p>
+          <p className="text-sm text-[var(--ad-text-muted)]">{t("incidents.noRecent")}</p>
         ) : (
           <div className="space-y-2 opacity-80">
             {recent.slice(0, 10).map((inc) => (
@@ -484,10 +484,10 @@ function IncidentCard({
             <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-900">
               {incident.severity}
             </span>
-            <span className="text-xs text-ink-grey">{incident.status}</span>
+            <span className="text-xs text-[var(--ad-text-muted)]">{incident.status}</span>
           </div>
           <p className="font-semibold mt-1">{incident.title_it}</p>
-          <p className="text-xs text-ink-grey">{incident.service_slug} · {new Date(incident.started_at).toLocaleString()}</p>
+          <p className="text-xs text-[var(--ad-text-muted)]">{incident.service_slug} · {new Date(incident.started_at).toLocaleString()}</p>
         </div>
         <button onClick={() => void resolve()} className="btn btn-green text-xs">
           {t("incidents.resolve")}
@@ -502,7 +502,7 @@ function IncidentCard({
           <ol className="mt-2 space-y-1 border-l-2 border-[var(--ad-border)] pl-3 text-xs">
             {incident.updates.map((u) => (
               <li key={u.id}>
-                <p className="text-ink-grey">{new Date(u.created_at).toLocaleString()}</p>
+                <p className="text-[var(--ad-text-muted)]">{new Date(u.created_at).toLocaleString()}</p>
                 <p>{u.body_it}</p>
               </li>
             ))}
@@ -529,7 +529,7 @@ function IncidentSummary({ incident, t }: { incident: Incident; t: ReturnType<ty
   return (
     <div className="border-b border-[var(--ad-border)] py-2 text-sm">
       <p className="font-medium">{incident.title_it}</p>
-      <p className="text-xs text-ink-grey">
+      <p className="text-xs text-[var(--ad-text-muted)]">
         {incident.service_slug} · {incident.severity} · {new Date(incident.resolved_at!).toLocaleString()}
       </p>
     </div>
@@ -561,7 +561,7 @@ function HistoryTab({
             <tr key={s.id} className="border-b border-[var(--ad-border)]">
               <td className="py-2 pr-3">
                 <p className="font-semibold">{s.name_it}</p>
-                <p className="text-xs text-ink-grey">{s.slug}</p>
+                <p className="text-xs text-[var(--ad-text-muted)]">{s.slug}</p>
               </td>
               <td className="py-2 pr-3 text-right tabular-nums">
                 {s.uptime_7d === null ? "—" : `${s.uptime_7d.toFixed(2)}%`}

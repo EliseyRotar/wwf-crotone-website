@@ -16,7 +16,7 @@ export default function AdminError({
   return (
     <div className="text-center py-20">
       <h1 className="text-3xl mb-4">Admin Error</h1>
-      <p className="text-ink-grey mb-6">Something went wrong in the admin panel.</p>
+      <p className="text-[var(--ad-text-muted)] mb-6">Something went wrong in the admin panel.</p>
       <button onClick={reset} className="btn btn-primary">
         Try again
       </button>

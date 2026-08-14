@@ -139,7 +139,7 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
                 <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
               </div>
             </div>
-            {msg && <p className="text-sm text-ink-grey">{msg}</p>}
+            {msg && <p className="text-sm text-[var(--ad-text-muted)]">{msg}</p>}
             <button type="submit" disabled={busy} className="btn btn-green">
               <Upload size={18} /> {busy ? tC("loading") : t("publish")}
             </button>
@@ -154,7 +154,7 @@ export default function GalleryUploader({ items }: { items: { id: string; titleI
             <div key={it.id} className="flex items-center justify-between p-3 bg-surface border border-[var(--ad-border)]">
               <div className="min-w-0">
                 <p className="font-bold truncate">{it.titleIt}</p>
-                <p className="text-xs text-ink-grey">{it.category}</p>
+                <p className="text-xs text-[var(--ad-text-muted)]">{it.category}</p>
               </div>
               <button onClick={() => del(it.id)} className="text-[var(--ad-danger)] hover:bg-[var(--ad-danger-soft)] p-2" aria-label={tC("delete")}>
                 <Trash2 size={16} />

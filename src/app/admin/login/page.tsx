@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logos/wwf.png" alt="WWF" className="h-14 mb-4 rounded-sm bg-white p-1.5" />
         <h1 className="text-2xl mb-1">{t("title")}</h1>
-        <p className="text-sm text-ink-grey mb-6">{t("subtitle")}</p>
+        <p className="text-sm text-[var(--ad-text-muted)] mb-6">{t("subtitle")}</p>
         <form onSubmit={submit} className="space-y-3">
           <div className="field">
             <label htmlFor="email">{t("email")}</label>

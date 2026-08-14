@@ -63,7 +63,7 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg">{creating ? t("newArticle") : t("editArticle")}</h3>
-              <button onClick={() => { setCreating(false); setEditing(null); }} className="text-[var(--ad-text-muted)] hover:text-ink"><X size={20} /></button>
+              <button onClick={() => { setCreating(false); setEditing(null); }} className="text-[var(--ad-text-muted)] hover:text-[var(--ad-text)]"><X size={20} /></button>
             </div>
             <div className="space-y-3">
               <div className="field"><label>{t("titleIt")}</label><input value={form.titleIt} onChange={(e) => setForm({ ...form, titleIt: e.target.value })} /></div>
@@ -83,12 +83,12 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
       )}
 
       <div className="space-y-2">
-        {posts.length === 0 && <p className="text-ink-grey">{t("noPosts")}</p>}
+        {posts.length === 0 && <p className="text-[var(--ad-text-muted)]">{t("noPosts")}</p>}
         {posts.map((p) => (
           <div key={p.id} className="flex items-center justify-between p-3 bg-surface border border-[var(--ad-border)]">
             <div>
-              <p className="font-bold">{p.titleIt} {p.titleEn && <span className="text-xs text-ink-grey">/ {p.titleEn}</span>}</p>
-              <p className="text-xs text-ink-grey">/{p.slug} — {p.published ? t("published") : t("draft")}</p>
+              <p className="font-bold">{p.titleIt} {p.titleEn && <span className="text-xs text-[var(--ad-text-muted)]">/ {p.titleEn}</span>}</p>
+              <p className="text-xs text-[var(--ad-text-muted)]">/{p.slug} — {p.published ? t("published") : t("draft")}</p>
             </div>
             <div className="flex gap-1">
               <button onClick={() => togglePublish(p)} className="p-2 text-[var(--ad-text)] hover:text-[var(--ad-accent)]" title={p.published ? t("unpublish") : t("publish")}>

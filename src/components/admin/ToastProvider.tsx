@@ -53,7 +53,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={`flex items-center gap-2 px-4 py-3 rounded shadow-lg text-sm ${reducedMotion ? "" : "animate-in slide-in-from-right "}${
               t.type === "success" ? "bg-wwf-green text-white"
               : t.type === "error" ? "bg-wwf-red text-white"
-              : "bg-ink text-white"
+              : "bg-[var(--ad-bg)] text-white"
             }`}
           >
             {t.type === "success" ? <CheckCircle size={16} /> : t.type === "error" ? <AlertCircle size={16} /> : null}

@@ -73,7 +73,7 @@ export default function RosterClient({ turni, selectedTurnoId, iscrizioni }: {
           <tbody>
             {iscrizioni.map((i, idx) => (
               <tr key={i.id} className="border-b border-[var(--ad-border)]/40">
-                <td className="p-2 text-ink-grey">{idx + 1}</td>
+                <td className="p-2 text-[var(--ad-text-muted)]">{idx + 1}</td>
                 <td className="p-2 font-bold">
                   {i.firstName} {i.lastName}
                   {i.isMinor && <span className="tag tag-orange ml-1 text-xs">min</span>}

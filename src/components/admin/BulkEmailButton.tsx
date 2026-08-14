@@ -64,7 +64,7 @@ export default function BulkEmailButton({ turnoId }: { turnoId?: string }) {
       <div className="card-body">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg">{t("title")}</h3>
-          <button onClick={() => setOpen(false)} className="text-[var(--ad-text-muted)] hover:text-ink"><X size={20} /></button>
+          <button onClick={() => setOpen(false)} className="text-[var(--ad-text-muted)] hover:text-[var(--ad-text)]"><X size={20} /></button>
         </div>
         <div className="field">
           <label>{t("subject")}</label>
@@ -88,7 +88,7 @@ export default function BulkEmailButton({ turnoId }: { turnoId?: string }) {
             />
           </div>
         )}
-        {msg && <p className="text-sm mt-2 text-ink-2">{msg}</p>}
+        {msg && <p className="text-sm mt-2 text-[var(--ad-text)]">{msg}</p>}
         <div className="flex gap-2 mt-3">
           <button onClick={send} disabled={busy} className="btn btn-green">{busy ? tC("loading") : (schedule ? t("schedule") : t("send"))}</button>
           <button onClick={() => setOpen(false)} className="btn btn-outline">{t("cancel")}</button>

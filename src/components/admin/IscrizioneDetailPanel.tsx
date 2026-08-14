@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations, useLocale } from "next-intl";
-import { X, Printer, ExternalLink, Check, Loader2 } from "lucide-react";
+import { X, Printer, ExternalLink, Check, Loader2, Trash2 } from "lucide-react";
 import { calcAge } from "@/lib/turns";
 import { useRouter } from "next/navigation";
 
@@ -436,6 +436,44 @@ export default function IscrizioneDetailPanel({
     setDraft((cur) => ({ ...cur, [field]: value }));
   };
 
+  const deleteIscrizione = async () => {
+    // Hard-delete confirmation. The API endpoint is superadmin-only and
+    // frees up the turno slot, so this is destructive — we make the
+    // user type the volunteer's last name to confirm.
+    const confirmText = prompt(
+      `Per eliminare DEFINITIVAMENTE ${iscrizione.firstName} ${iscrizione.lastName} e liberare il posto nel campo, digita il cognome "${iscrizione.lastName}" e premi OK.\n\nQuesta azione non può essere annullata.`
+    );
+    if (confirmText !== iscrizione.lastName) {
+      if (confirmText !== null) {
+        alert("Cognome non corrispondente. Eliminazione annullata.");
+      }
+      return;
+    }
+    setBusy("edit");
+    setError(null);
+    try {
+      const resp = await fetch("/api/admin/iscrizioni", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: iscrizione.id })
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      // Close the panel and refresh the table.
+      setEditing(false);
+      setDraft({});
+      setOpen(false);
+      if (typeof window !== "undefined" && window.location.hash.startsWith("#iscrizione-")) {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      setError(tIsc("networkError"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const printRecord = () => {
     const w = window.open("", "_blank", "width=800,height=900");
     if (!w) return;
@@ -823,6 +861,15 @@ export default function IscrizioneDetailPanel({
               {error && (
                 <span className="text-xs text-[var(--ad-danger)] mr-auto">{error}</span>
               )}
+              <button
+                type="button"
+                onClick={deleteIscrizione}
+                disabled={busy === "edit"}
+                className="mr-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-sm)] border border-[var(--ad-danger)] text-[var(--ad-danger)] hover:bg-[var(--ad-danger-soft)] disabled:opacity-50"
+              >
+                <Trash2 size={14} />
+                {tIsc("deleteVolunteer")}
+              </button>
               <button
                 onClick={cancelEdit}
                 disabled={busy === "edit"}

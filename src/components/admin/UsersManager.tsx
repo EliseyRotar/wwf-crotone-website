@@ -125,7 +125,7 @@ export default function UsersManager({
             <div key={u.id} className="flex items-center justify-between p-3 bg-surface border border-[var(--ad-border)]">
               <div>
                 <p className="font-bold">{u.email} {u.id === currentId && <span className="text-xs text-[var(--ad-accent)]">{t("you")}</span>}</p>
-                <p className="text-xs text-ink-grey">
+                <p className="text-xs text-[var(--ad-text-muted)]">
                   {u.role === "superadmin" ? t("superadmin") : t("manager")} — {u.name ?? "—"}
                   {!u.active && <span className="text-[var(--ad-danger)] ml-2">{t("disabled")}</span>}
                   {expired && <span className="text-[var(--ad-danger)] ml-2">{t("expired")}</span>}

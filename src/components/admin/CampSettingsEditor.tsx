@@ -110,7 +110,7 @@ export default function CampSettingsEditor({ settings }: { settings: Settings | 
               </label>
             </div>
           </div>
-          {msg && <p className="text-sm mt-3 text-ink-2">{msg}</p>}
+          {msg && <p className="text-sm mt-3 text-[var(--ad-text)]">{msg}</p>}
           <button onClick={save} disabled={busy} className="btn btn-green mt-4">
             <Save size={18} /> {busy ? tC("loading") : t("save")}
           </button>

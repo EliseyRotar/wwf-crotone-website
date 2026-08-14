@@ -80,7 +80,7 @@ export default function AdminShell({
         className={`group flex items-center gap-3 px-3 py-2 text-sm rounded-[var(--radius-sm)] transition-colors duration-150 ${
           active
             ? "bg-wwf-green text-white font-semibold"
-            : "text-ink hover:bg-wwf-green-pale/40 hover:text-wwf-green-dark"
+            : "text-[var(--ad-text)] hover:bg-wwf-green-pale/40 hover:text-wwf-green-dark"
         }`}
       >
         <l.icon
