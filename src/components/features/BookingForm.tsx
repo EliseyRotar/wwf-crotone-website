@@ -626,6 +626,18 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
                 </div>
               )}
 
+              {state.arrivalMode === "need_pickup" && (
+                <div className="field mb-4">
+                  <label htmlFor="flight">{t("flightNumber")}</label>
+                  <input
+                    id="flight"
+                    value={state.flightNumber}
+                    onChange={(e) => set("flightNumber", e.target.value)}
+                    placeholder={t("flightNumberHelp")}
+                  />
+                </div>
+              )}
+
               {state.arrivalMode === "train" && (
                 <div className="field mb-4">
                   <label htmlFor="trainnum">{t("trainNumber")}</label>

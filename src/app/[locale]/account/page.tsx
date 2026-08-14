@@ -363,7 +363,17 @@ function CampCard({
   const daysToGo = Math.max(0, Math.ceil((turno.startDate.getTime() - now.getTime()) / 86_400_000));
   let countdown: string;
   if (isPast) countdown = t("camp.countdown.past");
-  else if (isInProgress) countdown = t("camp.countdown.inProgress", { day: "in corso", total: 7 });
+  else if (isInProgress) {
+    // Day of camp: 1-based count from startDate to today
+    const dayNumber = Math.max(
+      1,
+      Math.min(
+        7,
+        Math.floor((now.getTime() - turno.startDate.getTime()) / 86_400_000) + 1
+      )
+    );
+    countdown = t("camp.countdown.inProgress", { day: dayNumber, total: 7 });
+  }
   else if (daysToGo === 0) countdown = t("camp.countdown.today");
   else if (daysToGo === 1) countdown = t("camp.countdown.tomorrow");
   else countdown = t("camp.countdown.daysToGo", { days: daysToGo });
