@@ -112,27 +112,6 @@
   --c-footer-muted: rgba(232,230,227,0.50);
   --c-glass-bg: rgba(20,20,19,0.75);
   --c-glass-border: rgba(58,58,56,0.3);
-
-  /* Admin palette overrides for dark mode. Without these the admin
-     keeps its light backgrounds/text — and since the admin code mostly
-     uses var(--ad-*) tokens, those need their own dark variants. */
-  --ad-bg: #141413;
-  --ad-bg-sunken: #1a1a18;
-  --ad-bg-elevated: #1e1e1c;
-  --ad-border: #3a3a38;
-  --ad-border-strong: #6a6a66;
-  --ad-text: #e8e6e3;
-  --ad-text-muted: #8a8884;
-  --ad-text-subtle: #6a6a66;
-  --ad-accent: #a5d961;
-  --ad-accent-hover: #c5e981;
-  --ad-accent-soft: #1a3a12;
-  --ad-success: #a5d961;
-  --ad-success-soft: #1a3a12;
-  --ad-warning: #f5c956;
-  --ad-warning-soft: #3a2a10;
-  --ad-danger: #ff6b4a;
-  --ad-danger-soft: #3a1410;
 }
 
 html {
@@ -176,6 +155,29 @@ html {
   --ad-warning-soft: #f5d200;
   --ad-danger: #ed2b00;
   --ad-danger-soft: #ffe0d6;
+}
+
+/* Admin palette overrides for dark mode. Must come AFTER the light-mode
+   admin defaults above so the cascade resolves to the dark values when
+   the user has toggled the theme. */
+.dark [data-surface="admin"] {
+  --ad-bg: #141413;
+  --ad-bg-sunken: #1a1a18;
+  --ad-bg-elevated: #1e1e1c;
+  --ad-border: #3a3a38;
+  --ad-border-strong: #6a6a66;
+  --ad-text: #e8e6e3;
+  --ad-text-muted: #8a8884;
+  --ad-text-subtle: #6a6a66;
+  --ad-accent: #a5d961;
+  --ad-accent-hover: #c5e981;
+  --ad-accent-soft: #1a3a12;
+  --ad-success: #a5d961;
+  --ad-success-soft: #1a3a12;
+  --ad-warning: #f5c956;
+  --ad-warning-soft: #3a2a10;
+  --ad-danger: #ff6b4a;
+  --ad-danger-soft: #3a1410;
 }
 
 /* Admin .card / .field / .btn / .tag override — same WWF palette, just
