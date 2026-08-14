@@ -77,7 +77,12 @@ model Iscrizione {
   dietaryNotes             String?
   tshirtSize               String? // "S" | "M" | "L" | "XL" | "XXL"
   // Logistics
-  arrivalMode              String? // "own_car" | "train" | "bus" | "plane_crotone" | "plane_lamezia" | "need_pickup"
+  arrivalMode              String? // "own_car" | "train" | "bus" | "plane_crotone" | "plane_lamezia" | "ferry" | "taxi" | "rental_car" | "need_pickup" | "other"
+  arrivalFrom              String? // free-text "from where" — city, line, terminal, etc.
+  flightNumber             String? // for plane_crotone / plane_lamezia
+  trainNumber              String? // for train
+  busCompany               String? // for bus / ferry
+  arrivalNotes             String? // free-text details for the organisers (max 500)
   arrivalTime              String? // e.g. "14:30"
   departureTime            String? // e.g. "10:00"
   // Admin-managed

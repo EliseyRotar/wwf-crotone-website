@@ -35,7 +35,27 @@ const schema = z.object({
   dietaryNeeds: z.enum(["none", "vegetarian", "vegan", "celiac", "other"]).optional().or(z.literal("")),
   dietaryNotes: z.string().max(2000).optional(),
   tshirtSize: z.enum(["S", "M", "L", "XL", "XXL"]).optional().or(z.literal("")),
-  arrivalMode: z.enum(["own_car", "train", "bus", "plane_crotone", "plane_lamezia", "need_pickup"]).optional().or(z.literal("")),
+  // Arrival mode is REQUIRED — the organizers need to plan pickups,
+  // transfer schedules and parking. The free-text "arrivalNotes" is
+  // optional but recommended for any mode (flight number, train
+  // number, ferry line, ride share details, etc.).
+  arrivalMode: z.enum([
+    "own_car",
+    "train",
+    "bus",
+    "plane_crotone",
+    "plane_lamezia",
+    "ferry",
+    "taxi",
+    "rental_car",
+    "need_pickup",
+    "other"
+  ]),
+  arrivalFrom: z.string().max(120).optional().or(z.literal("")),
+  flightNumber: z.string().max(40).optional().or(z.literal("")),
+  trainNumber: z.string().max(40).optional().or(z.literal("")),
+  busCompany: z.string().max(80).optional().or(z.literal("")),
+  arrivalNotes: z.string().max(500).optional().or(z.literal("")),
   arrivalTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal("")),
   departureTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal("")),
   privacyConsent: z.boolean().refine((v) => v === true, { message: "Consent required" }),
