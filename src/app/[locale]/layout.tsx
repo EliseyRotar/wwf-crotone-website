@@ -253,6 +253,11 @@ export default async function LocaleLayout({
         <meta name="theme-color" content={isDark ? "#141413" : "#007932" } />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        {/* DNS / TCP warm-up for Sentry browser SDK + map tile host.
+            Cuts first-error latency for unhandled exceptions and first
+            paint of the PastCampsMap basemap. */}
+        <link rel="preconnect" href="https://o4511881999679488.ingest.de.sentry.io" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://basemaps.cartocdn.com" />
         <PlausibleAnalytics />
         <script
           nonce={nonce}
