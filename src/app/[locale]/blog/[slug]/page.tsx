@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { SITE } from "@/config/site";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -55,19 +56,78 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
       excerptEn: true,
       imageUrl: true,
       published: true,
-      publishedAt: true
+      publishedAt: true,
+      authorId: true,
+      createdAt: true,
+      updatedAt: true
     }
   });
   if (!post || !post.published) notFound();
 
+  const title = loc === "it" ? post.titleIt : (post.titleEn ?? post.titleIt);
+  const description =
+    loc === "it"
+      ? (post.excerptIt ?? post.titleIt)
+      : (post.excerptEn ?? post.titleEn ?? post.titleIt);
+  const url = `${baseUrl}/${loc}/blog/${slug}`;
+  const ogLogo = `${baseUrl}/icon-192.png`;
+  const datePublished = post.publishedAt?.toISOString() ?? post.createdAt.toISOString();
+  const dateModified = post.updatedAt.toISOString();
+
+  // Article JSON-LD: feeds Google rich results (title, image, date, author,
+  // publisher) for individual blog posts. Falls back to SITE.name as author
+  // when the authorId is not set.
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description,
+    url,
+    datePublished,
+    dateModified,
+    inLanguage: loc === "it" ? "it-IT" : "en-GB",
+    publisher: {
+      "@type": "Organization",
+      name: SITE.name,
+      legalName: SITE.legalName,
+      url: baseUrl,
+      logo: { "@type": "ImageObject", url: ogLogo },
+      sameAs: [SITE.facebook, SITE.instagram, SITE.googleBusiness].filter(Boolean)
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    isPartOf: {
+      "@type": "Blog",
+      name: loc === "it" ? "Blog WWF Crotone" : "WWF Crotone Blog",
+      url: `${baseUrl}/${loc}/blog`
+    }
+  };
+  if (post.imageUrl) {
+    jsonLd.image = {
+      "@type": "ImageObject",
+      url: post.imageUrl.startsWith("http") ? post.imageUrl : `${baseUrl}${post.imageUrl}`,
+      width: 1200,
+      height: 630
+    };
+  }
+  if (post.authorId) {
+    jsonLd.author = { "@type": "Person", name: post.authorId };
+    // TODO: replace with a real User lookup when admin UI exposes it
+  } else {
+    jsonLd.author = { "@type": "Organization", name: SITE.name };
+  }
+
   return (
     <div className="container section max-w-3xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <article>
         {post.imageUrl && (
           <div className="relative mb-6 overflow-hidden rounded-xl" style={{ aspectRatio: "16/9" }}>
             <Image
               src={post.imageUrl}
-              alt={loc === "it" ? post.titleIt : (post.titleEn ?? post.titleIt)}
+              alt={title}
               fill
               sizes="(min-width: 768px) 60vw, 100vw"
               style={{ objectFit: "cover" }}
@@ -78,7 +138,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
         {post.publishedAt && (
           <p className="text-sm text-ink-grey mb-2">{post.publishedAt.toLocaleDateString(loc === "it" ? "it-IT" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}</p>
         )}
-        <h1 className="text-3xl md:text-4xl mb-6">{loc === "it" ? post.titleIt : (post.titleEn ?? post.titleIt)}</h1>
+        <h1 className="text-3xl md:text-4xl mb-6">{title}</h1>
         <div className="prose prose-lg max-w-none text-ink-2 leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: loc === "it" ? post.contentIt : (post.contentEn ?? post.contentIt) }} />
       </article>
     </div>
