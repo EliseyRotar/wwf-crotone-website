@@ -18,6 +18,8 @@ import InstagramFeed from "@/components/features/InstagramFeed";
 
 export const revalidate = 60;
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://wwfcrotone.it";
+
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -260,6 +262,58 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
         </div>
       </section>
+
+      {/* LocalBusiness JSON-LD — helps Google show our address, phone,
+          and hours on the Knowledge Panel and Maps results. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "@id": `${baseUrl}/#localbusiness`,
+            name: SITE.legalName,
+            alternateName: "WWF Crotone",
+            url: baseUrl,
+            telephone: SITE.phoneField,
+            email: SITE.email,
+            image: `${baseUrl}/logos/wwf.png`,
+            logo: `${baseUrl}/logos/wwf.png`,
+            description:
+              loc === "it"
+                ? "Sezione locale di WWF Italia ETS. Campi di volontariato ambientale per la tutela delle tartarughe marine Caretta caretta sull'AMP Capo Rizzuto, Calabria."
+                : "Local branch of WWF Italia ETS. Environmental volunteer camps protecting Caretta caretta sea turtles in the Capo Rizzuto Marine Protected Area, Calabria, Italy.",
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: "Località San Leonardo di Cutro, snc",
+              addressLocality: "Cutro",
+              addressRegion: "KR",
+              postalCode: "88842",
+              addressCountry: "IT"
+            },
+            geo: {
+              "@type": "GeoCoordinates",
+              latitude: 38.9403,
+              longitude: 16.9497
+            },
+            openingHoursSpecification: [
+              {
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                opens: "09:00",
+                closes: "18:00"
+              }
+            ],
+            priceRange: "€€",
+            sameAs: [SITE.facebook, SITE.instagram, SITE.googleBusiness],
+            parentOrganization: {
+              "@type": "NGO",
+              name: "WWF Italia ETS",
+              url: "https://www.wwf.it"
+            }
+          })
+        }}
+      />
 
       <InstagramFeed />
     </>

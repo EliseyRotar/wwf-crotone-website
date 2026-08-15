@@ -2,7 +2,6 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
-import PastCampsMap from "@/components/features/PastCampsMapClient";
 import { SITE } from "@/config/site";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -165,7 +164,27 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="mt-20">
         <h2 className="mb-3">{t("mapTitle")}</h2>
         <p className="text-ink-2 max-w-3xl mb-6 leading-relaxed">{t("mapBody")}</p>
-        <PastCampsMap locale={loc} />
+        <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border-2 border-ink-grey-light shadow-lg">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d11860!2d16.9497!3d38.9403!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0!2zMzjCsDU2JzI0LjkiTiAxNibCsDU2JzU4Ljki!5e0!3m2!1sen!2sus"
+            className="w-full h-full"
+            style={{ border: 0 }}
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            title={t("mapTitle")}
+          />
+        </div>
+        <p className="text-xs text-ink-grey mt-3 text-center">
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=WWF+Crotone+San+Leonardo+di+Cutro"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-wwf-green underline"
+          >
+            San Leonardo di Cutro (KR), Calabria — {loc === "it" ? "apri in Google Maps" : "open in Google Maps"}
+          </a>
+        </p>
       </section>
     </div>
   );

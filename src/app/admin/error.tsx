@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import { ErrorPage } from "@/components/ui/ErrorPage";
 
+/**
+ * Admin panel error boundary. Same component as the public one but
+ * locale is locked to IT (admin is internal-only).
+ */
 export default function AdminError({
   error,
   reset
@@ -10,16 +15,16 @@ export default function AdminError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    console.error("[admin]", error);
   }, [error]);
 
   return (
-    <div className="text-center py-20">
-      <h1 className="text-3xl mb-4">Admin Error</h1>
-      <p className="text-[var(--ad-text-muted)] mb-6">Something went wrong in the admin panel.</p>
-      <button onClick={reset} className="btn btn-primary">
-        Try again
-      </button>
-    </div>
+    <ErrorPage
+      variant="server-error"
+      locale="it"
+      homeHref="/admin"
+      error={error}
+      onRetry={reset}
+    />
   );
 }

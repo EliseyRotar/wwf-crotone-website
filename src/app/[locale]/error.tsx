@@ -1,25 +1,40 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ErrorPage } from "@/components/ui/ErrorPage";
 
-export default function Error({
+/**
+ * Server Component error boundary for any route under [locale].
+ * Sentry captures the underlying error automatically; we just render
+ * a friendly fallback here with a retry button.
+ *
+ * Locale is detected from a small client-side fetch of the
+ * NEXT_LOCALE cookie via document.cookie (the cookie is httpOnly-safe
+ * to read here since the middleware sets it accessible to JS).
+ */
+export default function LocaleError({
   error,
   reset
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [locale, setLocale] = useState<"it" | "en">("it");
+
   useEffect(() => {
-    console.error(error);
+    if (typeof document === "undefined") return;
+    const m = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+    if (m && m[1].toLowerCase().startsWith("en")) setLocale("en");
+    console.error("[locale-error]", error);
   }, [error]);
 
   return (
-    <div className="container section text-center">
-      <h1 className="text-3xl md:text-4xl mb-4">Something went wrong</h1>
-      <p className="text-ink-grey mb-6">An unexpected error occurred. Please try again.</p>
-      <button onClick={reset} className="btn btn-primary">
-        Try again
-      </button>
-    </div>
+    <ErrorPage
+      variant="server-error"
+      locale={locale}
+      homeHref={`/${locale}`}
+      error={error}
+      onRetry={reset}
+    />
   );
 }

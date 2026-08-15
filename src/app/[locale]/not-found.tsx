@@ -1,14 +1,16 @@
-import Link from "next/link";
+import { ErrorPage } from "@/components/ui/ErrorPage";
 
-export default function NotFound() {
-  return (
-    <div className="container section text-center">
-      <h1 className="text-6xl md:text-8xl font-head text-wwf-green mb-4">404</h1>
-      <p className="text-xl text-ink-2 mb-2">Page not found</p>
-      <p className="text-ink-grey mb-8">The page you are looking for does not exist or has been moved.</p>
-      <Link href="/" className="btn btn-primary">
-        Back to home
-      </Link>
-    </div>
-  );
+/**
+ * 404 inside the [locale] layout — renders with the full site
+ * header/footer. Locale is detected by Next.js from the URL segment.
+ */
+export default async function NotFound() {
+  // next/navigation can't read params here, but the layout already
+  // set the request locale, so we read it from cookies as a fallback
+  // for picking the right copy variant.
+  const { cookies } = await import("next/headers");
+  const c = await cookies();
+  const nextLocale = c.get("NEXT_LOCALE")?.value;
+  const locale: "it" | "en" = nextLocale === "en" ? "en" : "it";
+  return <ErrorPage variant="not-found" locale={locale} homeHref={`/${locale}`} />;
 }

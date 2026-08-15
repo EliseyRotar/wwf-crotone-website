@@ -118,16 +118,23 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         <section>
           <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border-2 border-ink-grey-light shadow-lg">
             <iframe
-              src="https://www.openstreetmap.org/export/embed.html?bbox=16.85%2C38.88%2C17.05%2C39.00&layer=mapnik&marker=38.9403%2C16.9497"
+              src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d11860!2d16.9497!3d38.9403!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0!2zMzjCsDU2JzI0LjkiTiAxNibCsDU2JzU4Ljki!5e0!3m2!1sen!2sus"
               className="w-full h-full"
               style={{ border: 0 }}
               loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
               title="Mappa — San Leonardo di Cutro (KR), Calabria"
             />
           </div>
           <p className="text-xs text-ink-grey mt-3 text-center">
-            <a href="https://www.openstreetmap.org/?mlat=38.9403&mlon=16.9497#map=14/38.9403/16.9497" target="_blank" rel="noopener noreferrer" className="hover:text-wwf-green underline">
-              San Leonardo di Cutro (KR), Calabria — apri in OpenStreetMap
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=WWF+Crotone+San+Leonardo+di+Cutro"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-wwf-green underline"
+            >
+              San Leonardo di Cutro (KR), Calabria — {loc === "it" ? "apri in Google Maps" : "open in Google Maps"}
             </a>
           </p>
         </section>

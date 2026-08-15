@@ -23,13 +23,21 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Dates" });
   return {
-    title: t("title"),
-    description: t("intro"),
+    title: t("seoTitle"),
+    description: t("seoDescription"),
     alternates: { canonical: `${baseUrl}/${locale}/dates` },
     openGraph: {
-      title: `${t("title")} · WWF Crotone`,
-      description: t("intro"),
-      url: `${baseUrl}/${locale}/dates`
+      title: `${t("seoTitle")} · WWF Crotone`,
+      description: t("seoDescription"),
+      url: `${baseUrl}/${locale}/dates`,
+      type: "website",
+      locale: locale === "it" ? "it_IT" : "en_US",
+      siteName: "WWF Crotone"
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("seoTitle"),
+      description: t("seoDescription")
     }
   };
 }
