@@ -1,6 +1,6 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Mail, Phone, MessageCircle, Facebook, Instagram, Plane, Train, Bus, Car, Building2, FileText, User, AtSign } from "lucide-react";
+import { Mail, Phone, MessageCircle, Facebook, Instagram, Plane, Train, Bus, Car, Building2, FileText, User, AtSign, MapPin, ExternalLink } from "lucide-react";
 import { SITE } from "@/config/site";
 import WeatherWidget from "@/components/features/WeatherWidget";
 
@@ -116,34 +116,39 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         </section>
 
 <section>
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border-2 border-ink-grey-light shadow-lg">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border-2 border-ink-grey-light shadow-lg group">
             <iframe
-              src="https://www.openstreetmap.org/export/embed.html?bbox=16.85%2C38.88%2C17.05%2C39.00&layer=voyager&marker=38.9403%2C16.9497"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=16.82%2C38.87%2C17.08%2C39.01&layer=voyager&marker=38.9403%2C16.9497"
               className="w-full h-full"
               style={{ border: 0 }}
               loading="lazy"
               title={loc === "it" ? "Mappa — San Leonardo di Cutro (KR), Calabria" : "Map — San Leonardo di Cutro (KR), Calabria"}
             />
+            {/* Hover hint badge — fades on hover */}
+            <div className="absolute top-3 left-3 pointer-events-none px-3 py-1.5 rounded-full bg-white/95 dark:bg-ink/95 shadow-md text-xs font-semibold text-ink-2 dark:text-white opacity-100 group-hover:opacity-0 transition-opacity flex items-center gap-1.5">
+              <MapPin size={12} className="text-wwf-green" />
+              <span>{loc === "it" ? "Trascina per esplorare" : "Drag to explore"}</span>
+            </div>
           </div>
-          <p className="text-xs text-ink-grey mt-3 text-center">
+          <p className="text-sm text-ink-grey mt-3 text-center flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
             <a
               href="https://www.openstreetmap.org/?mlat=38.9403&mlon=16.9497#map=14/38.9403/16.9497"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-wwf-green underline"
+              className="inline-flex items-center gap-1 hover:text-wwf-green transition-colors"
             >
-              San Leonardo di Cutro (KR), Calabria — {loc === "it" ? "apri in OpenStreetMap" : "open in OpenStreetMap"}
+              <ExternalLink size={12} />
+              <span>{loc === "it" ? "Apri in OpenStreetMap" : "Open in OpenStreetMap"}</span>
             </a>
-          </p>
-          {/* Google Maps link for users who prefer to navigate there */}
-          <p className="text-xs text-ink-grey/70 mt-1 text-center">
+            <span className="text-ink-grey/40">·</span>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=WWF+Crotone+San+Leonardo+di+Cutro+KR`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-wwf-green underline"
+              className="inline-flex items-center gap-1 hover:text-wwf-green transition-colors"
             >
-              {loc === "it" ? "Apri anche in Google Maps →" : "Also open in Google Maps →"}
+              <ExternalLink size={12} />
+              <span>{loc === "it" ? "Apri in Google Maps" : "Open in Google Maps"}</span>
             </a>
           </p>
         </section>
