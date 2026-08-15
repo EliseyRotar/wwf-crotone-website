@@ -1,17 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import type { Metadata, Viewport } from "next";
 import { ErrorPage } from "@/components/ui/ErrorPage";
-import "@/app/globals.css";
-
-export const metadata: Metadata = {
-  title: "404 · WWF Crotone"
-};
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1
-};
 
 /**
  * Top-level 404. Next.js calls this when no route matches.
@@ -19,19 +8,21 @@ export const viewport: Viewport = {
  * locale layout; this one is the fallback for paths that don't even
  * match /[locale]/* (e.g. /random-garbage).
  *
- * We import globals.css here so the ErrorPage's design-system classes
- * (font-head, text-7xl, text-ink, text-ink-2, btn, btn-primary, etc.)
- * are styled even though this file runs WITHOUT any parent layout.
- * Without the import, the page renders unstyled (404 number appears
- * tiny and black instead of huge and green).
+ * We rely on src/app/layout.tsx to provide the <html>/<body> shell and
+ * to import globals.css — this means the design-system classes inside
+ * ErrorPage (font-head, text-7xl, text-ink, text-ink-2, btn,
+ * btn-primary, btn-outline) all render correctly here, and the page
+ * also gets the shared chrome (Header / Footer / CookieBanner / etc.).
  *
- * We DON'T render <html>/<body> here — Next.js wraps this file in the
- * App Router's root <html>/<body> automatically, since there is no
- * src/app/layout.tsx to provide them. Rendering our own would produce
- * nested <html> tags which is invalid HTML.
+ * We do NOT re-export metadata or viewport from this file — the root
+ * layout owns those. If we did, Next.js would throw 'You cannot
+ * export metadata/viewport from a page that is also rendered inside a
+ * layout that exports them' (the root layout exports both).
  */
 export default async function GlobalNotFound() {
   // Read locale from NEXT_LOCALE cookie or Accept-Language header.
+  // (We can't read params here because not-found.tsx runs at the App
+  // Router root where there are no params.)
   const headerStore = await headers();
   const cookieLocale = (await headerStore.get("cookie")) ?? "";
   const cookieMatch = cookieLocale.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
