@@ -88,11 +88,12 @@ const POINTS: MapPoint[] = [
   }
 ];
 
-const TILE_LIGHT = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const TILE_LIGHT = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 const TILE_DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 const ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &middot; ' +
-  '<a href="https://carto.com/attributions">CARTO</a>';
+  '<a href="https://carto.com/attributions">CARTO</a> &middot; ' +
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>';
 
 const FOCUS_BOUNDS_PADDING: [number, number] = [40, 40];
 const DEFAULT_CENTER: [number, number] = [39.0, 17.0];
