@@ -1,20 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import {
-  Turtle,
-  HeartPulse,
-  Trash2,
-  MapPin,
-  GraduationCap,
-  Plane,
-  ArrowRight,
-  Download
-} from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import { STATS, SITE } from "@/config/site";
+import { CORE_ACTIVITIES } from "@/config/activities";
 import { prisma } from "@/lib/prisma";
 import { getTurnStatus, fmtDateShort } from "@/lib/turns";
 import InstagramFeed from "@/components/features/InstagramFeed";
+import ActivityCard from "@/components/features/ActivityCard";
 
 export const revalidate = 60;
 
@@ -36,14 +29,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     { value: String(STATS.years), label: t("statsYears") }
   ];
 
-  const activities = [
-    { icon: Turtle, it: "Ricerca nidi di Caretta caretta", en: "Search for Caretta caretta nests", img: "/images/gallery/ricerca_nidi.png" },
-    { icon: HeartPulse, it: "Centro Recupero Tartarughe Marine", en: "Marine Turtle Recovery Center", img: "/images/gallery/tartaruga_nel_Centro_Recupero_Tartarughe_Marine.png" },
-    { icon: Trash2, it: "Pulizia delle spiagge", en: "Beach cleanup", img: "/images/gallery/pulizia_spiaggia.png" },
-    { icon: MapPin, it: "Recupero animali selvatici", en: "Wildlife rescue", img: "/images/gallery/recupero_animali_selvatici.png" },
-    { icon: GraduationCap, it: "Formazione sulle tartarughe marine", en: "Sea turtle training", img: "/images/gallery/drone_shot_beach_plus_sea.png" },
-    { icon: Plane, it: "Escursioni culturali", en: "Cultural excursions", img: "/images/gallery/Capocolonna.png" }
-  ];
+  const activities = CORE_ACTIVITIES;
 
   const previewNumbers = [1, 4, 8, 12];
   const dbTurni = await prisma.turno.findMany({
@@ -127,27 +113,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <p className="text-ink-grey text-lg leading-relaxed">{t("activitiesSubtitle")}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activities.map((a, i) => (
-              <article key={i} className="card card-feature group">
-                <div className="card-img">
-                  <Image
-                    src={a.img}
-                    alt={loc === "it" ? a.it : a.en}
-                    width={800}
-                    height={600}
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="card-body">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0">
-                      <a.icon size={20} className="text-wwf-green" aria-hidden />
-                    </div>
-                    <h3 className="text-lg leading-snug">{loc === "it" ? a.it : a.en}</h3>
-                  </div>
-                </div>
-              </article>
+            {activities.map((a) => (
+              <ActivityCard key={a.id} a={a} locale={loc as "it" | "en"} variant="feature" />
             ))}
           </div>
           <div className="mt-10">
