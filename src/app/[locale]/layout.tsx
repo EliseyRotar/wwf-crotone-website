@@ -1,38 +1,6 @@
 import type { Metadata } from "next";
-import { Oswald, Inter, JetBrains_Mono } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale, getTranslations } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { cookies, headers } from "next/headers";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import CookieBanner from "@/components/ui/CookieBanner";
-import MobileStickyCta from "@/components/layout/MobileStickyCta";
-import ChatWidget from "@/components/features/ChatWidget";
-import PlausibleAnalytics from "@/components/layout/PlausibleAnalytics";
-import { SITE } from "@/config/site";
-import "@/app/globals.css";
-
-const oswald = Oswald({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-head",
-  display: "swap"
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body",
-  display: "swap"
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-  display: "swap"
-});
 
 const locales = ["it", "en"] as const;
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -54,19 +22,7 @@ export async function generateMetadata({
 
   return {
     metadataBase: new URL(baseUrl),
-    title: {
-      default: title,
-      template: `%s · WWF Crotone`
-    },
     description,
-    icons: {
-      icon: [
-        { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-        { url: "/favicon.png", sizes: "800x800", type: "image/png" }
-      ],
-      shortcut: "/favicon.ico",
-      apple: "/apple-touch-icon.png"
-    },
     keywords: locale === "it"
       ? [
           "WWF Crotone",
@@ -149,6 +105,20 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * Locale-segment layout. Responsibilities are intentionally minimal:
+ *
+ *  - Validate the [locale] param (so /xx/* → 404).
+ *  - Call setRequestLocale() so next-intl can resolve translations
+ *    inside server components.
+ *  - Export per-locale SEO metadata.
+ *
+ * The shared chrome (Header / Footer / CookieBanner / MobileStickyCta /
+ * ChatWidget / NextIntlClientProvider / fonts / globals.css / dark mode
+ * class / NGO JSON-LD) lives in src/app/layout.tsx so it's available
+ * on every route — including src/app/not-found.tsx, which has no
+ * [locale] parent.
+ */
 export default async function LocaleLayout({
   children,
   params
@@ -159,133 +129,5 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!locales.includes(locale as (typeof locales)[number])) notFound();
   setRequestLocale(locale);
-
-  const messages = await getMessages();
-  const store = await cookies();
-  const themeCookie = store.get("theme")?.value;
-  const isDark = themeCookie === "dark";
-
-  // H-06: pick up the per-request nonce minted by middleware so we can
-  // stamp it on inline <script> blocks. The middleware sets the same nonce
-  // in the response's Content-Security-Policy header — together they let
-  // us drop 'unsafe-inline' from script-src in production.
-  const headerStore = await headers();
-  const nonce = headerStore.get("x-nonce") ?? undefined;
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "NGO",
-    name: "WWF Crotone",
-    alternateName: "WWF Provincia di Crotone",
-    url: `${baseUrl}/${locale}`,
-    logo: `${baseUrl}/logos/wwf.png`,
-    description: locale === "it"
-      ? "Campi di volontariato WWF Crotone: tutela delle tartarughe marine Caretta caretta, pulizia delle spiagge, recupero animali selvatici. Estate 2026, San Leonardo di Cutro (KR)."
-      : "WWF Crotone volunteer camps: protect Caretta caretta sea turtles, beach cleanup, wildlife rescue. Summer 2026, San Leonardo di Cutro (KR), Calabria.",
-    email: SITE.email,
-    telephone: SITE.phoneField,
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: "San Leonardo di Cutro",
-      addressRegion: "KR",
-      addressCountry: "IT"
-    },
-    sameAs: [SITE.facebook, SITE.instagram],
-    parentOrganization: {
-      "@type": "NGO",
-      name: "WWF Italia ETS",
-      url: "https://www.wwf.it"
-    },
-    knowsAbout: [
-      "Caretta caretta",
-      "sea turtle conservation",
-      "marine protected areas",
-      "Capo Rizzuto",
-      "volunteer camps",
-      "environmental education",
-      "wildlife rescue",
-      "biodiversity conservation",
-      "Calabria",
-      "Tartamar project"
-    ]
-  };
-
-  const eventLd = {
-    "@context": "https://schema.org",
-    "@type": "EventSeries",
-    name: "Campi di Volontariato WWF Crotone 2026",
-    description: locale === "it"
-      ? "12 turni settimanali di volontariato ambientale dal 21 giugno al 13 settembre 2026: monitoraggio tartarughe marine, pulizia spiagge, recupero animali selvatici."
-      : "12 weekly volunteer turns from June 21 to September 13, 2026: sea turtle monitoring, beach cleanup, wildlife rescue.",
-    startDate: "2026-06-21",
-    endDate: "2026-09-13",
-    eventStatus: "https://schema.org/EventScheduled",
-    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    location: {
-      "@type": "Place",
-      name: "C.E.L.A. — Centro di Educazione alla Legalità e all'Ambiente",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "San Leonardo di Cutro",
-        addressRegion: "KR",
-        addressCountry: "IT"
-      }
-    },
-    organizer: {
-      "@type": "NGO",
-      name: "WWF Crotone",
-      url: `${baseUrl}/${locale}`
-    },
-    offers: {
-      "@type": "AggregateOffer",
-      priceCurrency: "EUR",
-      lowPrice: "400",
-      highPrice: "450",
-      availability: "https://schema.org/InStock"
-    }
-  };
-
-  return (
-    <html lang={locale} className={`${oswald.variable} ${inter.variable} ${jetbrains.variable} ${isDark ? "dark" : ""}`} suppressHydrationWarning>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content={isDark ? "#141413" : "#007932" } />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        {/* DNS / TCP warm-up for Sentry browser SDK + map tile host.
-            Cuts first-error latency for unhandled exceptions and first
-            paint of the PastCampsMap basemap. */}
-        <link rel="preconnect" href="https://o4511881999679488.ingest.de.sentry.io" crossOrigin="" />
-        <link rel="dns-prefetch" href="https://basemaps.cartocdn.com" />
-        <PlausibleAnalytics />
-        <script
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");if(!t){var c=document.cookie.match(/theme=(dark|light)/);t=c?c[1]:window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t==="dark"){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";}else{document.documentElement.classList.remove("dark");document.documentElement.style.colorScheme="light";}}catch(e){}})();`
-          }}
-        />
-      </head>
-      <body>
-        <script
-          nonce={nonce}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <script
-          nonce={nonce}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventLd) }}
-        />
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <Header />
-          <main id="main">{children}</main>
-          <Footer />
-          <CookieBanner />
-          <MobileStickyCta />
-          <ChatWidget />
-        </NextIntlClientProvider>
-      </body>
-    </html>
-  );
+  return <>{children}</>;
 }
