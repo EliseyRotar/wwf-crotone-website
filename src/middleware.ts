@@ -150,14 +150,20 @@ function buildCsp(nonce: string): string {
     "https://plausible.io",
     "https://api.open-meteo.com",
     "https://api.groq.com",
-    "https://*.tile.openstreetmap.org",
     "https://*.basemaps.cartocdn.com",
+    // Sentry browser SDK: ingest endpoints resolve to
+    //   o<org>.ingest.<region>.sentry.io (we use .de for EU residency)
+    // Without this in connect-src the browser silently drops every event.
+    "https://*.ingest.de.sentry.io",
+    "https://*.sentry.io",
     "ws:",
     "wss:"
   ];
   return [
     "default-src 'self'",
-    "img-src 'self' data: https://images.unsplash.com https://www.riservanaturaledelvergari.it https://i.ytimg.com https://*.cdninstagram.com https://scontent.cdninstagram.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com",
+    // img-src: drop the raw OSM tile host (we serve map tiles from CARTO
+    // now). data: kept for inline favicons / SVG avatars in admin UI.
+    "img-src 'self' data: https://images.unsplash.com https://www.riservanaturaledelvergari.it https://i.ytimg.com https://*.cdninstagram.com https://scontent.cdninstagram.com https://*.basemaps.cartocdn.com",
     "media-src 'self'",
     "frame-src https://www.youtube-nocookie.com https://www.openstreetmap.org",
     `script-src ${scriptSrc.join(" ")}`,
