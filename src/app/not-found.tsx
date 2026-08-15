@@ -1,12 +1,34 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import type { Metadata, Viewport } from "next";
 import { ErrorPage } from "@/components/ui/ErrorPage";
+import "@/app/globals.css";
+
+export const metadata: Metadata = {
+  title: "404 · WWF Crotone"
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1
+};
 
 /**
  * Top-level 404. Next.js calls this when no route matches.
  * The [locale]/not-found.tsx handles the locale-specific UI inside the
  * locale layout; this one is the fallback for paths that don't even
  * match /[locale]/* (e.g. /random-garbage).
+ *
+ * We import globals.css here so the ErrorPage's design-system classes
+ * (font-head, text-7xl, text-ink, text-ink-2, btn, btn-primary, etc.)
+ * are styled even though this file runs WITHOUT any parent layout.
+ * Without the import, the page renders unstyled (404 number appears
+ * tiny and black instead of huge and green).
+ *
+ * We DON'T render <html>/<body> here — Next.js wraps this file in the
+ * App Router's root <html>/<body> automatically, since there is no
+ * src/app/layout.tsx to provide them. Rendering our own would produce
+ * nested <html> tags which is invalid HTML.
  */
 export default async function GlobalNotFound() {
   // Read locale from NEXT_LOCALE cookie or Accept-Language header.
@@ -22,28 +44,13 @@ export default async function GlobalNotFound() {
   const locale = (detected === "en" ? "en" : "it") as "it" | "en";
 
   return (
-    <html lang={locale}>
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>404 · WWF Crotone</title>
-      </head>
-      <body
-        style={{
-          margin: 0,
-          fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif",
-          background: "#fffaf2",
-          color: "#101010"
-        }}
-      >
-        <ErrorPage variant="not-found" locale={locale} homeHref={`/${locale}`} />
-        <p style={{ textAlign: "center", paddingBottom: "4rem", marginTop: "-2rem" }}>
-          <Link href={`/${locale}`} style={{ color: "#707070", fontSize: "0.875rem" }}>
-            WWF Crotone
-          </Link>
-        </p>
-      </body>
-    </html>
+    <>
+      <ErrorPage variant="not-found" locale={locale} homeHref={`/${locale}`} />
+      <p className="text-center pb-16 -mt-8 text-sm text-ink-grey">
+        <Link href={`/${locale}`} className="hover:text-wwf-green transition-colors">
+          WWF Crotone
+        </Link>
+      </p>
+    </>
   );
 }
