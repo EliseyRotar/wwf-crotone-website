@@ -51,6 +51,12 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Note: the Dockerfile-level HEALTHCHECK below is correct for the `app`
+# service (Next.js HTTP server on :3000). The `cron` service reuses
+# this image but doesn't run an HTTP server, so it overrides the
+# healthcheck via `healthcheck:` in infra/docker-compose.yml. If you
+# add a new service to compose that reuses this image, give it its
+# own healthcheck block — don't rely on this default.
 HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://127.0.0.1:3000/api/health || exit 1
 
-CMD ["node", "server.js"] 
+CMD ["node", "server.js"]
