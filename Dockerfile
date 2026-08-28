@@ -17,6 +17,11 @@ WORKDIR /app
 # Force Prisma to emit the debian-openssl-3 engine so Alpine/libssl3 works.
 ENV PRISMA_CLIENT_ENGINE_TYPE=debian-openssl-3.0.x
 ENV PRISMA_CLI_ENGINE_TYPE=debian-openssl-3.0.x
+# T3 Env validation runs at module load. The Docker build doesn't
+# have real SMTP/R2/Groq creds so we skip validation. The standalone
+# runner image (below) does NOT have this env, so production boots
+# still validate.
+ENV SKIP_ENV_VALIDATION=true
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
