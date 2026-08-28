@@ -43,6 +43,11 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+# Cron script + its CommonJS env helper. Both needed by the cron
+# container (the app container never runs scripts/status-poll.js but
+# it's cheap to include). env-script.cjs is CJS so the cron can
+# require() it from inside the ESM status-poll.js via createRequire.
+COPY --from=builder /app/scripts ./scripts
 
 RUN mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app/.next
 
