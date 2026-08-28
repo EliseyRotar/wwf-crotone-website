@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { LIMITS } from "@/lib/validate";
+import { deleteGalleryImage } from "@/lib/r2Gallery";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,45 @@ const CATEGORY_ENUM = [
   "tartamar",
   "turtledog"
 ] as const;
+
+/**
+ * Allowed prefixes for a GalleryItem.src. New items uploaded via the
+ * admin form get a URL from src/lib/r2Gallery.ts (R2 wwf-gallery bucket
+ * served via the public R2 host or a custom domain like
+ * gallery.wwfcrotone.it). Existing items may still point at the old
+ * /uploads/gallery/ or /images/ static paths.
+ *
+ * Accepted shapes:
+ *   - https://<bucket>.<endpoint>/gallery/...            (R2 public host)
+ *   - https://gallery.wwfcrotone.it/gallery/...           (custom domain)
+ *   - /uploads/gallery/...                               (legacy)
+ *   - /images/...                                        (legacy)
+ *   - /uploads/gallery/... (YouTube-id case — but that's `type: video`)
+ */
+const R2_PUBLIC_BASE = process.env.R2_GALLERY_PUBLIC_BASE?.replace(/\/+$/, "") ?? "";
+const R2_BUCKET = process.env.R2_GALLERY_BUCKET ?? "wwf-gallery";
+const R2_ENDPOINT_HOST = (process.env.AWS_ENDPOINT ?? "").replace(/^https?:\/\//, "");
+
+function isAllowedImageSrc(src: string): boolean {
+  // R2 custom domain
+  if (R2_PUBLIC_BASE && src.startsWith(R2_PUBLIC_BASE + "/")) return true;
+  // R2 bucket host (R2_PUBLIC_BASE not configured — dev)
+  if (R2_ENDPOINT_HOST && src.startsWith(`https://${R2_BUCKET}.${R2_ENDPOINT_HOST}/gallery/`)) return true;
+  // Legacy static paths
+  if (src.startsWith("/uploads/gallery/")) return true;
+  if (src.startsWith("/images/")) return true;
+  return false;
+}
+
+function isAllowedThumbnail(src: string): boolean {
+  // ImageKit-style / instagram CDN / YouTube thumbnails all OK
+  return (
+    src.startsWith("/uploads/") ||
+    src.startsWith("/images/") ||
+    src.startsWith("https://") ||
+    src.startsWith("http://")
+  );
+}
 
 const CreateGallerySchema = z
   .object({
@@ -43,10 +83,7 @@ const CreateGallerySchema = z
         });
       }
     } else {
-      if (
-        !data.src.startsWith("/uploads/gallery/") &&
-        !data.src.startsWith("/images/")
-      ) {
+      if (!isAllowedImageSrc(data.src)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["src"],
@@ -54,18 +91,12 @@ const CreateGallerySchema = z
         });
       }
     }
-    if (data.thumbnail) {
-      if (
-        !data.thumbnail.startsWith("/uploads/") &&
-        !data.thumbnail.startsWith("/images/") &&
-        !data.thumbnail.startsWith("https://")
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["thumbnail"],
-          message: "invalid-thumbnail"
-        });
-      }
+    if (data.thumbnail && !isAllowedThumbnail(data.thumbnail)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["thumbnail"],
+        message: "invalid-thumbnail"
+      });
     }
   });
 
@@ -152,6 +183,29 @@ export async function DELETE(req: Request) {
     );
   }
   const { id } = parsed.data;
+
+  // Load the row first so we can clean up the R2 object too.
+  const item = await prisma.galleryItem.findUnique({ where: { id } });
+  if (!item) {
+    return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
+  }
+
+  // Try to delete the R2 object. Best-effort — if R2 creds are missing
+  // or the object is already gone, we still delete the DB row.
+  if (item.src.startsWith("https://") && item.src.includes("/gallery/")) {
+    // Extract the object key from the URL.
+    const marker = "/gallery/";
+    const idx = item.src.indexOf(marker);
+    if (idx !== -1) {
+      const objectKey = `gallery/${item.src.slice(idx + marker.length)}`;
+      try {
+        await deleteGalleryImage(objectKey);
+      } catch (err) {
+        console.error(`[admin/gallery] failed to delete R2 object ${objectKey}:`, err);
+      }
+    }
+  }
+
   await prisma.galleryItem.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }
