@@ -196,12 +196,13 @@ test.describe("receipt upload @receipts", () => {
     // should 401/403; with a real session it should 400 (bad magic bytes).
     // Either rejection is acceptable — we just need to confirm the
     // upload endpoint is NOT publicly writable.
+    const fakeBytes = fs.readFileSync(fake.path);
     const uploadRes = await request.post(`/api/iscrizione/${created.id}/upload-receipt`, {
       multipart: {
         file: {
           name: "evil.pdf",
           mimeType: "application/pdf",
-          buffer: fake.path
+          buffer: fakeBytes
         }
       }
     });
@@ -242,12 +243,13 @@ test.describe("receipt upload @receipts", () => {
       return;
     }
     const created = (await createRes.json()) as { ok: boolean; id?: string };
+    const emptyBytes = fs.readFileSync(empty.path);
     const uploadRes = await request.post(`/api/iscrizione/${created.id}/upload-receipt`, {
       multipart: {
         file: {
           name: "empty.pdf",
           mimeType: "application/pdf",
-          buffer: empty.path
+          buffer: emptyBytes
         }
       }
     });
