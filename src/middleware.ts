@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import createIntlMiddleware from "next-intl/middleware";
+import createMiddleware from "next-intl/middleware";
 
-const intlMiddleware = createIntlMiddleware({
+/**
+ * next-intl v4 rename: `createIntlMiddleware` is now `createMiddleware`
+ * (the old name is kept as a back-compat alias until v5). We use the
+ * new name per the v4 migration guide.
+ *
+ * `localeCookie.maxAge` keeps the locale selection sticky for 1 year
+ * (next-intl 4 defaults to a session cookie which means the language
+ * resets on every new browser window — we want to preserve the
+ * v3 behavior for returning visitors).
+ */
+const intlMiddleware = createMiddleware({
   locales: ["it", "en"],
   defaultLocale: "it",
   localePrefix: "always",
-  localeDetection: true
+  localeDetection: true,
+  localeCookie: {
+    name: "NEXT_LOCALE",
+    maxAge: 60 * 60 * 24 * 365
+  }
 });
 
 const isDev = process.env.NODE_ENV !== "production";
