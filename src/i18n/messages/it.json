@@ -310,7 +310,11 @@
     "spotsOther": "{n} posti liberi",
     "fewLeft": "Solo {n} posti rimasti",
     "goingCount": "{n} iscritti",
-    "goingCountOne": "1 iscritto"
+    "goingCountOne": "1 iscritto",
+    "full": "Completo",
+    "selectTurn": "Seleziona turno",
+    "selectTurnHint": "Scegli uno o più turni a cui iscriverti. I turni al completo non sono selezionabili.",
+    "multiTurnInfo": "Puoi iscriverti a più turni: ogni campo è di una settimana."
   },
   "Gallery": {
     "title": "Galleria",
@@ -1249,6 +1253,7 @@
       "notes": "Note",
       "notesPlaceholder": "es. pagamento contanti, allergie, etc.",
       "turns": "Campi *",
+      "campi": "Campi *",
       "fee100": "Quota 100€ pagata",
       "balancePaid": "Saldo pagato",
       "fillRequired": "Compila almeno nome, cognome, email, telefono e un turno."
@@ -1280,6 +1285,9 @@
       "deleteLabel": "Elimina",
       "editLabel": "Modifica",
       "contact": "Contatto",
+      "turns": "Turni assegnati",
+      "campi": "Turni assegnati",
+      "campiCol": "Campi",
       "turnsCol": "Campi"
     },
     "campi": {
@@ -1291,6 +1299,16 @@
       "capacity": "Capacità / Stato",
       "active": "Attivo",
       "save": "Salva"
+    },
+    "turni": {
+      "title": "Turni",
+      "active": "Attivo",
+      "inactive": "Disattivato",
+      "save": "Salva",
+      "saved": "Turno aggiornato.",
+      "error": "Impossibile aggiornare il turno.",
+      "addTurno": "Aggiungi turno",
+      "removeTurno": "Rimuovi turno"
     },
     "roster": {
       "title": "Roster campo",
@@ -1689,7 +1707,8 @@
           "privacyConsent": "Consenso privacy",
           "marketingConsent": "Consenso marketing",
           "imageDataConsent": "Consenso immagini"
-        }
+        },
+        "backToBooking": "Torna all'iscrizione"
       },
       "receipts": {
         "title": "Ricevute di pagamento",
@@ -1733,6 +1752,10 @@
       "success": "Ricevuta caricata. In attesa di approvazione dell'amministratore.",
       "errorTooLarge": "File troppo grande. Limite 10 MB.",
       "errorWrongType": "Formato non supportato. Usa PDF, JPG o PNG."
+    },
+    "setPassword": {
+      "title": "Imposta una password (opzionale)",
+      "success": "Password impostata. Ora puoi accedere anche senza magic link."
     },
     "panel": {
       "edit": "Modifica iscrizione",

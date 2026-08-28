@@ -310,7 +310,11 @@
     "spotsOther": "{n} spots left",
     "fewLeft": "Only {n} spots left",
     "goingCount": "{n} going",
-    "goingCountOne": "1 going"
+    "goingCountOne": "1 going",
+    "full": "Full",
+    "selectTurn": "Select turn",
+    "selectTurnHint": "Choose one or more turns to register for. Full turns cannot be selected.",
+    "multiTurnInfo": "You can register for multiple turns: each camp lasts one week."
   },
   "Gallery": {
     "title": "Gallery",
@@ -964,7 +968,6 @@
       "name": "Name",
       "email": "Email",
       "phone": "Phone",
-      "camp": "Camp",
       "campo": "Camp",
       "age": "Age",
       "minor": "minor",
@@ -1155,7 +1158,7 @@
       "status": "Status",
       "notes": "Notes",
       "notesPlaceholder": "e.g. cash payment, allergies, etc.",
-      "camps": "Camps *",
+      "campi": "Camps *",
       "fee100": "Fee €100 paid",
       "balancePaid": "Balance paid",
       "fillRequired": "Fill at least first name, last name, email, phone and one turn."
@@ -1179,7 +1182,7 @@
       "phone": "Phone",
       "notesField": "Notes",
       "notesPlaceholder": "e.g. Kitchen, AR 07/01, etc.",
-      "camps": "Assigned turns",
+      "campi": "Assigned turns",
       "create": "Create",
       "saveEdit": "Save changes",
       "cancel": "Cancel",
@@ -1187,17 +1190,28 @@
       "deleteLabel": "Delete",
       "editLabel": "Edit",
       "contact": "Contact",
+      "campi": "Assigned turns",
+      "campiCol": "Camps",
       "turnsCol": "Camps"
     },
     "campi": {
       "title": "Camps",
       "subtitle": "Edit the capacity and status of each turn.",
-      "camp": "Camp",
       "dates": "Dates",
       "booked": "Booked",
       "capacity": "Capacity / Status",
       "active": "Active",
       "save": "Save"
+    },
+    "turni": {
+      "title": "Turns",
+      "active": "Active",
+      "inactive": "Inactive",
+      "save": "Save",
+      "saved": "Turn updated.",
+      "error": "Could not update turn.",
+      "addTurno": "Add turn",
+      "removeTurno": "Remove turn"
     },
     "roster": {
       "title": "Camp roster",
@@ -1595,7 +1609,8 @@
           "privacyConsent": "Privacy consent",
           "marketingConsent": "Marketing consent",
           "imageDataConsent": "Image consent"
-        }
+        },
+        "backToBooking": "Back to booking"
       },
       "receipts": {
         "title": "Payment receipts",
@@ -1639,6 +1654,10 @@
       "success": "Receipt uploaded. Waiting for admin approval.",
       "errorTooLarge": "File too large. 10 MB limit.",
       "errorWrongType": "Unsupported format. Use PDF, JPG or PNG."
+    },
+    "setPassword": {
+      "title": "Set a password (optional)",
+      "success": "Password set. You can now sign in without a magic link."
     },
     "panel": {
       "edit": "Edit registration",
