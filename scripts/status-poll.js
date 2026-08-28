@@ -25,10 +25,13 @@
 import { PrismaClient } from "@prisma/client";
 import { setTimeout as wait } from "node:timers/promises";
 import net from "node:net";
+import { createRequire } from "node:module";
+
+const _require = createRequire(import.meta.url);
+const { loadScriptEnv } = _require("./env-script.cjs");
 
 const prisma = new PrismaClient();
 
-const { loadScriptEnv } = require("./env-script.cjs");
 const _scriptEnv = loadScriptEnv();
 
 const UPTIMEROBOT_KEY = _scriptEnv.UPTIMEROBOT_API_KEY ?? "";
