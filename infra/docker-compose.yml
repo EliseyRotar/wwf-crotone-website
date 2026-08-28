@@ -183,7 +183,13 @@ services:
       context: ./repo
       dockerfile: ../Dockerfile
     restart: unless-stopped
-    command: ["sh", "-c", "npx prisma generate && node scripts/status-poll.js"]
+    # No `npx prisma generate` here — the runner image already has the
+    # Prisma client baked in (via COPY node_modules/.prisma in the
+    # Dockerfile). Running it at container start would fail because
+    # the `nextjs` user has no write permission on /app/node_modules.
+    # The live deploy at /srv/wwf/docker-compose.yml had this exact
+    # command; I'm intentionally NOT carrying it over.
+    command: ["node", "scripts/status-poll.js"]
     env_file:
       - ./.env.production
     environment:
