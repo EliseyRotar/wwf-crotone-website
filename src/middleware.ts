@@ -116,7 +116,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(newUrl, { request: { headers: requestHeaders } });
   }
 
-  const skipI18n = isAdminPath || isApiPath;
+  const skipI18n =
+    isAdminPath ||
+    isApiPath ||
+    pathname === "/sentry-example-page" ||
+    pathname.startsWith("/sentry-example-page/");
   const res = skipI18n
     ? NextResponse.next({ request: { headers: requestHeaders } })
     : intlMiddleware(new NextRequest(req, { headers: requestHeaders })) ??
