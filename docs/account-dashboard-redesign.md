@@ -470,7 +470,7 @@ For the engineering follow-up:
   `/account/bookings/{id}` (where the existing `ReceiptUploader`
   already lives), not a new uploader on the dashboard. Prefetch is
   free with `next/link`.
-- Keep all copy in `src/messages/{it,en}.json` under a new
+- Keep all copy in `src/i18n/messages/{it,en}.json` under a new
   `Account.dashboardV2` key so the old keys can stay for one release
   in case any tests/links still reference them.
 

@@ -20,7 +20,7 @@
 ## Key Conventions
 - Server components by default, `"use client"` only when needed
 - All colors use CSS variables defined in globals.css (light/dark)
-- i18n: all user-facing strings in src/messages/{it,en}.json
+- i18n: all user-facing strings in src/i18n/messages/{it,en}.json
 - Admin panel is Italian-only (WWF internal staff)
 - Public site is bilingual IT/EN
 - All API routes validate input with zod

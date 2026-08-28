@@ -77,7 +77,7 @@ Before opening a PR:
 
 See [`AGENTS.md`](./AGENTS.md) for the local dev conventions (server
 components by default, CSS variables for colours, i18n via
-`src/messages/`, etc.).
+`src/i18n/messages/`, etc.).
 
 ## Contact
 
