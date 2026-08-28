@@ -45,8 +45,10 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     <div className="container section">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <nav className="breadcrumb" aria-label="breadcrumb">
-        <a href={`/${loc}`}>{tNav("home")}</a>
-        <li aria-current="page">{t("title")}</li>
+        <ol>
+          <li><a href={`/${loc}`}>{tNav("home")}</a></li>
+          <li aria-current="page">{t("title")}</li>
+        </ol>
       </nav>
 
       <h1 className="mb-4">{t("title")}</h1>
@@ -220,65 +222,51 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         <div className="card">
           <div className="card-body">
             <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Building2 size={18} className="text-wwf-green" aria-hidden />
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalRagione")}</dt>
-                  <dd className="text-base font-semibold mt-0.5">{t("legalRagioneValue")}</dd>
-                </div>
+              <div>
+                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-grey">
+                  <Building2 size={14} className="text-wwf-green" aria-hidden />
+                  {t("legalRagione")}
+                </dt>
+                <dd className="text-base font-semibold mt-0.5">{t("legalRagioneValue")}</dd>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText size={18} className="text-wwf-green" aria-hidden />
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalForma")}</dt>
-                  <dd className="text-base mt-0.5">{t("legalFormaValue")}</dd>
-                </div>
+              <div>
+                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-grey">
+                  <FileText size={14} className="text-wwf-green" aria-hidden />
+                  {t("legalForma")}
+                </dt>
+                <dd className="text-base mt-0.5">{t("legalFormaValue")}</dd>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText size={18} className="text-wwf-green" aria-hidden />
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalCf")}</dt>
-                  <dd className="text-base font-mono mt-0.5">{t("legalCfValue")}</dd>
-                </div>
+              <div>
+                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-grey">
+                  <FileText size={14} className="text-wwf-green" aria-hidden />
+                  {t("legalCf")}
+                </dt>
+                <dd className="text-base font-mono mt-0.5">{t("legalCfValue")}</dd>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <User size={18} className="text-wwf-green" aria-hidden />
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalPresidente")}</dt>
-                  <dd className="text-base mt-0.5">{t("legalPresidenteValue")}</dd>
-                </div>
+              <div>
+                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-grey">
+                  <User size={14} className="text-wwf-green" aria-hidden />
+                  {t("legalPresidente")}
+                </dt>
+                <dd className="text-base mt-0.5">{t("legalPresidenteValue")}</dd>
               </div>
-              <div className="flex items-start gap-3 sm:col-span-2">
-                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Building2 size={18} className="text-wwf-green" aria-hidden />
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">{t("legalSede")}</dt>
-                  <dd className="text-base mt-0.5">{t("legalSedeValue")}</dd>
-                </div>
+              <div className="sm:col-span-2">
+                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-grey">
+                  <Building2 size={14} className="text-wwf-green" aria-hidden />
+                  {t("legalSede")}
+                </dt>
+                <dd className="text-base mt-0.5">{t("legalSedeValue")}</dd>
               </div>
-              <div className="flex items-start gap-3 sm:col-span-2">
-                <div className="w-10 h-10 rounded-lg bg-wwf-green/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <AtSign size={18} className="text-wwf-green" aria-hidden />
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-widest text-ink-grey">
-                    {t("legalPec")} <span className="font-normal normal-case text-ink-grey/80">— {t("legalPecLabel")}</span>
-                  </dt>
-                  <dd>
-                    <a href={`mailto:${SITE.pec}`} className="text-base mt-0.5 text-ink-2 hover:text-wwf-green transition-colors break-all">
-                      {t("legalPecValue")}
-                    </a>
-                  </dd>
-                </div>
+              <div className="sm:col-span-2">
+                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-grey">
+                  <AtSign size={14} className="text-wwf-green" aria-hidden />
+                  {t("legalPec")} <span className="font-normal normal-case text-ink-grey/80">— {t("legalPecLabel")}</span>
+                </dt>
+                <dd className="text-base mt-0.5">
+                  <a href={`mailto:${SITE.pec}`} className="text-ink-2 hover:text-wwf-green transition-colors break-all">
+                    {t("legalPecValue")}
+                  </a>
+                </dd>
               </div>
             </dl>
           </div>

@@ -109,8 +109,10 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ loc
         <div className="hero-content">
           <div className="container">
             <nav className="breadcrumb text-white/80 mb-4" aria-label="breadcrumb">
-              <a href={`/${loc}`} className="text-white/80 hover:text-white">{tNav("home")}</a>
-              <li className="text-white" aria-current="page">{t("title")}</li>
+              <ol>
+                <li><a href={`/${loc}`} className="text-white/80 hover:text-white">{tNav("home")}</a></li>
+                <li className="text-white" aria-current="page">{t("title")}</li>
+              </ol>
             </nav>
             <p className="eyebrow text-wwf-green-light mb-4">{loc === "it" ? "Le attività del campo" : "Camp activities"}</p>
             <h1 className="mb-6 max-w-4xl">{t("title")}</h1>

@@ -78,8 +78,10 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <nav className="breadcrumb" aria-label="breadcrumb">
-        <a href={`/${loc}`}>{tNav("home")}</a>
-        <li aria-current="page">{t("title")}</li>
+        <ol>
+          <li><a href={`/${loc}`}>{tNav("home")}</a></li>
+          <li aria-current="page">{t("title")}</li>
+        </ol>
       </nav>
 
       <h1 className="mb-6">{t("title")}</h1>

@@ -38,8 +38,10 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
     <div className="container section">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <nav className="breadcrumb" aria-label="breadcrumb">
-        <a href={`/${loc}`}>{tNav("home")}</a>
-        <li aria-current="page">{t("title")}</li>
+        <ol>
+          <li><a href={`/${loc}`}>{tNav("home")}</a></li>
+          <li aria-current="page">{t("title")}</li>
+        </ol>
       </nav>
 
       <h1 className="mb-6">{t("title")}</h1>
