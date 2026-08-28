@@ -13,6 +13,13 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60 * 60 * 24 * 30,
+    // Next.js 16 changed defaults — be explicit:
+    //   qualities: default is now [75] only. We allow 50/75/100 so
+    //     explicit <Image quality={...}> props in JSX still work.
+    //   maximumRedirects: default is now 3 (was unlimited). Explicit for
+    //     clarity — Unsplash and Instagram CDN can chain redirects.
+    qualities: [50, 75, 100],
+    maximumRedirects: 3,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "www.riservanaturaledelvergari.it" },
