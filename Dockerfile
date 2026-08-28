@@ -59,11 +59,13 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-# Cron script + its CommonJS env helper. Both needed by the cron
-# container (the app container never runs scripts/status-poll.js but
-# it's cheap to include). env-script.cjs is CJS so the cron can
-# require() it from inside the ESM status-poll.js via createRequire.
-COPY --from=builder /app/scripts ./scripts
+# NOTE: scripts/ is bind-mounted read-only from /srv/wwf/repo at the
+# compose level (infra/docker-compose.yml cron service volumes:).
+# Earlier we also COPY'd scripts/ into the runner image here, but
+# the .next/standalone build overlay on COPY line 57 was making
+# the /app/scripts path unreliable in the final image. Bind-mount
+# is the source of truth; if you edit any file in repo/scripts/, the
+# cron picks it up on the next restart without rebuilding the image.
 
 RUN mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app/.next
 

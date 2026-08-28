@@ -171,6 +171,12 @@ services:
   # one tick completed). If the cron loop dies, no new snapshot lands,
   # and this probe starts failing within ~3 min. Docker then restarts
   # the container via restart: unless-stopped.
+  #
+  # scripts/ is bind-mounted read-only from /srv/wwf/repo because we
+  # need env-script.cjs (status-poll.js's CJS env helper) to be at
+  # /app/scripts/env-script.cjs — the Dockerfile layer that copies
+  # scripts/ into the runner image is unreliable when .next/standalone
+  # overlays the same path.
   cron:
     image: wwf-app:latest
     build:
@@ -184,6 +190,8 @@ services:
       DATABASE_URL: postgresql://wwf:${POSTGRES_PASSWORD}@postgres:5432/wwf
       SELF_HEALTH_URL: http://app:3000/api/health
       UPTIMEROBOT_API_KEY: ${UPTIMEROBOT_API_KEY:-}
+    volumes:
+      - /srv/wwf/repo/scripts:/app/scripts:ro
     depends_on:
       app: { condition: service_healthy }
       postgres: { condition: service_healthy }
