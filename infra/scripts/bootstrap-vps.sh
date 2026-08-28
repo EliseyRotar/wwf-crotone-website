@@ -169,13 +169,41 @@ cat > "$CRON_FILE" <<'EOF'
 0 4 * * 0  deploy  /srv/wwf/scripts/test-restore.sh >> /var/log/wwf/restore.log 2>&1
 EOF
 chmod 0644 "$CRON_FILE"
-# Stubs so cron doesn't email warnings before the real scripts land
+
+# Re-point cron at the real WAL-G scripts shipped in the repo:
+#   infra/scripts/walg-backup.sh  →  /srv/wwf/scripts/backup.sh
+#   infra/scripts/walg-wal-push.sh →  /srv/wwf/scripts/wal-archive.sh
+# (the previous bootstrap created a stub `backup.sh` and a stub
+# `wal-archive.sh`, which meant nightly base backups and WAL archiving
+# were both no-ops in production). Idempotent: only overwrites if the
+# stub placeholder is in place, never destroys a hand-edited script.
+install_walg_script() {
+  local src="$1" dst="$2"
+  if [ ! -f "$APP_DIR/repo/$src" ]; then
+    return 0
+  fi
+  if [ -f "$APP_DIR/scripts/$dst" ] \
+      && ! grep -q 'not implemented yet' "$APP_DIR/scripts/$dst"; then
+    return 0
+  fi
+  sudo -u "$DEPLOY_USER" install -m 0755 "$APP_DIR/repo/$src" "$APP_DIR/scripts/$dst"
+  log "Linked $src → scripts/$dst"
+}
+
+install_walg_script "infra/scripts/walg-backup.sh"  "backup.sh"
+install_walg_script "infra/scripts/walg-wal-push.sh" "wal-archive.sh"
+
+# Final fallback: if the cron entry points at a non-existent script,
+# install a loud stub that exits non-zero so we get a mail instead of
+# silent data loss.
 for s in backup.sh wal-archive.sh; do
   if [ ! -f "$APP_DIR/scripts/$s" ]; then
     echo '#!/usr/bin/env bash' | sudo -u "$DEPLOY_USER" tee "$APP_DIR/scripts/$s" >/dev/null
-    echo "echo \"$s not implemented yet — add WAL-G push to R2 here.\"" \
+    echo "echo \"FATAL: $s is missing — bootstrap did not link walg-*.sh from repo/infra/scripts/\" >&2" \
       | sudo -u "$DEPLOY_USER" tee -a "$APP_DIR/scripts/$s" >/dev/null
+    echo "exit 1" | sudo -u "$DEPLOY_USER" tee -a "$APP_DIR/scripts/$s" >/dev/null
     sudo -u "$DEPLOY_USER" chmod 0755 "$APP_DIR/scripts/$s"
+    err "Installed loud-failure stub for $s — check bootstrap log."
   fi
 done
 log "Cron jobs installed: $CRON_FILE"
