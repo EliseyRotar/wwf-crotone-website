@@ -39,7 +39,11 @@ tests/e2e/
 ├── seo.spec.ts           # sitemap.xml / robots.txt / manifest — @smoke
 ├── security.spec.ts      # CSP / XFO / XCTO / CSRF / admin auth — @smoke
 ├── admin.spec.ts         # Admin login + pages — @admin
-└── account.spec.ts       # Magic-link flow — @slow
+├── admin-crud.spec.ts    # Admin panel full CRUD + auth flow — @admin
+├── account.spec.ts       # Magic-link request-only smoke — @slow
+├── magic-link.spec.ts    # Full magic-link E2E (needs Mailpit) — @magic-link @smoke
+├── chatbot.spec.ts       # Chatbot rate-limit + CSRF — @chatbot
+└── signup.spec.ts        # Booking form + receipt upload — @signup @receipts
 ```
 
 ## Tags
@@ -112,18 +116,22 @@ container), point `DATABASE_URL` at it before starting the server.
 
 ## Known limitations
 
-- **Magic-link email verification** is not fully covered end-to-end
-  because we don't run MailHog / Greenmail in CI yet. The
-  `account.spec.ts` test only checks the API returns 200 and the UI
-  shows the success state. To complete the loop, add a Greenmail
-  container to the CI workflow and assert on the captured message.
+- **Magic-link email verification** is covered end-to-end via
+  `magic-link.spec.ts` when `MAILPIT_URL` is set. In CI, the
+  `.github/workflows/ci.yml` E2E job starts `axllent/mailpit:latest`
+  as a service container (ports 1025 SMTP + 8025 HTTP API). The test
+  submits the magic-link request, polls Mailpit's REST API for the
+  matching message, extracts the verification URL from the HTML body,
+  and follows it in Playwright to assert the session cookie is set.
+  Without `MAILPIT_URL` the test skips gracefully.
 - **Visual regression** is screenshot-only — the responsive spec
   captures PNGs at three viewports but doesn't compare them. Wire up
   `expect(page).toHaveScreenshot()` once we have a stable baseline.
 - **Webkit / Firefox** aren't covered. Add projects to
   `playwright.config.ts` when we need them.
-- **Chatbot** at `/api/chat` is not exercised — it requires a real
-  `GROQ_API_KEY` and would burn quota on CI.
+- **Chatbot** at `/api/chat` is partially exercised — rate-limit + CSRF
+  tests run without a real Groq key; the actual LLM response path
+  needs `GROQ_API_KEY` and would burn quota on CI.
 
 ## Debugging
 
