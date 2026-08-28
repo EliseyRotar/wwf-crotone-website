@@ -106,18 +106,25 @@ export const serverEnv = createEnv({
  *
  * Warning-only in dev (so the dev server boots without SMTP),
  * throws in production.
+ *
+ * Skipped entirely when SKIP_ENV_VALIDATION=true (CI builds) — the
+ * schema validation is already bypassed; the cross-field check would
+ * fail too because the build env has no real SMTP creds.
  */
 const isProd = process.env.NODE_ENV === "production";
-if (serverEnv.USE_BREVO_EMAIL) {
-  if (!serverEnv.BREVO_SMTP_KEY) {
-    const msg = "USE_BREVO_EMAIL=true requires BREVO_SMTP_KEY";
-    if (isProd) throw new Error(msg);
-    else console.warn(`[env] ${msg}`);
-  }
-} else {
-  if (!serverEnv.SMTP_USER || !serverEnv.SMTP_PASS) {
-    const msg = "USE_BREVO_EMAIL=false requires SMTP_USER + SMTP_PASS (Gmail App Password)";
-    if (isProd) throw new Error(msg);
-    else console.warn(`[env] ${msg}`);
+const skipCrossField = process.env.SKIP_ENV_VALIDATION === "true";
+if (!skipCrossField) {
+  if (serverEnv.USE_BREVO_EMAIL) {
+    if (!serverEnv.BREVO_SMTP_KEY) {
+      const msg = "USE_BREVO_EMAIL=true requires BREVO_SMTP_KEY";
+      if (isProd) throw new Error(msg);
+      else console.warn(`[env] ${msg}`);
+    }
+  } else {
+    if (!serverEnv.SMTP_USER || !serverEnv.SMTP_PASS) {
+      const msg = "USE_BREVO_EMAIL=false requires SMTP_USER + SMTP_PASS (Gmail App Password)";
+      if (isProd) throw new Error(msg);
+      else console.warn(`[env] ${msg}`);
+    }
   }
 }
