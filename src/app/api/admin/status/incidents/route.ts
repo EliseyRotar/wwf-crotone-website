@@ -8,13 +8,37 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { requireSuperadmin } from "@/lib/guard";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
+import { LIMITS } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
+
+const SLUG_RE = /^[a-z0-9-]{2,60}$/;
+
+const CreateIncidentSchema = z
+  .object({
+    service_slug: z.string().trim().min(2).max(60).regex(SLUG_RE, "invalid service slug"),
+    severity: z.enum(["minor", "major", "critical"]).optional().default("minor"),
+    status: z.enum(["investigating", "identified", "monitoring", "resolved"]).optional().default("investigating"),
+    title_it: z.string().trim().min(1).max(200),
+    title_en: z.string().trim().max(200).optional(),
+    body_it: z.string().max(LIMITS.MAX_STRING).nullable().optional(),
+    body_en: z.string().max(LIMITS.MAX_STRING).nullable().optional(),
+    started_at: z.string().min(8).max(40).optional(),
+    resolved_at: z.string().min(8).max(40).nullable().optional()
+  })
+  .strict();
+
+function parseDateOrNull(value: string | null | undefined): Date | null {
+  if (value === undefined || value === null) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -44,27 +68,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
-  const body = await req.json();
-  const service_slug = String(body.service_slug ?? "").trim();
-  const svc = await prisma.statusService.findUnique({ where: { slug: service_slug } });
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "bad-json" }, { status: 400 });
+  }
+
+  const parsed = CreateIncidentSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "invalid", issues: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const d = parsed.data;
+  const serviceSlug = d.service_slug.toLowerCase();
+  const svc = await prisma.statusService.findUnique({ where: { slug: serviceSlug } });
   if (!svc) return NextResponse.json({ ok: false, error: "service not found" }, { status: 400 });
+
+  const startedRaw = parseDateOrNull(d.started_at);
+  if (d.started_at && !startedRaw) {
+    return NextResponse.json({ ok: false, error: "invalid-started-at" }, { status: 400 });
+  }
+  const resolvedRaw = parseDateOrNull(d.resolved_at ?? null);
+  if (d.resolved_at && !resolvedRaw) {
+    return NextResponse.json({ ok: false, error: "invalid-resolved-at" }, { status: 400 });
+  }
 
   const incident = await prisma.incident.create({
     data: {
       service_id: svc.id,
       source: "manual",
       external_id: null,
-      severity: ["minor", "major", "critical"].includes(body.severity) ? body.severity : "minor",
-      status: ["investigating", "identified", "monitoring", "resolved"].includes(body.status)
-        ? body.status
-        : "investigating",
-      title_it: String(body.title_it ?? "").slice(0, 200),
-      title_en: String(body.title_en ?? body.title_it ?? "").slice(0, 200),
-      body_it: body.body_it ?? null,
-      body_en: body.body_en ?? body.body_it ?? null,
-      started_at: body.started_at ? new Date(body.started_at) : new Date(),
-      resolved_at: body.resolved_at ? new Date(body.resolved_at) : null,
-    },
+      severity: d.severity,
+      status: d.status,
+      title_it: d.title_it.slice(0, 200),
+      title_en: (d.title_en ?? d.title_it).slice(0, 200),
+      body_it: d.body_it ?? "",
+      body_en: d.body_en ?? d.body_it ?? "",
+      started_at: startedRaw ?? new Date(),
+      resolved_at: resolvedRaw
+    }
   });
 
   return NextResponse.json({ ok: true, incident });

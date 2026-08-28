@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession, type SessionUser } from "@/lib/auth";
 import { sendBulkEmail } from "@/lib/mail";
@@ -7,6 +8,36 @@ import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { LIMITS } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
+
+const BulkEmailSchema = z
+  .object({
+    subject: z.string().trim().min(1).max(LIMITS.MAX_BULK_EMAIL_SUBJECT),
+    body: z.string().min(1).max(LIMITS.MAX_BULK_EMAIL_BODY),
+    turnoId: z.string().min(1).max(64).optional(),
+    locale: z.enum(["it", "en"]).optional().default("it"),
+    scheduleAt: z.string().min(8).max(40).optional()
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.scheduleAt) {
+      const ms = Date.parse(data.scheduleAt);
+      if (Number.isNaN(ms)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["scheduleAt"],
+          message: "invalid-schedule"
+        });
+        return;
+      }
+      if (ms <= Date.now()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["scheduleAt"],
+          message: "schedule-in-past"
+        });
+      }
+    }
+  });
 
 function getManagerTurns(session: SessionUser): string[] {
   return session.role === "superadmin"
@@ -26,25 +57,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
-  const { subject, body, turnoId, locale, scheduleAt } = await req.json();
-  if (!subject || !body) return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
-  if (typeof subject !== "string" || subject.length > LIMITS.MAX_BULK_EMAIL_SUBJECT) {
-    return NextResponse.json({ ok: false, error: "subject-too-long" }, { status: 400 });
-  }
-  if (typeof body !== "string" || body.length > LIMITS.MAX_BULK_EMAIL_BODY) {
-    return NextResponse.json({ ok: false, error: "body-too-long" }, { status: 400 });
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "bad-json" }, { status: 400 });
   }
 
-  // F20: validate scheduleAt — must be a future ISO date if provided
-  if (scheduleAt) {
-    const ms = Date.parse(scheduleAt);
-    if (isNaN(ms)) {
-      return NextResponse.json({ ok: false, error: "invalid-schedule" }, { status: 400 });
-    }
-    if (ms <= Date.now()) {
-      return NextResponse.json({ ok: false, error: "schedule-in-past" }, { status: 400 });
-    }
+  const parsed = BulkEmailSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "invalid", issues: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
+  const { subject, body, turnoId, locale, scheduleAt } = parsed.data;
 
   const managerTurns = getManagerTurns(session);
 
@@ -84,7 +111,7 @@ export async function POST(req: Request) {
   const emails = [...new Set(iscrizioni.map((i) => i.email))];
   if (emails.length === 0) return NextResponse.json({ ok: false, error: "no-recipients" }, { status: 400 });
 
-  const ok = await sendBulkEmail({ to: emails, subject, body, locale: locale || "it" });
+  const ok = await sendBulkEmail({ to: emails, subject, body, locale });
   if (!ok) return NextResponse.json({ ok: false, error: "mail-failed" }, { status: 500 });
   return NextResponse.json({ ok: true, sent: emails.length });
 }

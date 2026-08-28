@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession, canAccessTurn } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
@@ -6,6 +7,14 @@ import { logAudit } from "@/lib/audit";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
+
+const ReceiptActionSchema = z
+  .object({
+    receiptId: z.string().min(1).max(64),
+    action: z.enum(["approve", "reject"]),
+    reason: z.string().max(500).optional()
+  })
+  .strict();
 
 /**
  * PATCH /api/admin/iscrizioni/receipt
@@ -31,10 +40,21 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
     }
 
-    const { receiptId, action, reason } = await req.json();
-    if (!receiptId || (action !== "approve" && action !== "reject")) {
-      return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ ok: false, error: "bad-json" }, { status: 400 });
     }
+
+    const parsed = ReceiptActionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { ok: false, error: "invalid", issues: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const { receiptId, action, reason } = parsed.data;
 
     const receipt = await prisma.receiptUpload.findUnique({
       where: { id: receiptId },
@@ -55,7 +75,7 @@ export async function PATCH(req: Request) {
         data: {
           approvedAt: isApprove ? now : null,
           approvedBy: isApprove ? session.id : null,
-          rejectionReason: isApprove ? null : String(reason ?? "").slice(0, 500) || null
+          rejectionReason: isApprove ? null : (reason ?? "").slice(0, 500) || null
         }
       });
 

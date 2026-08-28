@@ -4,17 +4,34 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/guard";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
+import { LIMITS } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_FIELDS = [
-  "name_it", "name_en", "category", "display_order", "source",
-  "source_id", "url", "icon", "description_it", "description_en", "active",
-] as const;
+const SLUG_PARAM_RE = /^[a-z0-9-]{2,60}$/;
+
+const PatchServiceSchema = z
+  .object({
+    name_it: z.string().trim().max(200).optional(),
+    name_en: z.string().trim().max(200).optional(),
+    category: z.enum(["user-facing", "infrastructure", "external"]).optional(),
+    display_order: z.number().int().min(0).max(1_000_000).optional(),
+    source: z
+      .enum(["uptimerobot", "statuspage", "self-probe", "instatus", "manual"])
+      .optional(),
+    source_id: z.string().max(200).nullable().optional(),
+    url: z.string().url().max(2000).nullable().optional(),
+    icon: z.string().max(200).nullable().optional(),
+    description_it: z.string().max(LIMITS.MAX_STRING).nullable().optional(),
+    description_en: z.string().max(LIMITS.MAX_STRING).nullable().optional(),
+    active: z.boolean().optional()
+  })
+  .strict();
 
 export async function PATCH(
   req: NextRequest,
@@ -29,13 +46,29 @@ export async function PATCH(
   }
 
   const { slug } = await params;
+  if (!SLUG_PARAM_RE.test(slug)) {
+    return NextResponse.json({ ok: false, error: "invalid-slug" }, { status: 400 });
+  }
   const svc = await prisma.statusService.findUnique({ where: { slug } });
   if (!svc) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
 
-  const body = await req.json();
-  const data: Record<string, unknown> = {};
-  for (const k of ALLOWED_FIELDS) {
-    if (k in body) data[k] = body[k];
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "bad-json" }, { status: 400 });
+  }
+
+  const parsed = PatchServiceSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "invalid", issues: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const data = parsed.data;
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ ok: false, error: "no-edits" }, { status: 400 });
   }
 
   const updated = await prisma.statusService.update({ where: { slug }, data });
@@ -55,6 +88,9 @@ export async function DELETE(
   }
 
   const { slug } = await params;
+  if (!SLUG_PARAM_RE.test(slug)) {
+    return NextResponse.json({ ok: false, error: "invalid-slug" }, { status: 400 });
+  }
   // Soft delete so we keep historical snapshots/periods readable
   await prisma.statusService.update({ where: { slug }, data: { active: false } });
   return NextResponse.json({ ok: true });

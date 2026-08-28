@@ -1,10 +1,29 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession, type SessionUser } from "@/lib/auth";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
+
+const STATUS_ENUM = [
+  "pending",
+  "confirmed",
+  "paid",
+  "cancelled",
+  "waitlist"
+] as const;
+
+const CsvQuerySchema = z
+  .object({
+    status: z.enum(STATUS_ENUM).optional(),
+    campo: z.string().min(1).max(64).optional(),
+    from: z.string().min(1).max(40).optional(),
+    to: z.string().min(1).max(40).optional(),
+    ids: z.string().min(1).max(20_000).optional()
+  })
+  .strict();
 
 function escapeCsvCell(value: string): string {
   const escaped = value.replace(/"/g, '""');
@@ -14,10 +33,10 @@ function escapeCsvCell(value: string): string {
   return `"${escaped}"`;
 }
 
-function parseDateInput(s: string | null): Date | null {
+function parseDateInput(s: string | undefined): Date | null {
   if (!s) return null;
   const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function getManagerTurns(session: SessionUser): string[] {
@@ -39,11 +58,30 @@ export async function GET(req: Request) {
 
     // F33: query-parameter filters
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
-    const turnoId = searchParams.get("campo");
-    const from = parseDateInput(searchParams.get("from"));
-    const toRaw = parseDateInput(searchParams.get("to"));
-    const idsParam = searchParams.get("ids");
+    const rawQuery = {
+      status: searchParams.get("status") ?? undefined,
+      campo: searchParams.get("campo") ?? undefined,
+      from: searchParams.get("from") ?? undefined,
+      to: searchParams.get("to") ?? undefined,
+      ids: searchParams.get("ids") ?? undefined
+    };
+    const parsed = CsvQuerySchema.safeParse(rawQuery);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { ok: false, error: "invalid", issues: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const { status, campo: turnoId, from: fromRaw, to: toRaw, ids: idsParam } = parsed.data;
+
+    const from = parseDateInput(fromRaw);
+    if (fromRaw && !from) {
+      return NextResponse.json({ ok: false, error: "invalid-from-date" }, { status: 400 });
+    }
+    const toDate = parseDateInput(toRaw);
+    if (toRaw && !toDate) {
+      return NextResponse.json({ ok: false, error: "invalid-to-date" }, { status: 400 });
+    }
     const ids = idsParam ? idsParam.split(",").filter(Boolean).slice(0, 500) : null;
 
     const managerTurns = getManagerTurns(session);
@@ -54,7 +92,7 @@ export async function GET(req: Request) {
       : {};
 
     const where: Record<string, unknown> = { ...baseWhere };
-    if (status && ["pending", "confirmed", "paid", "cancelled", "waitlist"].includes(status)) {
+    if (status) {
       where.status = status;
     }
     if (turnoId) {
@@ -67,11 +105,11 @@ export async function GET(req: Request) {
     if (ids) {
       where.id = { in: ids };
     }
-    if (from || toRaw) {
+    if (from || toDate) {
       const range: { gte?: Date; lte?: Date } = {};
       if (from) range.gte = from;
-      if (toRaw) {
-        const to = new Date(toRaw);
+      if (toDate) {
+        const to = new Date(toDate);
         to.setHours(23, 59, 59, 999);
         range.lte = to;
       }
@@ -145,7 +183,7 @@ export async function GET(req: Request) {
       userId: session.id,
       action: "export",
       entity: "iscrizioni_csv",
-      details: JSON.stringify({ filters: { status, turnoId, from, to: toRaw, ids } })
+      details: JSON.stringify({ filters: { status, turnoId, from, to: toDate, ids } })
     });
 
     // Include filter info in the filename for traceability
@@ -154,7 +192,7 @@ export async function GET(req: Request) {
     if (status) tagParts.push(status);
     if (turnoId) tagParts.push("turno");
     if (from) tagParts.push(`from-${from.toISOString().slice(0, 10)}`);
-    if (toRaw) tagParts.push(`to-${toRaw.toISOString().slice(0, 10)}`);
+    if (toDate) tagParts.push(`to-${toDate.toISOString().slice(0, 10)}`);
     const tag = tagParts.length > 0 ? `-${tagParts.join("-")}` : "";
     const filename = `iscrizioni-wwf-crotone${tag}-${dateTag}.csv`;
 
