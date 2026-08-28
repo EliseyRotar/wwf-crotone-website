@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireSuperadmin } from "@/lib/guard";
+import { requireSuperadminApi } from "@/lib/guard";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { LIMITS } from "@/lib/validate";
@@ -37,7 +37,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperadmin();
+  const sessionOrResp = await requireSuperadminApi();
+  if (sessionOrResp instanceof NextResponse) return sessionOrResp;
+  const session = sessionOrResp;
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }

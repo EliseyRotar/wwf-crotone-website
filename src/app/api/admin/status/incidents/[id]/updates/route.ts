@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireSuperadmin } from "@/lib/guard";
+import { requireSuperadminApi } from "@/lib/guard";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 
@@ -38,7 +38,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperadmin();
+  const sessionOrResp = await requireSuperadminApi();
+  if (sessionOrResp instanceof NextResponse) return sessionOrResp;
+  const session = sessionOrResp;
   if (!validateOrigin(req)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
