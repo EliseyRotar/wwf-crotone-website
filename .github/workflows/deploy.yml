@@ -104,6 +104,14 @@ jobs:
             cd /srv/wwf/repo
             sudo -u deploy git fetch origin main
             sudo -u deploy git reset --hard origin/main
+            # Sync the repo compose file to the deploy location.
+            # /srv/wwf/docker-compose.yml is the LIVE compose that
+            # docker actually reads; infra/docker-compose.yml is the
+            # source of truth in the repo. Without this rsync the
+            # live stack would diverge from the repo within one deploy.
+            sudo -u deploy cp /srv/wwf/repo/infra/docker-compose.yml /srv/wwf/docker-compose.yml
+            # Same for postgres.Dockerfile (referenced from compose).
+            sudo -u deploy cp /srv/wwf/repo/infra/postgres.Dockerfile /srv/wwf/postgres.Dockerfile 2>/dev/null || true
             cd /srv/wwf
             sudo docker compose --project-name infra build app
             sudo docker compose --project-name infra up -d --force-recreate --no-deps app cron
