@@ -14,19 +14,13 @@
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
+import { getAuthSecret } from "@/lib/auth";
 
 const COOKIE = "wwf_lookup";
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function getSecret(): string {
-  // Reuse the same secret plumbing as auth so we never have a second
-  // source of truth. getSecret() in auth.ts throws when missing, so we
-  // re-implement the logic here but lean on the same env var.
-  const raw = process.env.AUTH_SECRET;
-  if (raw && raw.length >= 16) return raw;
-  // Fall back to a dev-only value so dev/tests can still mint tokens.
-  // Never use this path in production.
-  return "dev-only-lookup-secret-not-for-production";
+  return getAuthSecret();
 }
 
 function b64url(buf: Buffer): string {

@@ -13,13 +13,12 @@
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
+import { getAuthSecret } from "@/lib/auth";
 
 const MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 
 function getSecret(): string {
-  const raw = process.env.AUTH_SECRET;
-  if (raw && raw.length >= 16) return raw;
-  return "dev-only-newsletter-secret-not-for-production";
+  return getAuthSecret();
 }
 
 function b64url(buf: Buffer): string {

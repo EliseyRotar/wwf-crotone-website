@@ -27,6 +27,7 @@
 import { cookies, headers } from "next/headers";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { getAuthSecret } from "@/lib/auth";
 import {
   verifyDeviceCookie,
   DEVICE_COOKIE_NAME,
@@ -37,13 +38,7 @@ export const ACCOUNT_COOKIE_NAME = "wwf_account";
 export const ACCOUNT_TTL_S = 24 * 60 * 60; // 24 hours
 
 function getSecret(): string {
-  const raw = process.env.AUTH_SECRET;
-  if (!raw || raw.length < 32) {
-    throw new Error(
-      "AUTH_SECRET is not set or too short. Generate one with: openssl rand -base64 48"
-    );
-  }
-  return raw;
+  return getAuthSecret();
 }
 
 function b64url(buf: Buffer): string {

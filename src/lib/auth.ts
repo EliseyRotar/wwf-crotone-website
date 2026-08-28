@@ -17,7 +17,7 @@ const DEV_FALLBACK = "dev-secret-change-me";
  * Generate a fresh secret with:
  *     openssl rand -base64 48
  */
-function getSecret(): string {
+export function getAuthSecret(): string {
   const raw = process.env.AUTH_SECRET;
   if (!raw) {
     throw new Error(
@@ -40,7 +40,7 @@ function getSecret(): string {
 const COOKIE_NAME = "wwf_admin_session";
 
 function getKey() {
-  return new TextEncoder().encode(getSecret());
+  return new TextEncoder().encode(getAuthSecret());
 }
 
 export type SessionUser = {

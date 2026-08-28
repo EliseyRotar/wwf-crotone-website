@@ -16,25 +16,20 @@
  * Cookie format: `<base64url(userId)>.<base64url(deviceHash)>.<expiryMs>.<base64urlHmac>`
  *
  * All comparisons use a constant-time HMAC compare to avoid timing
- * leaks. The secret is reused from AUTH_SECRET (so we never have two
- * sources of truth) and falls back to a dev-only constant when the env
- * var is missing in development — auth.ts throws in that case, but we
- * can't import getSecret() from auth.ts without dragging in next/headers.
+ * leaks. The secret is reused from AUTH_SECRET via the shared
+ * getAuthSecret() in auth.ts so there is one source of truth. Tests
+ * must set AUTH_SECRET to a 32+ char value via vitest.setup.ts.
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
+import { getAuthSecret } from "@/lib/auth";
 
 export const DEVICE_COOKIE_NAME = "wwf_device_session";
 export const DEVICE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 export const DEVICE_TTL_S = Math.floor(DEVICE_TTL_MS / 1000);
 
 function getSecret(): string {
-  const raw = process.env.AUTH_SECRET;
-  if (raw && raw.length >= 32) return raw;
-  // Dev fallback. Never used in production: getSecret() in auth.ts would
-  // have thrown at boot if AUTH_SECRET were missing. This path lets the
-  // helpers still work in tests/dev when auth.ts itself isn't loaded.
-  return "dev-only-device-secret-not-for-production-32+chars";
+  return getAuthSecret();
 }
 
 function b64url(buf: Buffer): string {
