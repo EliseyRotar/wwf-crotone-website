@@ -113,7 +113,21 @@ jobs:
     name: E2E (Playwright + Mailpit)
     runs-on: ubuntu-latest
     needs: [lint, typecheck, build]
-    # Skip if no Playwright suite exists yet (early-commit safety net)
+    # Mailpit as a service container — runs alongside the test runner.
+    # NOTE: services: must be a job-level sibling of steps:, NOT nested
+    # inside steps. GitHub Actions rejects nested services as
+    # "workflow file issue" (took me three commits to figure out).
+    services:
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025   # SMTP
+          - 8025:8025   # HTTP API
+        options: >-
+          --health-cmd "wget -qO- http://localhost:8025/api/v1/info || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -152,18 +166,6 @@ jobs:
           NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
           GROQ_API_KEY: ci-groq
           SKIP_ENV_VALIDATION: "true"
-        # Mailpit as a service container — runs alongside the test runner
-        services:
-          mailpit:
-            image: axllent/mailpit:latest
-            ports:
-              - 1025:1025   # SMTP
-              - 8025:8025   # HTTP API
-            options: >-
-              --health-cmd "wget -qO- http://localhost:8025/api/v1/info || exit 1"
-              --health-interval 5s
-              --health-timeout 3s
-              --health-retries 10
         run: npm run test:e2e:smoke -- --reporter=github
 
       - name: Upload Playwright report on failure
