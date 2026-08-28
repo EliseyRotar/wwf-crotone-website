@@ -29,8 +29,9 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
+    console.error("[health/db] DB check failed:", err);
     return NextResponse.json(
-      { ok: false, service: "postgres", db: "error", error: String(err) },
+      { ok: false, service: "postgres", db: "unavailable" },
       { status: 503 }
     );
   }

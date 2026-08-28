@@ -8,6 +8,7 @@ export async function GET() {
     await prisma.$queryRaw`SELECT 1`;
     return NextResponse.json({ ok: true, db: "ok", timestamp: new Date().toISOString() });
   } catch (err) {
-    return NextResponse.json({ ok: false, db: "error", error: String(err) }, { status: 503 });
+    console.error("[health] DB check failed:", err);
+    return NextResponse.json({ ok: false, db: "unavailable" }, { status: 503 });
   }
 }

@@ -17,7 +17,7 @@ const schema = z.object({
  * POST /api/account/magic-link
  *
  * Body: { email, locale }
- * Response (always): { ok: true, sentTo: <email> }
+ * Response (always): { ok: true }
  *
  * Behaviour:
  *   - Validates the email format.
@@ -26,7 +26,9 @@ const schema = z.object({
  *   - Generates a magic link and emails it. We do NOT branch on
  *     "user found / not found" in the response — the same
  *     `{ ok: true }` is returned in both cases to prevent account
- *     enumeration via timing or response shape.
+ *     enumeration via timing or response shape. We also do NOT echo
+ *     the email back, since returning the user's input verbatim is
+ *     an account-enumeration oracle on top of the timing leak.
  */
 export async function POST(req: Request) {
   try {
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ ok: true, sentTo: email.toLowerCase() });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("magic-link POST error:", err);
     return NextResponse.json({ ok: false, error: "server" }, { status: 500 });
