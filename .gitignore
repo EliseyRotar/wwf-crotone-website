@@ -54,6 +54,12 @@ INFRASTRUCTURE.txt
 # Test coverage
 coverage
 
+# Playwright
+playwright-report/
+test-results/
+.playwright/
+playwright/.cache/
+
 # Spreadsheet with personal data (PII — GDPR)
 CAMPI_2026.xlsx
 *.xlsx
