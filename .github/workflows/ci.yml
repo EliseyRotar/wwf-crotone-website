@@ -130,7 +130,6 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run smoke + a11y + admin + chatbot suites
-        run: npm run test:e2e:smoke -- --reporter=github
         env:
           # Point the app at Mailpit for SMTP — no real creds needed
           SMTP_HOST: 127.0.0.1
@@ -165,6 +164,7 @@ jobs:
               --health-interval 5s
               --health-timeout 3s
               --health-retries 10
+        run: npm run test:e2e:smoke -- --reporter=github
 
       - name: Upload Playwright report on failure
         if: failure()
