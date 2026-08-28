@@ -90,6 +90,13 @@ jobs:
           DATABASE_URL: "postgresql://build:build@localhost:5432/build"
           AUTH_SECRET: "ci-test-secret-not-used-in-production-xxxxxxxxxxxxxxxx"
           NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+          # T3 Env validation requires these. See src/env/server.ts.
+          GROQ_API_KEY: "ci-groq"
+          AWS_ENDPOINT: "https://ci.r2.cloudflarestorage.com"
+          AWS_ACCESS_KEY_ID: "ci-key"
+          AWS_SECRET_ACCESS_KEY: "ci-secret"
+          POSTGRES_PASSWORD: "ci-pass"
+          SKIP_ENV_VALIDATION: "true"
 
   # End-to-end tests via Playwright. Runs in a separate job from the
   # Vitest unit tests because E2E:
