@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { authenticate, signSession, setSessionCookie } from "@/lib/auth";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 import { validateOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
+
+const LoginSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+  password: z.string().min(1).max(200),
+});
 
 export async function POST(req: Request) {
   try {
@@ -16,11 +22,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
     }
 
-    const { email, password } = await req.json();
-    if (!email || !password) {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ ok: false, error: "bad-json" }, { status: 400 });
+    }
+
+    const parsed = LoginSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
     }
-    const user = await authenticate(String(email), String(password));
+    const { email, password } = parsed.data;
+
+    const user = await authenticate(email, password);
     if (!user) {
       return NextResponse.json({ ok: false, error: "invalid" }, { status: 401 });
     }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
@@ -8,6 +9,22 @@ import { validateEmail, LIMITS } from "@/lib/validate";
 import { logAudit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
+
+const CreateUserSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().email().max(254),
+    name: z.string().trim().max(LIMITS.MAX_NAME).nullable().optional(),
+    password: z.string().min(8).max(200),
+    role: z.enum(["superadmin", "manager"]).optional().default("manager"),
+    assignedTurns: z.string().max(500).nullable().optional(),
+  })
+  .strict();
+
+const DeleteUserSchema = z
+  .object({
+    id: z.string().min(1).max(64),
+  })
+  .strict();
 
 export async function POST(req: Request) {
   const session = await getSession();
@@ -23,15 +40,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
   }
 
-  const { email, name, password, role, assignedTurns } = await req.json();
-  if (!email || !password) return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "bad-json" }, { status: 400 });
+  }
+  const parsed = CreateUserSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "invalid", issues: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { email, name, password, role, assignedTurns } = parsed.data;
+
   if (!validateEmail(email)) return NextResponse.json({ ok: false, error: "invalid-email" }, { status: 400 });
-  if (typeof password !== "string" || password.length < 8) {
-    return NextResponse.json({ ok: false, error: "password-too-short" }, { status: 400 });
-  }
-  if (name && typeof name === "string" && name.length > LIMITS.MAX_NAME) {
-    return NextResponse.json({ ok: false, error: "name-too-long" }, { status: 400 });
-  }
 
   const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (existing) return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
@@ -84,8 +108,25 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
-  const { id } = await req.json();
-  if (!id) return NextResponse.json({ ok: false, error: "missing" }, { status: 400 });
+  if (!(await rateLimit(`utenti-del:${clientKey(req)}`, 10, 60_000))) {
+    return NextResponse.json({ ok: false, error: "rate-limited" }, { status: 429 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "bad-json" }, { status: 400 });
+  }
+  const parsed = DeleteUserSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "invalid", issues: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { id } = parsed.data;
+
   if (id === session.id) return NextResponse.json({ ok: false, error: "self" }, { status: 400 });
   await prisma.user.delete({ where: { id } });
   await logAudit({
