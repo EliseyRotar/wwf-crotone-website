@@ -15,7 +15,9 @@
  * the browser).
  */
 
-const R2_BUCKET = process.env.R2_RECEIPTS_BUCKET ?? "wwf-receipts";
+import { serverEnv } from "@/env/server";
+
+const R2_BUCKET = serverEnv.R2_RECEIPTS_BUCKET;
 
 export type UploadReceiptResult = {
   objectKey: string;
@@ -26,15 +28,18 @@ export type UploadReceiptResult = {
   originalName: string;
 };
 
-function getCreds():
-  | { endpoint: string; region: string; accessKey: string; secretKey: string }
-  | null {
-  const endpoint = process.env.AWS_ENDPOINT;
-  const accessKey = process.env.AWS_ACCESS_KEY_ID;
-  const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
-  if (!endpoint || !accessKey || !secretKey) return null;
-  const region = process.env.AWS_REGION ?? "auto";
-  return { endpoint, region, accessKey, secretKey };
+function getCreds(): {
+  endpoint: string;
+  region: string;
+  accessKey: string;
+  secretKey: string;
+} {
+  return {
+    endpoint: serverEnv.AWS_ENDPOINT,
+    region: serverEnv.AWS_REGION,
+    accessKey: serverEnv.AWS_ACCESS_KEY_ID,
+    secretKey: serverEnv.AWS_SECRET_ACCESS_KEY
+  };
 }
 
 function bytesToHex(bytes: Uint8Array): string {

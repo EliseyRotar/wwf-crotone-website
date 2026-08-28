@@ -28,8 +28,11 @@ import net from "node:net";
 
 const prisma = new PrismaClient();
 
-const UPTIMEROBOT_KEY = process.env.UPTIMEROBOT_API_KEY ?? "";
-const SELF_HEALTH_URL = process.env.SELF_HEALTH_URL ?? "http://app:3000/api/health";
+const { loadScriptEnv } = require("./env-script.cjs");
+const _scriptEnv = loadScriptEnv();
+
+const UPTIMEROBOT_KEY = _scriptEnv.UPTIMEROBOT_API_KEY ?? "";
+const SELF_HEALTH_URL = _scriptEnv.SELF_HEALTH_URL ?? "http://app:3000/api/health";
 const POLL_INTERVAL_MS = 60_000;
 const SNAPSHOT_TTL_DAYS = 7;
 

@@ -19,7 +19,10 @@
  *       SENTRY_DSN (optional — sentry breadcrumb only)
  */
 
-const BUCKET = process.env.R2_BUCKET || "wwf-backups";
+const { loadScriptEnv } = require("./env-script.cjs");
+const _scriptEnv = loadScriptEnv();
+
+const BUCKET = _scriptEnv.R2_BUCKET || "wwf-backups";
 
 // Free tier limits as of 2026 — verify at
 // https://developers.cloudflare.com/r2/pricing/
@@ -29,7 +32,7 @@ const FREE_TIER = {
   class_b_ops: 10_000_000,        // reads + heads
 };
 
-const SENTRY_DSN = process.env.SENTRY_DSN || "";
+const SENTRY_DSN = _scriptEnv.SENTRY_DSN || "";
 
 async function signRequest(method, endpoint, bucket, accessKey, secretKey, querystring = "", payloadHash = "") {
   // The querystring passed in MUST be the raw, sorted, percent-encoded
@@ -166,9 +169,9 @@ async function sendSentryBreadcrumb(level, message, data) {
 }
 
 async function main() {
-  const endpoint = process.env.AWS_ENDPOINT;
-  const accessKey = process.env.AWS_ACCESS_KEY_ID;
-  const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
+  const endpoint = _scriptEnv.AWS_ENDPOINT;
+  const accessKey = _scriptEnv.AWS_ACCESS_KEY_ID;
+  const secretKey = _scriptEnv.AWS_SECRET_ACCESS_KEY;
 
   if (!endpoint || !accessKey || !secretKey) {
     console.error("Missing R2 credentials (AWS_ENDPOINT / AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY)");

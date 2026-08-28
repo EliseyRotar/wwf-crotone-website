@@ -18,8 +18,10 @@
  * someone GETs an existing object key — uploads still need R2 creds.)
  */
 
-const R2_BUCKET = process.env.R2_GALLERY_BUCKET ?? "wwf-gallery";
-const R2_PUBLIC_BASE = process.env.R2_GALLERY_PUBLIC_BASE ?? "";
+import { serverEnv } from "@/env/server";
+
+const R2_BUCKET = serverEnv.R2_GALLERY_BUCKET;
+const R2_PUBLIC_BASE = serverEnv.R2_GALLERY_PUBLIC_BASE ?? "";
 
 export type UploadGalleryResult = {
   objectKey: string;
@@ -30,15 +32,18 @@ export type UploadGalleryResult = {
   originalName: string;
 };
 
-function getCreds():
-  | { endpoint: string; region: string; accessKey: string; secretKey: string }
-  | null {
-  const endpoint = process.env.AWS_ENDPOINT;
-  const accessKey = process.env.AWS_ACCESS_KEY_ID;
-  const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
-  if (!endpoint || !accessKey || !secretKey) return null;
-  const region = process.env.AWS_REGION ?? "auto";
-  return { endpoint, region, accessKey, secretKey };
+function getCreds(): {
+  endpoint: string;
+  region: string;
+  accessKey: string;
+  secretKey: string;
+} {
+  return {
+    endpoint: serverEnv.AWS_ENDPOINT,
+    region: serverEnv.AWS_REGION,
+    accessKey: serverEnv.AWS_ACCESS_KEY_ID,
+    secretKey: serverEnv.AWS_SECRET_ACCESS_KEY
+  };
 }
 
 function bytesToHex(bytes: Uint8Array): string {

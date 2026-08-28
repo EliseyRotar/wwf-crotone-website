@@ -2,39 +2,19 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-
-const PLACEHOLDER = "change-me-with-openssl-rand-base64-32";
-const DEV_FALLBACK = "dev-secret-change-me";
+import { serverEnv } from "@/env/server";
 
 /**
- * H-01: AUTH_SECRET must be a real secret in every environment. The previous
- * implementation fell back to a known constant in dev, which meant a
- * developer who forgot to set AUTH_SECRET could have user tokens signed
- * with a publicly-checked-in string. We now throw, even in development,
- * whenever the secret is missing, is still the example placeholder,
- * contains "change-me", or is the old dev fallback.
+ * H-01: AUTH_SECRET must be a real secret in every environment. The
+ * env validation in src/env/server.ts already enforces this:
+ *   - min 32 chars
+ *   - throws at boot if missing
  *
- * Generate a fresh secret with:
- *     openssl rand -base64 48
+ * We read from the validated env (serverEnv.AUTH_SECRET) so the schema
+ * in src/env/server.ts is the single source of truth.
  */
 export function getAuthSecret(): string {
-  const raw = process.env.AUTH_SECRET;
-  if (!raw) {
-    throw new Error(
-      "AUTH_SECRET is not set. Generate one with: openssl rand -base64 48"
-    );
-  }
-  if (raw === PLACEHOLDER || raw.includes("change-me") || raw === DEV_FALLBACK) {
-    throw new Error(
-      "AUTH_SECRET is still the placeholder or example value. Set a real secret with: openssl rand -base64 48"
-    );
-  }
-  if (raw.length < 32) {
-    throw new Error(
-      "AUTH_SECRET must be at least 32 characters. Regenerate with: openssl rand -base64 48"
-    );
-  }
-  return raw;
+  return serverEnv.AUTH_SECRET;
 }
 
 const COOKIE_NAME = "wwf_admin_session";

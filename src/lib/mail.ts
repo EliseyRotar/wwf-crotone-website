@@ -1,7 +1,18 @@
 import nodemailer from "nodemailer";
 import { SITE } from "@/config/site";
+import { serverEnv } from "@/env/server";
 
 let transporter: nodemailer.Transporter | null = null;
+
+/**
+ * Server-side helper for the public site URL. NEXT_PUBLIC_SITE_URL is
+ * a client-inlined var; server code reads it from process.env directly.
+ * T3 Env's server schema doesn't (and shouldn't) include NEXT_PUBLIC_*
+ * vars — they belong in the client schema only.
+ */
+function siteUrl(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? `https://${SITE.domain}`;
+}
 
 /**
  * Transactional email provider toggle.
@@ -30,22 +41,20 @@ let transporter: nodemailer.Transporter | null = null;
  */
 function getTransporter(): nodemailer.Transporter | null {
   if (transporter) return transporter;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = serverEnv.SMTP_USER;
+  const pass = serverEnv.SMTP_PASS;
   if (!user || !pass) {
     console.warn("SMTP not configured — emails will be skipped");
     return null;
   }
-  const useBrevo = process.env.USE_BREVO_EMAIL === "true";
-  const host = useBrevo
-    ? (process.env.SMTP_HOST ?? "smtp-relay.brevo.com")
-    : "smtp.gmail.com";
-  const port = useBrevo
-    ? Number(process.env.SMTP_PORT ?? 587)
-    : 465;
-  const secure = useBrevo
-    ? (process.env.SMTP_SECURE ?? "false") === "true"
-    : true;
+  const useBrevo = serverEnv.USE_BREVO_EMAIL;
+  const host = useBrevo ? (serverEnv.SMTP_HOST ?? "smtp-relay.brevo.com") : "smtp.gmail.com";
+  // When USE_BREVO_EMAIL=true, Brevo SMTP relay listens on 587 STARTTLS.
+  // When false (Gmail), we hardcode Gmail's SSL endpoint (465, secure=true)
+  // so an operator only needs to set SMTP_USER + SMTP_PASS (Gmail App
+  // Password). They don't need to re-edit SMTP_HOST / SMTP_PORT / SMTP_SECURE.
+  const port = useBrevo ? serverEnv.SMTP_PORT : 465;
+  const secure = useBrevo ? serverEnv.SMTP_SECURE : true;
   transporter = nodemailer.createTransport({
     host,
     port,
@@ -135,7 +144,7 @@ export async function notifyNewIscrizione(data: {
     ? data.extraTurni.map(escapeHtml).join(", ")
     : null;
 
-  const adminUrl = data.adminPanelUrl ?? (process.env.NEXT_PUBLIC_SITE_URL ?? "") + "/admin/iscrizioni";
+  const adminUrl = data.adminPanelUrl ?? siteUrl() + "/admin/iscrizioni";
 
   // Build a flat list of [label, value] pairs. We use a flat array of
   // pairs (no nested arrays, no pre-formatted <tr>) and join them in
@@ -258,7 +267,7 @@ Apri nel pannello admin: ${adminUrl}
   `.trim();
 
   return sendNotification({
-    to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
+    to: serverEnv.ADMIN_NOTIFY_EMAIL ?? SITE.email,
     subject,
     text,
     html
@@ -314,7 +323,7 @@ Causale: Iscrizione di: ${data.firstName} ${data.lastName}, numero del campo sce
 
 Il saldo (€${data.totalCost - 100}) va versato almeno una settimana prima dell'inizio del campo.
 
-Trovi la lista di cosa portare qui: ${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list
+Trovi la lista di cosa portare qui: ${siteUrl()}/${data.locale}/packing-list
 
 Ti contatteremo a breve per confermare la tua iscrizione.
 
@@ -334,7 +343,7 @@ Reason: Registration of: ${data.firstName} ${data.lastName}, chosen camp number
 
 The balance (€${data.totalCost - 100}) is due at least one week before the camp starts.
 
-Find the packing list here: ${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list
+Find the packing list here: ${siteUrl()}/${data.locale}/packing-list
 
 We will contact you shortly to confirm your registration.
 
@@ -351,7 +360,7 @@ We will contact you shortly to confirm your registration.
 <p><strong>IBAN:</strong> ${SITE.iban}<br/>
 <strong>Causale:</strong> Iscrizione di: ${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}, numero del campo scelto</p>
 <p>Il saldo (€${data.totalCost - 100}) va versato almeno una settimana prima dell'inizio del campo.</p>
-<p>Trovi la lista di cosa portare qui: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list">Lista cosa portare</a></p>
+<p>Trovi la lista di cosa portare qui: <a href="${siteUrl()}/${data.locale}/packing-list">Lista cosa portare</a></p>
 <p>Ti contatteremo a breve per confermare la tua iscrizione.</p>
 <p>— WWF Crotone</p>`
     : `<h2>Hello ${escapeHtml(data.firstName)},</h2>
@@ -364,7 +373,7 @@ We will contact you shortly to confirm your registration.
 <p><strong>IBAN:</strong> ${SITE.iban}<br/>
 <strong>Reason:</strong> Registration of: ${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}, chosen camp number</p>
 <p>The balance (€${data.totalCost - 100}) is due at least one week before the camp starts.</p>
-<p>Find the packing list here: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/${data.locale}/packing-list">Packing list</a></p>
+<p>Find the packing list here: <a href="${siteUrl()}/${data.locale}/packing-list">Packing list</a></p>
 <p>We will contact you shortly to confirm your registration.</p>
 <p>— WWF Crotone</p>`;
 
@@ -711,7 +720,7 @@ export async function sendReceiptUploadedAdminNotification(iscrizione: {
   const safeName = escapeHtml(`${iscrizione.firstName} ${iscrizione.lastName}`);
   const safeEmail = escapeHtml(iscrizione.email);
   const safeTurno = iscrizione.turno ? `Campo ${iscrizione.turno.number}` : "—";
-  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? `https://${SITE.domain}`}/admin/iscrizioni/${iscrizione.id}`;
+  const adminUrl = `${(siteUrl())}/admin/iscrizioni/${iscrizione.id}`;
   const turnoBadge = iscrizione.turno
     ? `<span style="display:inline-block;background:#e6f4ea;color:#007932;padding:3px 10px;border-radius:12px;font-size:13px;font-weight:600">${escapeHtml(`Campo ${iscrizione.turno.number}`)}</span>`
     : `<span style="color:#707070">—</span>`;
@@ -782,7 +791,7 @@ Apri nel pannello admin: ${adminUrl}`;
     if (!t) return { ok: false, error: "smtp-not-configured" };
     await t.sendMail({
       from: `"WWF Crotone — Notifiche" <info@wwfcrotone.it>`,
-      to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
+      to: serverEnv.ADMIN_NOTIFY_EMAIL ?? SITE.email,
       subject,
       text,
       html
@@ -810,7 +819,7 @@ export async function sendStatusChangeAdminNotification(
   const safeName = escapeHtml(`${iscrizione.firstName} ${iscrizione.lastName}`);
   const safeEmail = escapeHtml(iscrizione.email);
   const safeTurno = iscrizione.turno ? `Campo ${iscrizione.turno.number}` : "—";
-  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? `https://${SITE.domain}`}/admin/iscrizioni/${iscrizione.id}`;
+  const adminUrl = `${(siteUrl())}/admin/iscrizioni/${iscrizione.id}`;
 
   const STATUS_LABELS: Record<string, { label: string; tone: "pending" | "progress" | "ok" | "warn" }> = {
     pending: { label: "In attesa di conferma email", tone: "pending" },
@@ -905,7 +914,7 @@ ${actionHint ? actionHint.it + "\n\n" : ""}Apri nel pannello admin: ${adminUrl}`
     if (!t) return { ok: false, error: "smtp-not-configured" };
     await t.sendMail({
       from: `"WWF Crotone — Notifiche" <info@wwfcrotone.it>`,
-      to: process.env.ADMIN_NOTIFY_EMAIL ?? SITE.email,
+      to: serverEnv.ADMIN_NOTIFY_EMAIL ?? SITE.email,
       subject,
       text,
       html
@@ -916,3 +925,8 @@ ${actionHint ? actionHint.it + "\n\n" : ""}Apri nel pannello admin: ${adminUrl}`
     return { ok: false, error: "send-failed" };
   }
 }
+
+
+
+
+
