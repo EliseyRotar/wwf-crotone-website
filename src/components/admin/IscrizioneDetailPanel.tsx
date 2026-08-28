@@ -832,7 +832,7 @@ export default function IscrizioneDetailPanel({
             )}
             {isMultiTurn && (
               <Row
-                label={t("extraTurnsField")}
+                label={t("extraCampiField")}
                 value={iscrizione.extraTurnoNumbers.map((n) => t("camp", { number: n })).join(", ")}
               />
             )}
