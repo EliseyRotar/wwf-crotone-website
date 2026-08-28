@@ -263,6 +263,30 @@ model NewsletterSubscriber {
   updatedAt      DateTime  @updatedAt
 }
 
+/// In-progress volunteer booking form draft. Server-side replacement
+/// for the previous localStorage persistence (GDPR: no PII in browser
+/// storage, draft survives logout/clear-cache, recoverable across
+/// devices via the magic-link flow).
+///
+/// The draftId is the public identifier; it's stored in an HttpOnly
+/// cookie on the user's browser so they don't need to remember it.
+/// Data is a JSON blob matching the BookingForm FormState shape.
+/// Auto-expires after 30 days — cleaned up by a nightly cron or on
+/// successful iscrizione submission.
+model BookingDraft {
+  id        String   @id @default(cuid())
+  draftId   String   @unique // public identifier, shared with the cookie
+  data      String   // JSON.stringify(FormState)
+  step      Int      @default(0) // last step the user was on
+  ipHash    String?  // hashed client IP — for analytics / abuse detection
+  userAgent String?  @db.VarChar(256)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt]) // for the nightly cleanup cron
+}
+
 // Camp operators / staff (distinct from volunteer registrations).
 // role: "operatore" | "tecnico" | "coordinatore"
 model Operatore {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useState, useEffect } from "react";
+import { useReducer, useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Check, ArrowRight, ArrowLeft, AlertTriangle, Loader2 } from "lucide-react";
 import { getTurnStatus, calcAge } from "@/lib/turns";
@@ -55,7 +55,9 @@ type FormAction =
   | { type: "reset" }
   | { type: "hydrate"; value: Partial<FormState> };
 
-const DRAFT_KEY = "wwf-crotone-booking-draft";
+// DRAFT_KEY used to be the localStorage key — drafts now live on the
+// server keyed by a random opaque ID in an HttpOnly cookie. See
+// src/app/api/booking-draft/route.ts.
 
 const SWIM_LABEL_KEYS = {
   none: "swimNone",
@@ -146,24 +148,70 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
   const [errorFieldId, setErrorFieldId] = useState<string | null>(null);
 
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE, (init) => {
-    if (typeof window === "undefined") return init;
-    try {
-      const raw = window.localStorage.getItem(DRAFT_KEY);
-      if (!raw) return init;
-      const parsed = JSON.parse(raw) as Partial<FormState>;
-      return { ...init, ...parsed };
-    } catch {
-      return init;
-    }
+    // Server-side draft is loaded via the `draftLoaded` effect below.
+    // We start from the initial state synchronously so the form renders
+    // on first paint. The effect will hydrate once the draft arrives.
+    return init;
   });
 
-  // Persist a draft to localStorage on every change
+  // Hydrate from server-side draft on mount.
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/booking-draft", { credentials: "include" });
+        const json = (await res.json()) as {
+          ok: boolean;
+          draft?: { step: number; data: Partial<FormState> } | null;
+        };
+        if (cancelled) return;
+        if (json.ok && json.draft?.data) {
+          dispatch({ type: "hydrate", value: json.draft.data });
+          if (json.draft.step) setStep(json.draft.step);
+        }
+      } catch {
+        // Network error — leave the form at initial state. The PUT side
+        // will retry on next user interaction.
+      } finally {
+        if (!cancelled) setDraftLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Debounced server-side persistence. Sends the full state every 800ms
+  // while the user is filling the form. Server returns a 30-day cookie
+  // that identifies the draft.
+  const draftSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (done) return;
-    try {
-      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-    } catch {}
-  }, [state, done]);
+    if (!draftLoaded) return; // don't save before we even loaded
+    if (draftSaveTimer.current) clearTimeout(draftSaveTimer.current);
+    draftSaveTimer.current = setTimeout(() => {
+      fetch("/api/booking-draft", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ step, data: state })
+      })
+        .then((r) => {
+          if (r.ok) setDraftSaved(true);
+          else setDraftSaved(false);
+        })
+        .catch(() => setDraftSaved(false));
+    }, 800);
+    return () => {
+      if (draftSaveTimer.current) clearTimeout(draftSaveTimer.current);
+    };
+  }, [state, step, done, draftLoaded]);
+
+  // Reset the "saved" indicator after a moment.
+  useEffect(() => {
+    if (!draftSaved) return;
+    const t = setTimeout(() => setDraftSaved(false), 2500);
+    return () => clearTimeout(t);
+  }, [draftSaved]);
 
   const set = (key: keyof FormState, value: string | boolean | string[]) =>
     dispatch({ type: "set", key, value });
@@ -171,19 +219,26 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
   const toggleTurno = (id: string) => dispatch({ type: "toggleTurno", id });
 
   const saveDraft = () => {
-    try {
-      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-      setDraftSaved(true);
-      setTimeout(() => setDraftSaved(false), 2500);
-    } catch {
-      setError(t("draftSaveError"));
-    }
+    // Manual save = flush immediately.
+    fetch("/api/booking-draft", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ step, data: state })
+    })
+      .then((r) => {
+        if (r.ok) {
+          setDraftSaved(true);
+          setTimeout(() => setDraftSaved(false), 2500);
+        } else {
+          setError(t("draftSaveError"));
+        }
+      })
+      .catch(() => setError(t("draftSaveError")));
   };
 
   const clearDraft = () => {
-    try {
-      window.localStorage.removeItem(DRAFT_KEY);
-    } catch {}
+    fetch("/api/booking-draft", { method: "DELETE", credentials: "include" }).catch(() => undefined);
     dispatch({ type: "reset" });
     setStep(0);
   };
@@ -309,7 +364,10 @@ export default function BookingForm({ turni }: { turni: TurnoOption[] }) {
       const json = await res.json();
       if (json.ok) {
         setDone(true);
-        try { window.localStorage.removeItem(DRAFT_KEY); } catch {}
+        // Server-side draft cleanup — the server holds the canonical
+        // draft and we tell it to drop the row now that the booking
+        // succeeded. Fire-and-forget so the UX doesn't wait on it.
+        fetch("/api/booking-draft", { method: "DELETE", credentials: "include" }).catch(() => undefined);
       } else if (json.error === "turn-full") {
         setError(t("campoFull")); setStep(1);
       } else if (json.error === "turn-past") {
